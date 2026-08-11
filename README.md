@@ -28,7 +28,7 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **Logros:** Haber participado en la creación de un complemento de Word para los servicios de la empresa Legal Talent.
 
 ###  Yamil Alcaide
-<img src="assets/foto_ian.jpeg"  width="150">
+<img src="assets/"  width="150">
 
 * **Objetivos:** Estudiar Licenciatura en Gestión de TI en UADE con el objetivo de poder dedicarme a tiempo completo al área tecnológica.
 * **Conocimientos:** Python, HTML, JavaScript, C++ y diseño HTML.
@@ -36,7 +36,7 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **Logros:** Secundaria con título en informática, certificación de diseño HTML y 2 años de experiencia estudiando Ingeniería en Sistemas en la UTN.
 
 ### Ian Miguez
-<img src="assets/" width="150">
+<img src="assets/foto_ian.jpeg" width="150">
 
 * **Objetivos:** Adquirir experiencia profesional, aplicar lo que aprendo en la carrera y seguir aprendiendo dentro de un equipo de trabajo.
 * **Conocimientos:** Python, JAVA, Excel básico y Redes.
