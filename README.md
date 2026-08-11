@@ -28,7 +28,7 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **Logros:** Haber participado en la creación de un complemento de Word para los servicios de la empresa Legal Talent.
 
 ###  Yamil Alcaide
-<img src="assets/"  width="150">
+<img src="assets/foto_ian.jpeg"  width="150">
 
 * **Objetivos:** Estudiar Licenciatura en Gestión de TI en UADE con el objetivo de poder dedicarme a tiempo completo al área tecnológica.
 * **Conocimientos:** Python, HTML, JavaScript, C++ y diseño HTML.
