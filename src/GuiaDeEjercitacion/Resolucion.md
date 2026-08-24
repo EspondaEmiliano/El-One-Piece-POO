@@ -102,29 +102,29 @@ public class Circulo {
 
 ### Ejercicio 3.2 · ¿Qué imprime?
 * **Fragmento 1:**
-```java
-int[] valores = new int[4];
-valores[1] = 10;
-valores[3] = 25;
-for (int i = 0; i < valores.length; i++) {
-    System.out.println(valores[i]);
-}
+```text
+0
+10
+0
+25
 ```
 * **Fragmento 2:**
-````java
-String[] nombres = new String[3];
-nombres[0] = "Ana";
-for (int i = 0; i < nombres.length; i++) {
-    System.out.println(nombres[i]);
-}
+````text
+Ana
+null
+null
 ````
 ### Ejercicio 3.3 · Detectá el error
 ````java
 int[] a = new int[5]; a[5] = 3;
 System.out.println(a.length());
 Auto[] autos = new Auto[2]; autos[0].acelerar();
-
 ````
+
+1. Un arreglo de tamaño 5 tiene indices que van del 0 al 4. La posición `a[5]` no existe.
+2. En Java, `length` es un atributo de los arreglos, no un método. Debería ser `a.length` sin paréntesis.
+3. Al crear un arreglo de objetos, se crean espacios para referencias a los objetos, inicialmente en `null`. Falta instanciar el auto: `autos[0] = new Auto();` antes de llamar al método `acelerar()`.
+
 ### Ejercicio 3.4 · Escribí el código
 
 Dado `int[]` números ya cargado, escribí el fragmento que resuelve cada punto:
@@ -162,8 +162,8 @@ System.out.println("Mayores a 10: " + mayoresADiez);
 ### Ejercicio 3.5 · Primitivos vs. referencia
 
 1. Indicá el valor por defecto de cada posición recién creado el arreglo: `int[0], double[0.0], boolean[False], String[null].`
-2. En un arreglo de objetos, ¿qué guarda realmente cada posición: el objeto o una referencia?. Explicá.
-   En un arreglo se guarda una referencía a la localización del objeto por lo que al leer el arreglo el programa obtiene la ubicación donde se encuentra el objeto respectivo
+2. En un arreglo de objetos, ¿qué guarda realmente cada posición: el objeto o una referencia?. 
+   * Explicá: En un arreglo se guarda una referencía a la localización del objeto por lo que al leer el arreglo el programa obtiene la ubicación donde se encuentra el objeto respectivo
 
 ---
 ## Bloque 4 - Registro de temperaturas
@@ -184,3 +184,7 @@ La clase debe permitir:
 * Ningún identificador que sea palabra reservada.
 * Al menos un comentario de bloque (descripción de la clase) y comentarios de línea donde aporten.
 * Todo el recorrido de arreglos debe usar length (no números fijos).
+
+### Resolución
+
+En archivo en `.java` en la carpeta GuiaDeEjercitacion.
