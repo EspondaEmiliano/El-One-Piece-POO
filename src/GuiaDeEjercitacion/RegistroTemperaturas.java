@@ -1,5 +1,9 @@
 package GuiaDeEjercitacion;
 
+//Consigna:
+// Escribí una clase RegistroTemperaturas que trabaje con las temperaturas de una semana (7 días)
+// usando un arreglo de double. La clase debe permitir:
+
 import java.util.Scanner;
 
 public class RegistroTemperaturas {
@@ -9,6 +13,7 @@ public class RegistroTemperaturas {
         temperaturaSemana = new double[7];
     }
 
+    // 1. Cargar las 7 temperaturas del arreglo.
     public void cargarTemperatura() {
         Scanner sc = new Scanner(System.in);
         for (int i = 0; i < 7; i++) {
@@ -17,6 +22,7 @@ public class RegistroTemperaturas {
         }
     }
 
+    // 2. Calcular e imprimir el promedio de la semana
     public void calcularPromedio() {
         double suma = 0;
         double promedio;
@@ -25,6 +31,27 @@ public class RegistroTemperaturas {
         }
         promedio = suma / temperaturaSemana.length;
         System.out.println("El promedio de temperaturas es: " + promedio);
+    }
+
+    // 3. Encontrar la temperatura máxima y la mínima.
+    public void maximaTemperatura() {
+        double max = temperaturaSemana[0];
+        for (int i = 1; i < temperaturaSemana.length; i++) {
+            if (temperaturaSemana[i] > max) {
+                max = temperaturaSemana[i];
+            }
+        }
+        System.out.println("La máxima temperatura es: " + max);
+    }
+
+    public void minimaTemperatura() {
+        double min = temperaturaSemana[0];
+        for (int i = 1; i < temperaturaSemana.length; i++) {
+            if (temperaturaSemana[i] < min) {
+                min = temperaturaSemana[i];
+            }
+        }
+        System.out.println("La mínima temperatura es: " + min);
     }
 
 }
