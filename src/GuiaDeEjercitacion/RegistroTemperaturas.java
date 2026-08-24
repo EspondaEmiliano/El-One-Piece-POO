@@ -66,5 +66,11 @@ public class RegistroTemperaturas {
         System.out.println("Días que superaron el umbral de " + umbral + ": " + contador);
     }
 
-
+    // 5. Recorrer el arreglo usando length e imprimir cada día con su temperatura.
+    public void imprimirTemperaturas() {
+        String[] dias = {"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"};
+        for (int i = 0; i < temperaturaSemana.length; i++) {
+            System.out.println(dias[i] + ": " + temperaturaSemana[i]);
+        }
+    }
 }
