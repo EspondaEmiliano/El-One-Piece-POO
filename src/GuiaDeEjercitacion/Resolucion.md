@@ -96,9 +96,9 @@ public class Circulo {
 ## Bloque 3 Arreglos — el arreglo como objeto, posiciones, acceso y recorrido
 
 ### Ejercicio 3.1 · Declaración
-1. Un arreglo de 8 números enteros.
-2. Un arreglo de 5 objetos de tipo Producto.
-3. Un arreglo de 3 valores booleanos.
+1. Un arreglo de 8 números enteros `int [] arregloNumeros = new int[8];`.
+2. Un arreglo de 5 objetos de tipo Producto `Producto [] productos = new Producto[5];`.
+3. Un arreglo de 3 valores booleanos `boolean [] valoresBooleanos = new boolean[3];`.
 
 ### Ejercicio 3.2 · ¿Qué imprime?
 * **Fragmento 1:**
@@ -123,13 +123,41 @@ for (int i = 0; i < nombres.length; i++) {
 int[] a = new int[5]; a[5] = 3;
 System.out.println(a.length());
 Auto[] autos = new Auto[2]; autos[0].acelerar();
+
 ````
 ### Ejercicio 3.4 · Escribí el código
 
 Dado `int[]` números ya cargado, escribí el fragmento que resuelve cada punto:
-1. Sumar todos los elementos e imprimir el total. 
-2. Encontrar e imprimir el valor máximo. 
-3. Contar cuántos elementos son mayores a 10.
+
+````java
+int [] numeros;
+// 1. Sumar todos los elementos e imprimir el total
+int suma = 0;
+for(int i = 0; i < numeros.lenght; i++){
+    suma += numeros[i];
+}
+
+// 2) Encontrar e imprimir el valor máximo
+int maximo = numeros[0];
+for (int i = 1; i < numeros.length; i++) {
+        if (numeros[i] > maximo) {
+            maximo = numeros[i];
+        }
+}
+
+System.out.println("Valor máximo: " + maximo);
+
+// 3) Contar cuántos elementos son mayores a 10
+int mayoresADiez = 0;
+for (int i = 0; i < numeros.length; i++) {
+        if (numeros[i] > 10) {
+            mayoresADiez++;
+        }
+}
+
+System.out.println("Mayores a 10: " + mayoresADiez);
+````
+
 
 ### Ejercicio 3.5 · Primitivos vs. referencia
 
@@ -140,9 +168,9 @@ Dado `int[]` números ya cargado, escribí el fragmento que resuelve cada punto:
 ## Bloque 4 - Registro de temperaturas
 
 ### Consigna
-Escribí una clase RegistroTemperaturas que trabaje con las temperaturas de una semana (7 días)
+Escribí una clase RegistroTemperaturas que trabaje con las temperaturas de una semana (7 días) usando un arreglo de double. 
 
-usando un arreglo de double. La clase debe permitir:
+La clase debe permitir:
 
 1. Cargar las 7 temperaturas del arreglo.
 2. Calcular e imprimir el promedio de la semana.
