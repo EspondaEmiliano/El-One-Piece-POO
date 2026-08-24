@@ -133,8 +133,9 @@ Dado `int[]` números ya cargado, escribí el fragmento que resuelve cada punto:
 
 ### Ejercicio 3.5 · Primitivos vs. referencia
 
-1. Indicá el valor por defecto de cada posición recién creado el arreglo: `int[], double[], boolean[], String[].`
+1. Indicá el valor por defecto de cada posición recién creado el arreglo: `int[0], double[0.0], boolean[False], String[null].`
 2. En un arreglo de objetos, ¿qué guarda realmente cada posición: el objeto o una referencia?. Explicá.
+   En un arreglo se guarda una referencía a la localización del objeto por lo que al leer el arreglo el programa obtiene la ubicación donde se encuentra el objeto respectivo
 
 ---
 ## Bloque 4 - Registro de temperaturas
