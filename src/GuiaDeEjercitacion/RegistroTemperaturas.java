@@ -54,4 +54,17 @@ public class RegistroTemperaturas {
         System.out.println("La mínima temperatura es: " + min);
     }
 
+    // 4. Contar cuántos días superaron un umbral dado (por ejemplo, 30.0 grados).
+    public void contarDiasSuperiores(double umbral) {
+        int contador = 0;
+        for (int i = 0; i < temperaturaSemana.length; i++) {
+            double temp = temperaturaSemana[i];
+            if (temp > umbral) {
+                contador++;
+            }
+        }
+        System.out.println("Días que superaron el umbral de " + umbral + ": " + contador);
+    }
+
+
 }
