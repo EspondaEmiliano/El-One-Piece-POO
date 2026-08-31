@@ -29,7 +29,7 @@
 
 ---
 ## Parte 2 - Diagrama de clases
-![Diagrama de Clases](diagrama_clases.png)
+![Diagrama de Clases](assets/diagrama_clases.png)
 ### Justificación
 
 ### Justificación Comisión-Evaluación 
@@ -39,7 +39,7 @@
 ---
 ## Parte 3 - Diagrama de secuencia
 
-![Diagrama de secuencia](diagrama_secuencia.png)
+![Diagrama de secuencia](assets/diagrama_secuencia.png)
 
 ### Matriz de trazabilidad
 
