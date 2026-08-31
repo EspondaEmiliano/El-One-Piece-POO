@@ -2,7 +2,12 @@
 
 - **Comisión:** 579655  
 - **Grupo N°:** El One Piece 
-- **Integrantes:** Torres Matías; Miguez Ian; Esponda Emiliano; Villavedra Santiago; Alcaide Yamil 
+- **Integrantes:** 
+     - Torres Matías 
+     - Miguez Ian 
+     - Esponda Emiliano
+     - Villavedra Santiago
+     - Alcaide Yamil 
 - **Fecha:** 31-08-2026 
 ---
 ## Parte 1 - Análisis del dominio 
