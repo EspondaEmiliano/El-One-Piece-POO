@@ -31,7 +31,7 @@
 ---
 ## Parte 2 - Diagrama de clases
 
-<img src="assets/diagrama_clases.png" widght=800>
+<img src="../../assets/diagrama_clases.png" width="800">
 
 
 ### Justificación Comisión-Evaluación 
