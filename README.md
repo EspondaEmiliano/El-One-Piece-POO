@@ -54,6 +54,6 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 
 ## Bitácora de Clases y Avances del Equipo
 * **10-08-26** - Ejercicios propuestos de IfElse.
-* **24-08-26** - Resolución de la Gui de Ejercitación.
+* **24-08-26** - Resolución de la Guia de Ejercitación.
 * **31-08-26** - Resolución de la Actividad Grupal Clase UML.
 * **07-09-26** - 
