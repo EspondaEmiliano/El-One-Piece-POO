@@ -49,7 +49,7 @@ Cada instancia de ``Comision`` tiene asignado como mínimo un docente y a lo sum
 ---
 ## Parte 3 - Diagrama de secuencia
 
-<img src="assets/diagrama_secuencia.png" widght=800>
+<img src="../../assets/diagrama_secuencia.png" width="800">
 
 
 ### Matriz de trazabilidad
