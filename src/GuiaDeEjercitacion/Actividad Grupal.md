@@ -58,7 +58,7 @@ Cada instancia de ``Comision`` tiene asignado como mínimo un docente y a lo sum
 |:--------------------------------:|:---------------:|:-----------------------------------------------:|
 | ``validarInscripcion(comision)`` |   Universidad   | `+validarInscripcion(comision: Comision): void` |
 |         `existeComision`         |   Universidad   | `-existeComision(comision: Comision): Boolean`  |
-|            `hayCupo`             |    Comision     |              `+hayCupo(): Boolean`              |
+|          `noHayCupo`             |    Comision     |              `+noHayCupo(): Boolean`              |
 |       `estaAlumno(alumno)`       |    Comision     |     `+estaAlumno(alumno: Alumno): Boolean`      |
 |      `RegistrarInscripcion`      |   Universidad   |            `-registrarInscripcion()`            |
 |     <<create>>`Inscripcion`      |   Inscripcion   |     Constructor de la clase  `Inscripcion`      |
