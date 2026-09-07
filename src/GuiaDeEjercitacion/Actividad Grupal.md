@@ -30,6 +30,7 @@
 
 ---
 ## Parte 2 - Diagrama de clases
+
 ![Diagrama de Clases](assets/diagrama_clases.png)
 
 ### Justificación Comisión-Evaluación 
