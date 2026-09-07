@@ -1,18 +1,18 @@
-# Actividad Grupal - UML y Java 
+# Actividad Grupal - UML y Java
 
-- **Comisión:** 579655  
-- **Grupo N°:** El One Piece 
-- **Integrantes:** 
-     - Torres Matías 
-     - Miguez Ian 
-     - Esponda Emiliano
-     - Villavedra Santiago
-     - Alcaide Yamil 
-- **Fecha:** 31-08-2026 
+- **Comisión:** 579655
+- **Grupo N°:** El One Piece
+- **Integrantes:**
+  - Torres Matías
+  - Miguez Ian
+  - Esponda Emiliano
+  - Villavedra Santiago
+  - Alcaide Yamil
+- **Fecha:** 31-08-2026
 ---
-## Parte 1 - Análisis del dominio 
+## Parte 1 - Análisis del dominio
 
-### Clases candidatas y responsabilidades 
+### Clases candidatas y responsabilidades
 |         Clase         |                          Responsabilidad                           | Tipo (dominio/servicio) |
 |:---------------------:|:------------------------------------------------------------------:|:-----------------------:|
 | `Persona` (abstracta) |        Datos comunes de identidad (legajo, nombre, correo)         |         Dominio         |
@@ -24,7 +24,7 @@
 |     `Evaluación`      | Instancia de evaluación (parcial, TP, etc.) dentro de una comisión |         Dominio         |
 |     `Universidad`     |       Orquesta las validaciones del caso de uso "inscribir"        |        Servicio         |
 
-### Generalización identificada 
+### Generalización identificada
 
 `Persona → Alumno / Docente`. Se justifica porque ambos comparten legajo/nombre/correo, pero difieren en atributos y comportamiento (`carrera` vs `categoria`),  conviene tratarlos polimórficamente en cualquier lista de "personas registradas" sin duplicar código.
 
@@ -34,11 +34,11 @@
 <img src="../../assets/diagrama_clases.png" width="800">
 
 
-### Justificación Comisión-Evaluación 
+### Justificación Comisión-Evaluación
 
 La existencia de ``Evaluación`` está atada al ciclo de vida de `Comision`: si se borra la comisión, sus evaluaciones dejan de tener sentido.
 
-### Justificación de multiplicidad elegida 
+### Justificación de multiplicidad elegida
 
 Docente 1.* en Comisión: refleja la regla de negocio "una comisión debe tener al menos un docente y puede tener hasta dos". No es una simple recomendación, es una restricción del modelo.
 
@@ -123,9 +123,9 @@ public class Comision {
 
 ### Explicación de wrapper + ejemplo de conversión
 
-Una clase wrapper envuelve un tipo primitivo en un objeto, para poder usarlo donde Java exige objetos (genéricos, colecciones, valores nulos). 
+Una clase wrapper envuelve un tipo primitivo en un objeto, para poder usarlo donde Java exige objetos (genéricos, colecciones, valores nulos).
 
-Ejemplo: 
+Ejemplo:
 ```java
 int cupo = 30;
 Integer cupoObj = cupo; // autoboxing y a la inversa
@@ -143,4 +143,3 @@ int cupo2 = cupoObj; // unboxing
 - [✓] Firmas Java compatibles con el modelo
 - [✓] Tabla de wrappers completa
 - [✓] Todos los integrantes figuran en la entrega
-
