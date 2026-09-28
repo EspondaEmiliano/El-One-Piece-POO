@@ -56,7 +56,7 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **10-08-26** - Ejercicios propuestos de IfElse.
 * **24-08-26** - Resolución de la Guia de Ejercitación.
 * **31-08-26** - Resolución de la Actividad Grupal Clase UML.
-* **07-09-26** -
-* **14-09-26** -
-* **21-09-26** -
+* **07-09-26** - Realizamos la demo del parcial
+* **14-09-26** - Parcial
+* **21-09-26** - Estudio autonomo
 * **28-09-26** - Pensamos la idea del TP y empezamos a trabajar en el UML
