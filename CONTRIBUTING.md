@@ -6,7 +6,7 @@ Este documento define las reglas de trabajo en equipo para el desarrollo de las 
 
 ## 1. Reglas
 
-1. **La rama ``main` no se toca directamente:** Queda prohibido hacer `git push` directamente a ``main``. Todo cambio entra únicamente mediante Pull Request (PR) aprobado.
+1. **La rama `main` no se toca directamente:** Queda prohibido hacer `git push` directamente a `main`. Todo cambio entra únicamente mediante Pull Request (PR) aprobado.
 2. **Una rama por tarea o consigna:** Cada integrante trabaja en una rama aislada creada a partir de la última versión de `main`.
 3. **Actualizar antes de empezar y antes de entregar:** Siempre sincronizar la copia local con el repositorio remoto antes de escribir código nuevo y antes de abrir un PR.
 4. **Respetar la configuración de archivos ignorados:** El archivo `.gitignore` del proyecto ya omite archivos y directorios de entorno (`.idea`, `out`, `*.iml`). Nunca se deben versionar archivos binarios (`.class`) ni configuraciones personales del IDE.
