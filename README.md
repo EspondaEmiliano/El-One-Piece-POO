@@ -20,7 +20,7 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **Logros:** Obtener el segundo lugar en la Copa de Algoritmia de la universidad, estar cursando el segundo año de Ingeniería en Informática, desarrollo de un bot de inversiones programado en Python
 
 ### Santiago Villavedra
-<img src="assets/"  width="150">
+<img src="assets/foto_santiago.jpeg"  width="150">
 
 * **Objetivos:** Trabajar a corto plazo de modo que tenga un sueldo estable y promedio.
 * **Conocimientos:** Comprensión general del Paradigma de la orientación a Objetos; buen entendimiento de estadística, probabilidad y funciones matemáticas; comprensión de patrones de diseño.
