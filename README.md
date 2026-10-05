@@ -44,7 +44,7 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **Logros:** Participar de la Copa de Algoritmia en UADE 2025, llegando a la instancia final.
 
 ### Emiliano Esponda
-<img src="assets/"  width="150">
+<img src="assets/foto_emiliano.jpeg"  width="150">
 
 * **Objetivos:** Terminar la carrera y trabajar en el área.
 * **Conocimientos:** Manejo básico de Bash e ingeniería de requerimientos, y sé bastante sobre componentes de PC (marcas y modelos).
