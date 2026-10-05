@@ -58,5 +58,6 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **31-08-26** - Resolución de la Actividad Grupal Clase UML.
 * **07-09-26** - Realizamos la demo del parcial
 * **14-09-26** - Parcial
-* **21-09-26** - Estudio autonomo
+* **21-09-26** - Estudio autónomo
 * **28-09-26** - Pensamos la idea del TP y empezamos a trabajar en el UML
+* **05-10-26** - Entrega de la primera parte del TPO
