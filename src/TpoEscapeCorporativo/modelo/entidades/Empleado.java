@@ -1,4 +1,11 @@
 package TpoEscapeCorporativo.modelo.entidades;
 
-public class Empleado {
+import TpoEscapeCorporativo.modelo.datos.Posicion;
+
+public class Empleado extends EntidadMovil {
+
+    public Empleado(Posicion posicion, int velocidad) {
+        super(posicion, velocidad);
+    }
+
 }
