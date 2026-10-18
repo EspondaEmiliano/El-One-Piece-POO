@@ -13,7 +13,15 @@ public abstract class EntidadMovil {
         this.velocidad = velocidad;
         this.direccionActual = Direccion.NINGUNA;
     }
+    public void mover() {
+        int despX = direccionActual.getDx() * velocidad;
+        int despY = direccionActual.getDy() * velocidad;
 
+        posicion.setX1(posicion.getX1() + despX);
+        posicion.setY1(posicion.getY1() + despY);
+        posicion.setX2(posicion.getX2() + despX);
+        posicion.setY2(posicion.getY2() + despY);
+    }
     public Posicion getPosicion() {
         return posicion;
     }
