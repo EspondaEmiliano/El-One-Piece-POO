@@ -1,3 +1,5 @@
+package TpoEscapeCorporativo;
+
 import TpoEscapeCorporativo.vista.VentanaJuego;
 
 public class Main {
