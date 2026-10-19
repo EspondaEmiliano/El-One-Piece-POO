@@ -51,5 +51,5 @@ public class VentanaJuego {
         });
         ventana.setLocationRelativeTo(null);
         ventana.setVisible(true);
-}
+    }
 }
