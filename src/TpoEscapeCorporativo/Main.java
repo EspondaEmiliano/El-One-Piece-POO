@@ -1,4 +1,4 @@
-package TpoEscapeCorporativo;
+package  TpoEscapeCorporativo;
 
 import TpoEscapeCorporativo.vista.VentanaJuego;
 
