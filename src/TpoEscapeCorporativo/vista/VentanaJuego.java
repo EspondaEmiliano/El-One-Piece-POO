@@ -16,7 +16,7 @@ public class VentanaJuego {
         ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         ventana.setLayout(null);
 
-        JLabel cartelTitulo = new JLabel("Escape Corporativo...", SwingConstants.CENTER);
+        JLabel cartelTitulo = new JLabel("Escape Corporativo", SwingConstants.CENTER);
         cartelTitulo.setBounds(50, 20, 500, 40);
         cartelTitulo.setFont(GestorRecursos.getFuenteArcade(20f));
 
