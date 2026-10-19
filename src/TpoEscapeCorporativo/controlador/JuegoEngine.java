@@ -1,11 +1,17 @@
 package TpoEscapeCorporativo.controlador;
 
-import TpoEscapeCorporativo.modelo.entidades.Empleado;
+import TpoEscapeCorporativo.modelo.entidades.*;
 import TpoEscapeCorporativo.modelo.datos.Posicion;
 import TpoEscapeCorporativo.modelo.datos.Direccion;
 
+import java.util.List;
+
 public class JuegoEngine {
+    private List<Muro> muros;
+    private List<Proyectil> proyectiles;
     private Empleado jugador;
+    private Jefe enemigo;
+    private Salida salida;
 
     public JuegoEngine() {
         // Inicialización del hitbox (x1, y1, x2, y2) y la velocidad
