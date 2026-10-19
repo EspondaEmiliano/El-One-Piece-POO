@@ -21,6 +21,25 @@ public class PanelJuego extends JPanel {
 
         this.setFocusable(true);
     }
+    configurarGameLoop();
+}
+private void configurarGameLoop() {
+    this.timer = new Timer(16, e -> {
+        motor.actualizar();
+        repaint();
+    });
+}
+public void iniciarJuego() {
+    this.requestFocusInWindow();
+    if (!timer.isRunning()) {
+        timer.start();
+    }
+}
+public void pausarJuego() {
+    if (timer.isRunning()) {
+        timer.stop();
+    }
+}
 
     @Override
     protected void paintComponent(Graphics g) {
