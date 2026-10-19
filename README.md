@@ -61,3 +61,6 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **21-09-26** - Estudio autónomo
 * **28-09-26** - Pensamos la idea del TP y empezamos a trabajar en el UML
 * **05-10-26** - Entrega de la primera parte del TPO
+* **10-10-26** - Terminamos de definir el UML y creamos las carpetas del TPO
+* **13-10-26** - Creamos las ramas y definimos atributos y metodos basicos en EntidadMovil, emplado, dirección y posición
+* **18-10-26** - Definimos atributos en EntidadEstatica y agregamos metodos en IColisionable y EntidadMovil.java, ademas de implementar herencia en Muro, crear el Main y crear las bases funcionales en vista
