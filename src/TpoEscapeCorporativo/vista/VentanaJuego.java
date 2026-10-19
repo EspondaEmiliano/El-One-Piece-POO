@@ -11,12 +11,15 @@ public class VentanaJuego {
         }
     private void inicializarVentana(){
         System.out.println("Hola, mundo! (La vista se empezo a inicializar");
-        JFrame ventana = new JFrame("Super Escape Maravilloso del Empleado Negligente");
+        JFrame ventana = new JFrame("Escape Corporativo");
         ventana.setSize(600,400);
         ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         ventana.setLayout(null);
 
-        JLabel cartelTitulo = new JLabel("Super Escape Maravilloso del Empleado Negligente", SwingConstants.CENTER);
+        JLabel cartelTitulo = new JLabel("Escape Corporativo...", SwingConstants.CENTER);
+        cartelTitulo.setBounds(50, 20, 500, 40);
+        cartelTitulo.setFont(GestorRecursos.getFuenteArcade(20f));
+
         ventana.add(cartelTitulo);
 
         JButton botonPlay = new JButton("Play");
