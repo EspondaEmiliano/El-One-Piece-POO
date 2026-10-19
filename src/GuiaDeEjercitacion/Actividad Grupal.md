@@ -31,7 +31,7 @@
 ---
 ## Parte 2 - Diagrama de clases
 
-<img src="../../assets/diagrama_clases.png" width="800">
+<img src="../../assets/diagramas/diagrama_clases.png" width="800">
 
 
 ### Justificación Comisión-Evaluación
@@ -49,7 +49,7 @@ Cada instancia de ``Comision`` tiene asignado como mínimo un docente y a lo sum
 ---
 ## Parte 3 - Diagrama de secuencia
 
-<img src="../../assets/diagrama_secuencia.png" width="800">
+<img src="../../assets/diagramas/diagrama_secuencia.png" width="800">
 
 
 ### Matriz de trazabilidad
