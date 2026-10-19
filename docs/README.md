@@ -91,7 +91,8 @@ src/TpoEscapeCorporativo/
 ├── controlador/
 │   └── JuegoEngine.java               # Motor principal: orquesta el Game Loop, eventos y actualización
 ├── excepciones/
-│   └── ImpactoProyectilException.java # Excepción lanzada al colisionar un proyectil contra el Empleado
+│   ├── ImpactoProyectilException.java # Excepción lanzada al colisionar un proyectil contra el Empleado
+│   └── NivelNoEncontradoException.java # Excepción checked ante ausencia o fallo de lectura del mapa de nivel 
 ├── interfaces/
 │   ├── Buffo.java                     # Contrato polimórfico para los potenciadores temporales
 │   └── IColisionable.java             # Contrato para entidades sujetas a detección de colisiones
@@ -113,7 +114,7 @@ src/TpoEscapeCorporativo/
 │       ├── Cafe.java                  # Modificador que incrementa la velocidad de desplazamiento
 │       └── ZonaBuffo.java             # Entidad estática que contiene y entrega un Buffo
 ├── servicios/
-│   └── GestorArchivos.java            # Manejo de I/O, persistencia de rankings y carga de configuraciones
+│   └── GestorArchivos.java            # Persistencia de ranking (serialización) y carga de matrices de nivel (.txt)
 └── vista/
     └── VentanaJuego.java              # Ventana gráfica Swing con canvas de renderizado y doble búfer
 ```
@@ -214,9 +215,15 @@ classDiagram
         DERECHA
     }
     class Puntaje {
-        -int valor
-        -long tiempoEmpleado
-        +getValor() int
+        -String nombreJugador
+        -int puntos
+        -long tiempoSegundos
+        -LocalDateTime fechaRegistro
+        +getNombreJugador() String
+        +getPuntos() int
+        +getTiempoSegundos() long
+        +getTiempoFormateado() String
+        +compareTo(Puntaje nuevoPuntaje) int 
     }
 
     %% Controlador, Vista, Excepciones y Servicios
@@ -233,11 +240,20 @@ classDiagram
         +actualizarCanvas() void
     }
     class GestorArchivos {
-        +guardarPuntaje(Puntaje p) void
+        -String rutaRanking
+        -String carpetaNiveles
+        +guardarPuntaje(Puntaje nuevoPuntaje) void
         +cargarMejoresPuntajes() List~Puntaje~
+        +cargarMapaNivel(int numeroNivel) char[][]
+        +getRutaRanking() String
+        +getCarpetaNiveles() String
     }
     class ImpactoProyectilException {
         +ImpactoProyectilException(String mensaje)
+    }
+    class NivelNoEncontradoException {
+        +NivelNoEncontradoException(String mensaje)
+        +NivelNoEncontradoException(String mensaje, Throwable causa)
     }
 
     %% Relaciones de Implementación y Herencia
@@ -267,6 +283,12 @@ classDiagram
     JuegoEngine --> VentanaJuego : actualiza vista
     JuegoEngine ..> ImpactoProyectilException : atrapa/lanza
     JuegoEngine --> GestorArchivos : persiste estado
+    
+    %% Persistencia y Excepciones
+    Puntaje ..|> Comparable
+    Puntaje ..|> Serializable
+    GestorArchivos ..> NivelNoEncontradoException : lanza
+    GestorArchivos ..> Puntaje : serializa/recupera
 ```
 
 ---
@@ -282,7 +304,7 @@ El sistema modela fielmente las exigencias académicas de la materia mediante la
 | **Polimorfismo** | Uso unificado de la interfaz `Buffo` (`Cafe` y `Aguinaldo`) e iteración polimórfica sobre colecciones `List<IColisionable>`. | Permite añadir nuevas mejoras y entidades sin modificar el evaluador de física ni el motor central (**Principio Abierto/Cerrado - OCP**). |
 | **Encapsulamiento** | Atributos privados con métodos accesores validados en clases de estado (`Posicion`, `Puntaje`, entidades). | Protege la integridad de los datos impidiendo coordenadas o estados incongruentes. |
 | **Interfaces** | Contratos funcionales `IColisionable` y `Buffo` para desacoplar comportamiento de estructura interna. | Fomenta bajo acoplamiento y alta cohesión (**GRASP / SOLID**). |
-| **Manejo de Excepciones** | Excepciones personalizadas como `ImpactoProyectilException` (y las planificadas `FueraDeLimitesException`, `JuegoTerminadoException`). | Facilita la captura estructurada de situaciones anómalas o eventos de fin de partida sin colapsar el hilo de ejecución. |
+| **Manejo de Excepciones** | Distinción formal entre excepciones *checked* (`NivelNoEncontradoException` para I/O y carga de niveles) y *unchecked* (`ImpactoProyectilException` para eventos dinámicos de colisión). | Obliga a un tratamiento controlado y robusto de fallos de persistencia en disco, separando errores de infraestructura de la física en tiempo real. |
 
 ---
 
@@ -293,8 +315,7 @@ El sistema modela fielmente las exigencias académicas de la materia mediante la
 - **Prevención de Parpadeo (Double Buffering):**  
   Mecanismo provisto por Java Swing y `Graphics2D` dentro de `VentanaJuego` para realizar el renderizado en un búfer de memoria intermedio antes de transferirlo al canvas visible.
 - **Persistencia de Datos:**  
-  Administrada por `GestorArchivos` para garantizar el almacenamiento duradero del ranking y las mejores puntuaciones mediante archivos planos o serialización de objetos (`Serializable`).
-
+  Administrada por `GestorArchivos` para garantizar el almacenamiento duradero del Top 10 del ranking mediante serialización binaria (`Serializable`) y la carga dinámica de mapas matriciales desde archivos de texto plano (.txt).
 ---
 
 ## Alcance y Plan de Trabajo
