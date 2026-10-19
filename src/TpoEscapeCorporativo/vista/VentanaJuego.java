@@ -7,6 +7,7 @@ public class VentanaJuego {
 
     public VentanaJuego(){
         inicializarVentana();
+
         }
     private void inicializarVentana(){
         System.out.println("Hola, mundo! (La vista se empezo a inicializar");
@@ -30,7 +31,7 @@ public class VentanaJuego {
                 int posXCartel = (ventana.getWidth() - anchoCartel) / 2;
                 int posYCartel = (int)(ventana.getHeight() * 0.05);
                 cartelTitulo.setBounds(posXCartel, posYCartel, anchoCartel, 40);
-                // Adaptar tamaño
+                // Adaptar tamaño letra
                 int tamanioLetra = ventana.getWidth() / 40;
                 if (tamanioLetra < 14) tamanioLetra = 14; // Tamaño mínimo
                 if (tamanioLetra > 28) tamanioLetra = 28; // Tamaño máximo
