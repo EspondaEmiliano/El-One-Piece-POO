@@ -7,6 +7,7 @@ public class Jefe extends EntidadMovil{
     private String nombre;
     private int intervalAtaque;
     private long ultimoAtaque; // Momento en el que se realizó el último ataque
+    private Proyectil proyectilGenerado;
 
     public Jefe(Posicion posicion, int velocidad, String nombre, int intervalAtaque) {
         super(posicion, velocidad);
@@ -54,8 +55,35 @@ public class Jefe extends EntidadMovil{
     }
 
     public void atacar(Posicion posicionObjetivo) {
-        // Implementar después de ver la lógica de Proyectil
+        // Calcula el centro horizontal del jefe.
+        int centroX = (posicion.getX1() + posicion.getX2()) / 2;
+
+        // Crea un proyectil pequeño en la posición horizontal del jefe.
+        // Su posición vertical inicial coincide con la parte inferior del jefe.
+        Posicion posicionProyectil = new Posicion(
+                centroX - 2,
+                posicion.getY2(),
+                centroX + 2,
+                posicion.getY2() + 4
+        );
+
+        // Crea el proyectil con una velocidad de 7 unidades.
+        proyectilGenerado = new Proyectil(posicionProyectil, 7);
+
+        // Configura el movimiento vertical hacia abajo.
+        proyectilGenerado.setDireccionActual(
+                TpoEscapeCorporativo.modelo.datos.Direccion.ABAJO
+        );
     }
 
+    // Permite que JuegoEngine obtenga el proyectil generado.
+    public Proyectil getProyectilGenerado() {
+        return proyectilGenerado;
+    }
+
+    // Permite limpiar la referencia una vez que JuegoEngine lo incorpora.
+    public void limpiarProyectilGenerado() {
+        proyectilGenerado = null;
+    }
 
 }
