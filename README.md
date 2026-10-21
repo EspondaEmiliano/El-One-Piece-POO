@@ -64,3 +64,4 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **10-10-26** - Terminamos de definir el UML y creamos las carpetas del TPO
 * **13-10-26** - Creamos las ramas y definimos atributos y metodos basicos en EntidadMovil, emplado, dirección y posición
 * **18-10-26** - Definimos atributos en EntidadEstatica y agregamos metodos en IColisionable y EntidadMovil.java, ademas de implementar herencia en Muro, crear el Main y crear las bases funcionales en vista
+* **19-10-26** - Implementamos clase Empleado con manejo de salud y buffos, tamaños dinamicos en vista, boton y facilidad para cambiar la fuente, nueva fuente, clase GestorRecursos, clase PanelJuego, sistema de carga de sprites y actualizar VentanaJuego
