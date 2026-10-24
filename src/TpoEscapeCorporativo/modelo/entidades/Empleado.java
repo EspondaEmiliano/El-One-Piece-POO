@@ -5,7 +5,9 @@ import TpoEscapeCorporativo.modelo.datos.Posicion;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+
 
 /**
  * Representa al personaje principal controlado por el jugador.
@@ -51,6 +53,7 @@ public class Empleado extends EntidadMovil {
      */
     public void agregarBuffo(Buffo buffo) {
         if (buffo != null) {
+            buffo.aplicar(this);
             this.buffosActivos.add(buffo);
         }
     }
@@ -65,10 +68,29 @@ public class Empleado extends EntidadMovil {
     }
 
     /**
+     * Actualiza el tiempo restante de todos los buffos activos y remueve
+     * aquellos que hayan expirado, revirtiendo sus efectos.
+     *
+     * @param deltaTiempo Milisegundos transcurridos en el frame (ej. 15 ms).
+     */
+    public void actualizarBuffos(long deltaTiempo) {
+        Iterator<Buffo> iterator = this.buffosActivos.iterator();
+        while (iterator.hasNext()) {
+            Buffo buffo = iterator.next();
+            buffo.actualizar(deltaTiempo);
+
+            if (buffo.estaExpirado()) {
+                buffo.remover(this);
+                iterator.remove();
+            }
+        }
+    }
+
+    /**
      * Indica si el empleado sigue vivo para continuar la partida.
      */
     public boolean estaVivo() {
-        return this.salud >0;
+        return this.salud > 0;
     }
 
     // --- Getters y Setters ---
