@@ -1,8 +1,12 @@
 package TpoEscapeCorporativo.controlador;
 
-import TpoEscapeCorporativo.modelo.entidades.*;
-import TpoEscapeCorporativo.modelo.datos.Posicion;
+import TpoEscapeCorporativo.interfaces.Buffo;
 import TpoEscapeCorporativo.modelo.datos.Direccion;
+import TpoEscapeCorporativo.modelo.datos.Posicion;
+import TpoEscapeCorporativo.modelo.entidades.*;
+import TpoEscapeCorporativo.modelo.items.Aguinaldo;
+import TpoEscapeCorporativo.modelo.items.Cafe;
+import TpoEscapeCorporativo.modelo.items.ZonaBuffo;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -11,6 +15,7 @@ import java.util.List;
 public class JuegoEngine {
     private List<Muro> muros;
     private List<Proyectil> proyectiles;
+    private List<ZonaBuffo> zonaBuffos;
     private Empleado jugador;
     private Jefe enemigo;
     private Salida salida;
@@ -26,11 +31,28 @@ public class JuegoEngine {
 
         // Crea una lista vacía para almacenar los proyectiles.
         this.proyectiles = new ArrayList<>();
+
+        // Inicializa zonas de buffos e instancias de prueba en el mapa (tamaño 32x32)
+        this.zonaBuffos = new ArrayList<>();
+        this.zonaBuffos.add(new ZonaBuffo(new Posicion(250,150,282,182),new Cafe()));
+        this.zonaBuffos.add(new ZonaBuffo(new Posicion(400,250,432,282),new Aguinaldo()));
     }
 
     public void actualizar() {
-        // Este método se invocará en cada ciclo (frame) del Game Loop
+        // Este método se invocará en cada ciclo (frame) del Game Loop.
         jugador.mover();
+
+        // Actualiza el tiempo restante de los buffos del jugador y remueve expirados
+        jugador.actualizarBuffos(16);
+
+        // Detecta recolección de potenciadores en el mapa
+        for (ZonaBuffo zona : zonaBuffos) {
+            if (!zona.isRecolectado() && zona.verificarColision(jugador.getPosicion())) {
+                Buffo buffoRecogido = zona.consumirBuffo();
+                jugador.agregarBuffo(buffoRecogido);
+            }
+        }
+
         // Hace que el jefe siga horizontalmente al empleado.
         enemigo.seguirEmpleado(jugador.getPosicion());
 
@@ -94,6 +116,10 @@ public class JuegoEngine {
     public List<Proyectil> getProyectiles() {
         // Devuelve una copia de la lista para consultar los proyectiles.
         return new ArrayList<>(proyectiles);
+    }
+
+    public List<ZonaBuffo> getZonasBuffo() {
+        return new ArrayList<>(zonaBuffos);
     }
 
 }
