@@ -1,5 +1,6 @@
 package TpoEscapeCorporativo.controlador;
 
+import TpoEscapeCorporativo.excepciones.NivelNoEncontradoException;
 import TpoEscapeCorporativo.interfaces.Buffo;
 import TpoEscapeCorporativo.modelo.datos.Direccion;
 import TpoEscapeCorporativo.modelo.datos.Posicion;
@@ -7,6 +8,7 @@ import TpoEscapeCorporativo.modelo.entidades.*;
 import TpoEscapeCorporativo.modelo.items.Aguinaldo;
 import TpoEscapeCorporativo.modelo.items.Cafe;
 import TpoEscapeCorporativo.modelo.items.ZonaBuffo;
+import TpoEscapeCorporativo.servicios.GestorArchivos;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -21,26 +23,18 @@ public class JuegoEngine {
     private Salida salida;
 
     public JuegoEngine() {
-        // Inicialización del hitbox (x1, y1, x2, y2) y la velocidad
-        Posicion posicionInicial = new Posicion(10, 10, 42, 42);
-        this.jugador = new Empleado(posicionInicial, 5);
-
-        // Inicializa al jefe.
-        Posicion posicionJefe = new Posicion(100, 10, 132, 42);
-        this.enemigo = new Jefe(posicionJefe, 3, "Jefe", 1500);
-
-        // Crea una lista vacía para almacenar los proyectiles.
+        // Inicializa las listas vacías
+        this.muros = new ArrayList<>();
         this.proyectiles = new ArrayList<>();
-
-        // Inicializa zonas de buffos e instancias de prueba en el mapa (tamaño 32x32)
         this.zonaBuffos = new ArrayList<>();
-        this.zonaBuffos.add(new ZonaBuffo(new Posicion(250,150,282,182),new Cafe()));
-        this.zonaBuffos.add(new ZonaBuffo(new Posicion(400,250,432,282),new Aguinaldo()));
+
+        // Carga dinámicamente el nivel 1 desde assets/mapas/nivel_1.txt
+        cargarNivel(1);
     }
 
     public void actualizar() {
         // Este método se invocará en cada ciclo (frame) del Game Loop.
-        jugador.mover();
+        jugador.mover(muros);
 
         // Actualiza el tiempo restante de los buffos del jugador y remueve expirados
         jugador.actualizarBuffos(16);
@@ -101,6 +95,40 @@ public class JuegoEngine {
         jugador.setDireccionActual(nuevaDireccion);
     }
 
+    public void cargarNivel(int numeroNivel) {
+        GestorArchivos gestor = new GestorArchivos();
+        try {
+            char [][] mapa = gestor.cargarMapaNivel(numeroNivel);
+            int tamanioCelda = 32;
+
+            // Limpiar listas anteriores
+            muros.clear();
+            zonaBuffos.clear();
+
+            for (int fila = 0; fila < mapa.length; fila++) {
+                for (int columna = 0; columna < mapa[fila].length; columna++) {
+                    int x1 = columna * tamanioCelda +12;    // +12 Margen centrado
+                    int y1 = fila * tamanioCelda +8;        // +8 Margen centrado
+                    int x2 = x1 + tamanioCelda;
+                    int y2 = y1 + tamanioCelda;
+                    Posicion posicion = new Posicion(x1, y1, x2, y2);
+
+                    char c = mapa[fila][columna];
+                    switch (c) {
+                        case '#': muros.add(new Muro(posicion)); break;
+                        case 'E': this.jugador = new Empleado(posicion, 2); break;
+                        case 'J': this.enemigo = new Jefe(posicion,1,"Jefe", 1500); break;
+                        case 'S': this.salida = new Salida(posicion); break;
+                        case 'C': zonaBuffos.add(new ZonaBuffo(posicion, new Cafe())); break;
+                        case 'A': zonaBuffos.add(new ZonaBuffo(posicion, new Aguinaldo())); break;
+                    }
+                }
+            }
+        } catch (NivelNoEncontradoException e){
+            System.err.println("Error al cargar nivel: " + e.getMessage());
+        }
+    }
+
     public Empleado getJugador() {
         // Permite a la Vista (VentanaJuego) obtener los datos para el renderizado
         return jugador;
@@ -122,4 +150,11 @@ public class JuegoEngine {
         return new ArrayList<>(zonaBuffos);
     }
 
+    public List<Muro> getMuros() {
+        return new ArrayList<>(muros);
+    }
+
+    public Salida getSalida() {
+        return salida;
+    }
 }
