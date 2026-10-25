@@ -23,8 +23,8 @@ public class GestorRecursos {
     private static final String CARPETA_SPRITES = "assets/sprites/";
 
     // Nombres de archivos estándar
-    public static final String SPRITE_EMPLEADO = "empleado.png";
-    public static final String SPRITE_JEFE = "jefe.png";
+    public static final String SPRITE_EMPLEADO = "empleado_abajo.gif";
+    public static final String SPRITE_JEFE = "jefe.gif";
     public static final String SPRITE_PROYECTIL = "proyectil.png";
     public static final String SPRITE_MURO = "muro.png";
     public static final String SPRITE_SALIDA = "salida.png";
