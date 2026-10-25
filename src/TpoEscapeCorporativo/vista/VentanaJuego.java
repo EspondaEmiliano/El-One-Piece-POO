@@ -1,5 +1,7 @@
 package TpoEscapeCorporativo.vista;
 
+import TpoEscapeCorporativo.controlador.JuegoEngine;
+
 import javax.swing.*;
 
 public class VentanaJuego {
@@ -23,6 +25,21 @@ public class VentanaJuego {
 
         JButton botonPlay = new JButton("Play");
         ventana.add(botonPlay);
+
+        // Acción al hacer clic en Play:
+        botonPlay.addActionListener(e -> {
+            // 1. Instanciar el motor y la vista del juego
+            JuegoEngine motor = new JuegoEngine();
+            PanelJuego panelJuego = new PanelJuego(motor);
+
+            // 2. Reemplazar la pantalla de inicio por el panel de juego
+            ventana.setContentPane(panelJuego);
+            ventana.revalidate();
+            ventana.repaint();
+
+            // 3. Arrancar el Game Loop y darle foco al panel para recibir teclas
+            panelJuego.iniciarJuego();
+        });
 
         // Adaptarse al tamaño que le de el usuario a la ventana
         ventana.addComponentListener(new java.awt.event.ComponentAdapter() {
