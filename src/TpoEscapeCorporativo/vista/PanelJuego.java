@@ -6,6 +6,8 @@ import TpoEscapeCorporativo.modelo.datos.Posicion;
 import TpoEscapeCorporativo.modelo.datos.Direccion;
 import TpoEscapeCorporativo.modelo.entidades.Empleado;
 import TpoEscapeCorporativo.modelo.entidades.Jefe;
+import TpoEscapeCorporativo.modelo.entidades.Muro;
+import TpoEscapeCorporativo.modelo.entidades.Salida;
 import TpoEscapeCorporativo.modelo.entidades.Proyectil;
 import TpoEscapeCorporativo.modelo.items.Aguinaldo;
 import TpoEscapeCorporativo.modelo.items.Cafe;
@@ -64,13 +66,16 @@ public class PanelJuego extends JPanel {
 
         super.paintComponent(g);
 
-        // 1. Dibujar ítems / zonas de buffos
+        // 1. Dibujar el mapa (muros y salida de escape)
+        dibujarMapa(g);
+
+        // 2. Dibujar ítems / zonas de buffos
         dibujarBuffos(g);
 
-        // 2. Dibujar entidades (jugador, jefe, proyectiles)
+        // 3. Dibujar entidades (jugador, jefe, proyectiles)
         dibujarEntidades(g);
 
-        // 3. Dibujar interfaz / HUD (salud y buffos activos)
+        // 4. Dibujar interfaz / HUD (salud y buffos activos)
         dibujarHUD(g);
     }
 
@@ -191,6 +196,28 @@ public class PanelJuego extends JPanel {
                 motor.procesarEntrada(Direccion.NINGUNA);
             }
         });
+    }
+
+    /**
+     * Dibuja los muros y la puerta de salida cargados desde el archivo de mapa.
+     */
+    private void dibujarMapa(Graphics g) {
+        // Dibujar la salida
+        Salida salida = motor.getSalida();
+        if (salida != null) {
+            Posicion posS = salida.getPosicion();
+            BufferedImage spriteSalida = GestorRecursos.getSpriteSalida();
+            g.drawImage(spriteSalida, posS.getX1(), posS.getY1(),
+                    posS.getX2() - posS.getX1(), posS.getY2() - posS.getY1(), null);
+        }
+
+        // Dibujar los muros
+        BufferedImage spriteMuro = GestorRecursos.getSpriteMuro();
+        for (Muro muro : motor.getMuros()) {
+            Posicion posM = muro.getPosicion();
+            g.drawImage(spriteMuro, posM.getX1(), posM.getY1(),
+                    posM.getX2() - posM.getX1(), posM.getY2() - posM.getY1(), null);
+        }
     }
 
 }
