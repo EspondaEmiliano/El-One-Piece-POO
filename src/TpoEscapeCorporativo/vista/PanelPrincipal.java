@@ -11,8 +11,6 @@ public class PanelPrincipal {
     private JPanel panelPrincipal;
     private CardLayout cardLayout;
     private JuegoEngine motorEngine;
-
-    // 1. Guardamos la referencia de PanelJuego como atributo
     private PanelJuego panelJuego;
 
     public PanelPrincipal() {
@@ -32,31 +30,40 @@ public class PanelPrincipal {
         cardLayout = new CardLayout();
         panelPrincipal = new JPanel(cardLayout);
 
-        // Creamos los dos paneles
+        // 1. Pantalla de Menú
         PanelInicio panelInicio = new PanelInicio(this);
-        this.panelJuego = new PanelJuego(motorEngine);
 
-        // OJO: AQUÍ YA NO LLAMAMOS A iniciarJuego()
-        // porque el juego debe esperar a que el usuario presione "Play"
+        // 2. Pantalla de Juego activa (le pasamos 'this')
+        this.panelJuego = new PanelJuego(motorEngine, this);
 
-        // Agregamos ambos paneles al contenedor principal
+        // 3. Pantalla de Victoria (le pasamos 'this')
+        PanelVictoria panelVictoria = new PanelVictoria(this);
+
+        // Agregamos las tres pantallas al CardLayout
         panelPrincipal.add(panelInicio, "INICIO");
         panelPrincipal.add(this.panelJuego, "JUEGO");
+        panelPrincipal.add(panelVictoria, "VICTORIA");
 
         // Añadimos el contenedor a la ventana
         ventana.add(panelPrincipal);
         ventana.setVisible(true);
     }
 
-    // Método para cambiar de vista
+    // Cambia de pantalla y gestiona el foco del teclado
     public void mostrarPanel(String nombre) {
         cardLayout.show(panelPrincipal, nombre);
 
-        // 2. CLAVE: Cuando la vista pasa a ser "JUEGO", AHORA SÍ solicitamos el foco y arrancamos el loop
         if ("JUEGO".equalsIgnoreCase(nombre) && panelJuego != null) {
             panelJuego.iniciarJuego();
-            // Aseguramos que Swing termine la transición visual antes de pedir el foco:
             SwingUtilities.invokeLater(() -> panelJuego.requestFocusInWindow());
         }
+    }
+
+    // NUEVO: Método mediador invocado cuando el jugador escapa
+    public void finalizarPartidaConVictoria() {
+        if (panelJuego != null) {
+            panelJuego.pausarJuego(); // 1. Frena el Game Loop
+        }
+        mostrarPanel("VICTORIA");     // 2. Muestra la pantalla de triunfo
     }
 }

@@ -22,6 +22,9 @@ public class JuegoEngine {
     private Jefe enemigo;
     private Salida salida;
 
+    // NUEVO: Bandera de victoria
+    private boolean juegoGanado = false;
+
     public JuegoEngine() {
         // Inicializa las listas vacías
         this.muros = new ArrayList<>();
@@ -33,6 +36,9 @@ public class JuegoEngine {
     }
 
     public void actualizar() {
+        // Si ya se ganó, no se procesan más físicas
+        if (juegoGanado) return;
+
         // Este método se invocará en cada ciclo (frame) del Game Loop.
         jugador.mover(muros);
 
@@ -52,7 +58,6 @@ public class JuegoEngine {
 
         // Comprueba si el jefe puede atacar.
         if (enemigo.puedeAtacar()) {
-
             // Crea un proyectil desde la posición actual del jefe.
             enemigo.atacar(jugador.getPosicion());
 
@@ -73,25 +78,22 @@ public class JuegoEngine {
 
         // Actualiza todos los proyectiles y elimina los inactivos.
         Iterator<Proyectil> iterador = proyectiles.iterator();
-
         while (iterador.hasNext()) {
-
-            // Obtiene el siguiente proyectil.
             Proyectil proyectil = iterador.next();
-
-            // Si sigue activo, avanza según su dirección y velocidad.
             if (proyectil.getEstaActivo()) {
                 proyectil.mover();
             } else {
-
-                // Elimina los proyectiles que ya no están activos.
                 iterador.remove();
             }
+        }
+
+        // NUEVO: Verificar si el jugador alcanzó la salida de escape
+        if (salida != null && salida.esAlcanzada(jugador.getPosicion())) {
+            this.juegoGanado = true;
         }
     }
 
     public void procesarEntrada(Direccion nuevaDireccion) {
-        // Recibe la orden de movimiento y altera el estado de la entidad
         jugador.setDireccionActual(nuevaDireccion);
     }
 
@@ -101,14 +103,13 @@ public class JuegoEngine {
             char [][] mapa = gestor.cargarMapaNivel(numeroNivel);
             int tamanioCelda = 32;
 
-            // Limpiar listas anteriores
             muros.clear();
             zonaBuffos.clear();
 
             for (int fila = 0; fila < mapa.length; fila++) {
                 for (int columna = 0; columna < mapa[fila].length; columna++) {
-                    int x1 = columna * tamanioCelda +12;    // +12 Margen centrado
-                    int y1 = fila * tamanioCelda +8;        // +8 Margen centrado
+                    int x1 = columna * tamanioCelda + 12; // Margen centrado
+                    int y1 = fila * tamanioCelda + 8;    // Margen centrado
                     int x2 = x1 + tamanioCelda;
                     int y2 = y1 + tamanioCelda;
                     Posicion posicion = new Posicion(x1, y1, x2, y2);
@@ -120,7 +121,7 @@ public class JuegoEngine {
                             Posicion posicionEmpleado = new Posicion(x1 + 4, y1 + 4, x1 + 28, y1 + 28);
                             this.jugador = new Empleado(posicionEmpleado, 2);
                             break;
-                        case 'J': this.enemigo = new Jefe(posicion,1,"Jefe", 1500); break;
+                        case 'J': this.enemigo = new Jefe(posicion, 1, "Jefe", 1500); break;
                         case 'S': this.salida = new Salida(posicion); break;
                         case 'C': zonaBuffos.add(new ZonaBuffo(posicion, new Cafe())); break;
                         case 'A': zonaBuffos.add(new ZonaBuffo(posicion, new Aguinaldo())); break;
@@ -132,20 +133,19 @@ public class JuegoEngine {
         }
     }
 
+    public boolean isJuegoGanado() {
+        return juegoGanado;
+    }
+
     public Empleado getJugador() {
-        // Permite a la Vista (VentanaJuego) obtener los datos para el renderizado
         return jugador;
     }
 
-
     public Jefe getJefe() {
-        // Permite a la vista consultar al jefe.
         return enemigo;
     }
 
-
     public List<Proyectil> getProyectiles() {
-        // Devuelve una copia de la lista para consultar los proyectiles.
         return new ArrayList<>(proyectiles);
     }
 
