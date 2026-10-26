@@ -1,11 +1,14 @@
 package TpoEscapeCorporativo.modelo.entidades;
 
 import TpoEscapeCorporativo.interfaces.Buffo;
+import TpoEscapeCorporativo.modelo.datos.Direccion;
 import TpoEscapeCorporativo.modelo.datos.Posicion;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+
 
 /**
  * Representa al personaje principal controlado por el jugador.
@@ -32,6 +35,48 @@ public class Empleado extends EntidadMovil {
     }
 
     /**
+     * Mueve al empleado únicamente si la posición destino tentativa no colisiona
+     * con ninguno de los muros presentes en el nivel.
+     *
+     * @param muros Lista de muros del mapa.
+     */
+    public void mover(List<Muro> muros) {
+        if (direccionActual == Direccion.NINGUNA) {
+            return;
+        }
+
+        int desplazamientoX = direccionActual.getDx() * velocidad;
+        int desplazamientoY = direccionActual.getDy() * velocidad;
+
+        // Hitbox tentativo al que intenta desplazarse
+        Posicion posTentativa = new Posicion(
+                posicion.getX1() + desplazamientoX,
+                posicion.getY1() + desplazamientoY,
+                posicion.getX2() + desplazamientoX,
+                posicion.getY2() + desplazamientoY
+        );
+
+        // Verificar si colisiona contra algún muro del mapa
+        boolean hayColision = false;
+        if (muros != null) {
+            for (Muro muro : muros) {
+                if (muro.verificarColision(posTentativa)) {
+                    hayColision = true;
+                    break;
+                }
+            }
+        }
+
+        // Si no colisiona, se aplican las nuevas coordenadas
+        if (!hayColision) {
+            posicion.setX1(posTentativa.getX1());
+            posicion.setY1(posTentativa.getY1());
+            posicion.setX2(posTentativa.getX2());
+            posicion.setY2(posTentativa.getY2());
+        }
+    }
+
+    /**
      * Reduce la salud del empleado al ser impactado por un proyectil.
      * La salud nunca desciende por debajo de 0.
      *
@@ -51,6 +96,7 @@ public class Empleado extends EntidadMovil {
      */
     public void agregarBuffo(Buffo buffo) {
         if (buffo != null) {
+            buffo.aplicar(this);
             this.buffosActivos.add(buffo);
         }
     }
@@ -65,10 +111,29 @@ public class Empleado extends EntidadMovil {
     }
 
     /**
+     * Actualiza el tiempo restante de todos los buffos activos y remueve
+     * aquellos que hayan expirado, revirtiendo sus efectos.
+     *
+     * @param deltaTiempo Milisegundos transcurridos en el frame (ej. 15 ms).
+     */
+    public void actualizarBuffos(long deltaTiempo) {
+        Iterator<Buffo> iterator = this.buffosActivos.iterator();
+        while (iterator.hasNext()) {
+            Buffo buffo = iterator.next();
+            buffo.actualizar(deltaTiempo);
+
+            if (buffo.estaExpirado()) {
+                buffo.remover(this);
+                iterator.remove();
+            }
+        }
+    }
+
+    /**
      * Indica si el empleado sigue vivo para continuar la partida.
      */
     public boolean estaVivo() {
-        return this.salud >0;
+        return this.salud > 0;
     }
 
     // --- Getters y Setters ---

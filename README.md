@@ -12,7 +12,7 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 ## Integrantes
 
 ### Matías Torres
-<img src="assets/foto_matias.jpeg" width="150">
+<img src="assets/fotos/foto_matias.jpeg" width="150">
 
 * **Objetivos:** Terminar de incorporar sólidamente los conceptos de POO y dominar Java, aplicando buenas prácticas.
 * **Conocimientos:** Python, Java, SQL, Excel avanzado, administración de sistemas (Red Hat) y manejo de máquinas virtuales (VMware).
@@ -20,7 +20,7 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **Logros:** Obtener el segundo lugar en la Copa de Algoritmia de la universidad, estar cursando el segundo año de Ingeniería en Informática, desarrollo de un bot de inversiones programado en Python
 
 ### Santiago Villavedra
-<img src="assets/foto_santiago.jpeg"  width="150">
+<img src="assets/fotos/foto_santiago.jpeg"  width="150">
 
 * **Objetivos:** Trabajar a corto plazo de modo que tenga un sueldo estable y promedio.
 * **Conocimientos:** Comprensión general del Paradigma de la orientación a Objetos; buen entendimiento de estadística, probabilidad y funciones matemáticas; comprensión de patrones de diseño.
@@ -28,7 +28,7 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **Logros:** Haber participado en la creación de un complemento de Word para los servicios de la empresa Legal Talent.
 
 ###  Yamil Alcaide
-<img src="assets/foto_yamil.jpg"  width="150">
+<img src="assets/fotos/foto_yamil.jpg"  width="150">
 
 * **Objetivos:** Estudiar Licenciatura en Gestión de TI en UADE con el objetivo de poder dedicarme a tiempo completo al área tecnológica.
 * **Conocimientos:** Python, HTML, JavaScript, C++ y diseño HTML.
@@ -36,7 +36,7 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **Logros:** Secundaria con título en informática, certificación de diseño HTML y 2 años de experiencia estudiando Ingeniería en Sistemas en la UTN.
 
 ### Ian Miguez
-<img src="assets/foto_ian.jpeg" width="150">
+<img src="assets/fotos/foto_ian.jpeg" width="150">
 
 * **Objetivos:** Adquirir experiencia profesional, aplicar lo que aprendo en la carrera y seguir aprendiendo dentro de un equipo de trabajo.
 * **Conocimientos:** Python, JAVA, Excel básico y Redes.
@@ -44,7 +44,7 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **Logros:** Participar de la Copa de Algoritmia en UADE 2025, llegando a la instancia final.
 
 ### Emiliano Esponda
-<img src="assets/foto_emiliano.jpeg"  width="150">
+<img src="assets/fotos/foto_emiliano.jpeg"  width="150">
 
 * **Objetivos:** Terminar la carrera y trabajar en el área.
 * **Conocimientos:** Manejo básico de Bash e ingeniería de requerimientos, y sé bastante sobre componentes de PC (marcas y modelos).
@@ -64,3 +64,5 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **10-10-26** - Terminamos de definir el UML y creamos las carpetas del TPO
 * **13-10-26** - Creamos las ramas y definimos atributos y metodos basicos en EntidadMovil, emplado, dirección y posición
 * **18-10-26** - Definimos atributos en EntidadEstatica y agregamos metodos en IColisionable y EntidadMovil.java, ademas de implementar herencia en Muro, crear el Main y crear las bases funcionales en vista
+* **19-10-26** - Implementamos clase Empleado con manejo de salud y buffos, tamaños dinamicos en vista, boton y facilidad para cambiar la fuente, nueva fuente, clase GestorRecursos, clase PanelJuego, sistema de carga de sprites y actualizar VentanaJuego
+* **26-10-26** - Implementación del sistema de potenciadores (interfaz Buffo, Cafe, Aguinaldo y ZonaBuffo), colisiones del empleado con muros, calibración de patrullaje exterior y disparo del Jefe, diseño y carga dinámica de mapas desde archivo (nivel_1.txt), controles por teclado (WASD/flechas), renderizado completo de mapa y HUD en PanelJuego, y vinculación de inicio en VentanaJuego.

@@ -11,9 +11,9 @@ public class Muro extends EntidadEstatica implements IColisionable {
 
     @Override
     public Boolean verificarColision(Posicion otraPosicion) {
-        return posicion.getX1() <= otraPosicion.getX2() &&
-               posicion.getX2() >= otraPosicion.getX1() &&
-               posicion.getY1() <= otraPosicion.getY2() &&
-               posicion.getY2() >= otraPosicion.getY1();
+        return posicion.getX1() < otraPosicion.getX2() &&
+               posicion.getX2() > otraPosicion.getX1() &&
+               posicion.getY1() < otraPosicion.getY2() &&
+               posicion.getY2() > otraPosicion.getY1();
     }
 }
