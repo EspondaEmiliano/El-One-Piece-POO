@@ -124,9 +124,15 @@ src/TpoEscapeCorporativo/
 
 ---
 
-## Diagrama de Clases UML
+## Diagramas de Arquitectura y Clases UML
 
-El siguiente diagrama detalla la jerarquía de herencia, relaciones estructurales y contratos de interfaces que articulan la solución:
+Para garantizar una separación rigurosa de responsabilidades acorde al patrón **MVC** y facilitar la lectura técnica, el modelado estático del sistema se organiza en dos diagramas complementarios:
+1. **Dominio y Motor:** Modela las jerarquías de herencia, entidades, interfaces polimórficas, persistencia y el motor central (`JuegoEngine`).
+2. **Interfaz de Usuario (Vista):** Modela las ventanas y paneles Swing, el gestor de recursos y su comunicación con `JuegoEngine`.
+
+---
+
+### 1. Diagrama de Clases: Dominio y Motor (Modelo y Controlador)
 
 ```mermaid
 classDiagram
@@ -266,7 +272,7 @@ classDiagram
         +compareTo(Puntaje nuevoPuntaje) int 
     }
 
-    %% Controlador, Vista, Excepciones y Servicios
+    %% Controlador Principal
     class JuegoEngine {
         -List~Muro~ muros
         -List~Proyectil~ proyectiles
@@ -283,42 +289,6 @@ classDiagram
         +getZonasBuffo() List~ZonaBuffo~
         +getMuros() List~Muro~
         +getSalida() Salida
-    }
-    class PanelPrincipal {
-        -JFrame ventana
-        -JPanel panelPrincipal
-        -CardLayout cardLayout
-        -JuegoEngine motorEngine
-        -PanelJuego panelJuego
-        +mostrarPanel(String nombre) void
-    }
-    class PanelInicio {
-        -PanelPrincipal panelPrincipal
-        -inicializarPanel() void
-    }
-    class PanelJuego {
-        +static final int ANCHO
-        +static final int ALTO
-        -JuegoEngine motor
-        -Timer timer
-        +iniciarJuego() void
-        +pausarJuego() void
-        #paintComponent(Graphics g) void
-        -dibujarMapa(Graphics g) void
-        -dibujarBuffos(Graphics g) void
-        -dibujarEntidades(Graphics g) void
-        -dibujarHUD(Graphics g) void
-        -configurarControles() void
-    }
-    class GestorRecursos {
-        +getFuenteArcade(float tamanio) Font
-        +getSpriteEmpleado() BufferedImage
-        +getSpriteJefe() BufferedImage
-        +getSpriteProyectil() BufferedImage
-        +getSpriteMuro() BufferedImage
-        +getSpriteSalida() BufferedImage
-        +getSpriteCafe() BufferedImage
-        +getSpriteAguinaldo() BufferedImage
     }
     class GestorArchivos {
         -String rutaRanking
@@ -368,20 +338,77 @@ classDiagram
     JuegoEngine ..> ImpactoProyectilException : atrapa/lanza
     JuegoEngine --> GestorArchivos : persiste y carga niveles
 
-    %% Vista
-    PanelPrincipal o-- PanelInicio : contiene
-    PanelPrincipal o-- PanelJuego : contiene
-    PanelPrincipal --> JuegoEngine : instancia y comparte
-    PanelInicio --> PanelPrincipal : solicita cambio de vista
-    PanelJuego --> JuegoEngine : consulta datos y notifica teclas
-    PanelJuego ..> GestorRecursos : consume sprites y fuentes
-    PanelInicio ..> GestorRecursos : consume fuentes
-
     %% Persistencia y Excepciones
     Puntaje ..|> Comparable
     Puntaje ..|> Serializable
     GestorArchivos ..> NivelNoEncontradoException : lanza
     GestorArchivos ..> Puntaje : serializa/recupera
+```
+
+---
+
+### 2. Diagrama de Clases: Interfaz de Usuario (Vista - Swing)
+
+```mermaid
+classDiagram
+    class PanelPrincipal {
+        -JFrame ventana
+        -JPanel panelPrincipal
+        -CardLayout cardLayout
+        -JuegoEngine motorEngine
+        -PanelJuego panelJuego
+        +mostrarPanel(String nombre) void
+        -inicializarVentana() void
+    }
+    class PanelInicio {
+        -PanelPrincipal panelPrincipal
+        -inicializarPanel() void
+    }
+    class PanelJuego {
+        +static final int ANCHO
+        +static final int ALTO
+        -JuegoEngine motor
+        -Timer timer
+        +iniciarJuego() void
+        +pausarJuego() void
+        #paintComponent(Graphics g) void
+        -dibujarMapa(Graphics g) void
+        -dibujarBuffos(Graphics g) void
+        -dibujarEntidades(Graphics g) void
+        -dibujarHUD(Graphics g) void
+        -configurarControles() void
+        -configurarGameLoop() void
+    }
+    class GestorRecursos {
+        +getFuenteArcade(float tamanio) Font
+        +getSpriteEmpleado() BufferedImage
+        +getSpriteJefe() BufferedImage
+        +getSpriteProyectil() BufferedImage
+        +getSpriteMuro() BufferedImage
+        +getSpriteSalida() BufferedImage
+        +getSpriteCafe() BufferedImage
+        +getSpriteAguinaldo() BufferedImage
+    }
+    class JuegoEngine {
+        <<Controlador / Fachada>>
+        +actualizar() void
+        +procesarEntrada(Direccion d) void
+        +getJugador() Empleado
+        +getJefe() Jefe
+        +getProyectiles() List~Proyectil~
+        +getMuros() List~Muro~
+        +getZonasBuffo() List~ZonaBuffo~
+        +getSalida() Salida
+    }
+
+    %% Relaciones de la Capa Vista
+    PanelPrincipal o-- PanelInicio : aloja
+    PanelPrincipal o-- PanelJuego : aloja
+    PanelPrincipal --> JuegoEngine : instancia y vincula
+    PanelInicio --> PanelPrincipal : solicita cambio de pantalla
+    PanelJuego --> JuegoEngine : lee estado y envía entradas
+    PanelJuego ..> GestorRecursos : obtiene imágenes y sprites
+    PanelInicio ..> GestorRecursos : obtiene fuentes
 ```
 
 ---
