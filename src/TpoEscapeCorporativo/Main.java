@@ -1,10 +1,17 @@
 package  TpoEscapeCorporativo;
 
-import TpoEscapeCorporativo.vista.VentanaJuego;
+import TpoEscapeCorporativo.vista.PanelInicio;
+import TpoEscapeCorporativo.vista.PanelPrincipal;
+
+import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
 
-        VentanaJuego ventana = new VentanaJuego();
+        ///PanelInicio ventanita = new PanelInicio(); ///Primer version
+
+        SwingUtilities.invokeLater(() -> {
+            PanelPrincipal panel= new PanelPrincipal();
+        });
     }
 }

@@ -313,7 +313,7 @@ El sistema modela fielmente las exigencias académicas de la materia mediante la
 - **Bucle Principal Multihilo (Game Loop):**  
   Implementado mediante `Runnable` en `JuegoEngine`, manteniendo un hilo de ejecución secundario con una tasa estable de ciclos de actualización de física (`tick()`) y refresco visual (`render()`), independiente del hilo de interfaz de usuario de Swing (Event Dispatch Thread).
 - **Prevención de Parpadeo (Double Buffering):**  
-  Mecanismo provisto por Java Swing y `Graphics2D` dentro de `VentanaJuego` para realizar el renderizado en un búfer de memoria intermedio antes de transferirlo al canvas visible.
+  Mecanismo provisto por Java Swing y `Graphics2D` dentro de `PanelInicio` para realizar el renderizado en un búfer de memoria intermedio antes de transferirlo al canvas visible.
 - **Persistencia de Datos:**  
   Administrada por `GestorArchivos` para garantizar el almacenamiento duradero del Top 10 del ranking mediante serialización binaria (`Serializable`) y la carga dinámica de mapas matriciales desde archivos de texto plano (.txt).
 ---
