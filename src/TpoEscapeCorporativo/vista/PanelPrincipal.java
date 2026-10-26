@@ -1,4 +1,7 @@
 package TpoEscapeCorporativo.vista;
+
+import TpoEscapeCorporativo.controlador.JuegoEngine;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -7,8 +10,13 @@ public class PanelPrincipal {
     private JFrame ventana;
     private JPanel panelPrincipal;
     private CardLayout cardLayout;
+    private JuegoEngine motorEngine;
+
+    // 1. Guardamos la referencia de PanelJuego como atributo
+    private PanelJuego panelJuego;
 
     public PanelPrincipal() {
+        this.motorEngine = new JuegoEngine();
         inicializarVentana();
     }
 
@@ -24,27 +32,31 @@ public class PanelPrincipal {
         cardLayout = new CardLayout();
         panelPrincipal = new JPanel(cardLayout);
 
-        // 1. Creamos nuestro PanelInicio pasándole la referencia (this)
+        // Creamos los dos paneles
         PanelInicio panelInicio = new PanelInicio(this);
+        this.panelJuego = new PanelJuego(motorEngine);
 
-        // 2. Creamos un panel de juego temporal (luego lo reemplazarás por tu clase de juego)
-        JPanel panelJuegoTemporal = new JPanel();
-        panelJuegoTemporal.setBackground(Color.DARK_GRAY);
-        JLabel textoJuego = new JLabel("¡Estás en la pantalla de Juego!");
-        textoJuego.setForeground(Color.WHITE);
-        panelJuegoTemporal.add(textoJuego);
+        // OJO: AQUÍ YA NO LLAMAMOS A iniciarJuego()
+        // porque el juego debe esperar a que el usuario presione "Play"
 
-        // Agregamos ambos paneles al contenedor principal con sus nombres clave
+        // Agregamos ambos paneles al contenedor principal
         panelPrincipal.add(panelInicio, "INICIO");
-        panelPrincipal.add(panelJuegoTemporal, "JUEGO");
+        panelPrincipal.add(this.panelJuego, "JUEGO");
 
         // Añadimos el contenedor a la ventana
         ventana.add(panelPrincipal);
         ventana.setVisible(true);
     }
 
-    // Método interno para que los propios paneles puedan cambiar de vista fácilmente
+    // Método para cambiar de vista
     public void mostrarPanel(String nombre) {
         cardLayout.show(panelPrincipal, nombre);
+
+        // 2. CLAVE: Cuando la vista pasa a ser "JUEGO", AHORA SÍ solicitamos el foco y arrancamos el loop
+        if ("JUEGO".equalsIgnoreCase(nombre) && panelJuego != null) {
+            panelJuego.iniciarJuego();
+            // Aseguramos que Swing termine la transición visual antes de pedir el foco:
+            SwingUtilities.invokeLater(() -> panelJuego.requestFocusInWindow());
+        }
     }
 }
