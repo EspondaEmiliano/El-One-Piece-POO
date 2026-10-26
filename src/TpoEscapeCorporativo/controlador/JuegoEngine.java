@@ -79,14 +79,37 @@ public class JuegoEngine {
             // Obtiene el siguiente proyectil.
             Proyectil proyectil = iterador.next();
 
-            // Si sigue activo, avanza según su dirección y velocidad.
             if (proyectil.getEstaActivo()) {
                 proyectil.mover();
-            } else {
 
-                // Elimina los proyectiles que ya no están activos.
+                // 1. Verificar colisión con el Empleado
+                if (proyectil.verificarColision(jugador.getPosicion())) {
+                    proyectil.impacto();
+                    jugador.recibirDanio(20);  // Resta 20 de vida
+                }
+
+                // 2. Verificar colisión con los Muros interiores (ignora el techo perimetral en Y <= 40)
+                if (proyectil.getEstaActivo()) {
+                    for (Muro muro : muros) {
+                        // Solo colisiona con muros que estén adentro de la oficina (Y >= 72)
+                        if (muro.getPosicion().getY1() >= 72 && muro.verificarColision(proyectil.getPosicion())) {
+                            proyectil.impacto();
+                            break;
+                        }
+                    }
+                }
+
+                // 3. Verificar si se salió de la pantalla (Y > 400 o Y < 0)
+                if (proyectil.getPosicion().getY1() > 400) {
+                    proyectil.impacto();
+                }
+            }
+
+            // Si fue impactado o salió de pantalla, se elimina de la lista
+            if (!proyectil.getEstaActivo()) {
                 iterador.remove();
             }
+
         }
     }
 
