@@ -116,7 +116,10 @@ public class JuegoEngine {
                     char c = mapa[fila][columna];
                     switch (c) {
                         case '#': muros.add(new Muro(posicion)); break;
-                        case 'E': this.jugador = new Empleado(posicion, 2); break;
+                        case 'E':
+                            Posicion posicionEmpleado = new Posicion(x1 + 4, y1 + 4, x1 + 28, y1 + 28);
+                            this.jugador = new Empleado(posicionEmpleado, 2);
+                            break;
                         case 'J': this.enemigo = new Jefe(posicion,1,"Jefe", 1500); break;
                         case 'S': this.salida = new Salida(posicion); break;
                         case 'C': zonaBuffos.add(new ZonaBuffo(posicion, new Cafe())); break;
