@@ -22,30 +22,22 @@ public class JuegoEngine {
     private Jefe enemigo;
     private Salida salida;
 
-    // NUEVO: Bandera de victoria
     private boolean juegoGanado = false;
 
     public JuegoEngine() {
-        // Inicializa las listas vacías
         this.muros = new ArrayList<>();
         this.proyectiles = new ArrayList<>();
         this.zonaBuffos = new ArrayList<>();
 
-        // Carga dinámicamente el nivel 1 desde assets/mapas/nivel_1.txt
         cargarNivel(1);
     }
 
     public void actualizar() {
-        // Si ya se ganó, no se procesan más físicas
         if (juegoGanado) return;
 
-        // Este método se invocará en cada ciclo (frame) del Game Loop.
         jugador.mover(muros);
-
-        // Actualiza el tiempo restante de los buffos del jugador y remueve expirados
         jugador.actualizarBuffos(16);
 
-        // Detecta recolección de potenciadores en el mapa
         for (ZonaBuffo zona : zonaBuffos) {
             if (!zona.isRecolectado() && zona.verificarColision(jugador.getPosicion())) {
                 Buffo buffoRecogido = zona.consumirBuffo();
@@ -53,76 +45,41 @@ public class JuegoEngine {
             }
         }
 
-        // Hace que el jefe siga horizontalmente al empleado.
         enemigo.seguirEmpleado(jugador.getPosicion());
 
-        // Comprueba si el jefe puede atacar.
         if (enemigo.puedeAtacar()) {
-
-            // Crea un proyectil desde la posición actual del jefe.
             enemigo.atacar(jugador.getPosicion());
-
-            // Recupera el proyectil que acaba de crear.
             Proyectil nuevoProyectil = enemigo.getProyectilGenerado();
 
-            // Si se creó correctamente, lo agrega a la lista.
             if (nuevoProyectil != null) {
                 proyectiles.add(nuevoProyectil);
-
-                // Registra el momento del ataque.
                 enemigo.registrarAtaque();
-
-                // Limpia la referencia temporal del jefe.
                 enemigo.limpiarProyectilGenerado();
             }
         }
 
-        // Actualiza todos los proyectiles y elimina los inactivos.
         Iterator<Proyectil> iterador = proyectiles.iterator();
         while (iterador.hasNext()) {
             Proyectil proyectil = iterador.next();
-
             if (proyectil.getEstaActivo()) {
                 proyectil.mover();
-
-                // 1. Verificar colisión con el Empleado
-                if (proyectil.verificarColision(jugador.getPosicion())) {
-                    proyectil.impacto();
-                    jugador.recibirDanio(20);  // Resta 20 de vida
-                }
-
-                // 2. Verificar colisión con los Muros interiores (ignora el techo perimetral en Y <= 40)
-                if (proyectil.getEstaActivo()) {
-                    for (Muro muro : muros) {
-                        // Solo colisiona con muros que estén adentro de la oficina (Y >= 72)
-                        if (muro.getPosicion().getY1() >= 72 && muro.verificarColision(proyectil.getPosicion())) {
-                            proyectil.impacto();
-                            break;
-                        }
-                    }
-                }
-
-                // 3. Verificar si se salió de la pantalla (Y > 400 o Y < 0)
-                if (proyectil.getPosicion().getY1() > 400) {
-                    proyectil.impacto();
-                }
-            }
-
-            // Si fue impactado o salió de pantalla, se elimina de la lista
-            if (!proyectil.getEstaActivo()) {
+            } else {
                 iterador.remove();
             }
-
         }
 
-        // NUEVO: Verificar si el jugador alcanzó la salida de escape
         if (salida != null && salida.esAlcanzada(jugador.getPosicion())) {
             this.juegoGanado = true;
         }
     }
 
+    // NUEVO: Método para reiniciar la partida
+    public void reiniciarJuego() {
+        this.juegoGanado = false; // 1. Apaga la victoria
+        cargarNivel(1);           // 2. Coloca al empleado al inicio y recarga ítems y muros
+    }
+
     public void procesarEntrada(Direccion nuevaDireccion) {
-        // Recibe la orden de movimiento y altera el estado de la entidad
         jugador.setDireccionActual(nuevaDireccion);
     }
 
@@ -132,14 +89,13 @@ public class JuegoEngine {
             char [][] mapa = gestor.cargarMapaNivel(numeroNivel);
             int tamanioCelda = 32;
 
-            // Limpiar listas anteriores
             muros.clear();
             zonaBuffos.clear();
 
             for (int fila = 0; fila < mapa.length; fila++) {
                 for (int columna = 0; columna < mapa[fila].length; columna++) {
-                    int x1 = columna * tamanioCelda + 12; // Margen centrado
-                    int y1 = fila * tamanioCelda + 8;    // Margen centrado
+                    int x1 = columna * tamanioCelda + 12;
+                    int y1 = fila * tamanioCelda + 8;
                     int x2 = x1 + tamanioCelda;
                     int y2 = y1 + tamanioCelda;
                     Posicion posicion = new Posicion(x1, y1, x2, y2);
@@ -168,19 +124,14 @@ public class JuegoEngine {
     }
 
     public Empleado getJugador() {
-        // Permite a la Vista (VentanaJuego) obtener los datos para el renderizado
         return jugador;
     }
 
-
     public Jefe getJefe() {
-        // Permite a la vista consultar al jefe.
         return enemigo;
     }
 
-
     public List<Proyectil> getProyectiles() {
-        // Devuelve una copia de la lista para consultar los proyectiles.
         return new ArrayList<>(proyectiles);
     }
 
