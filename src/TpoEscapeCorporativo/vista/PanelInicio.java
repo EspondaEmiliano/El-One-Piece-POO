@@ -1,5 +1,6 @@
 package TpoEscapeCorporativo.vista;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
@@ -17,9 +18,13 @@ public class PanelInicio extends JPanel {
 
         // Mantenemos el layout en null para tus setBounds y proporciones
         setLayout(null);
+        setBackground(new Color(15, 25, 15)); // Negro del menu
+
 
         JLabel cartelTitulo = new JLabel("Super Escape Maravilloso del Empleado Negligente", SwingConstants.CENTER);
         cartelTitulo.setFont(GestorRecursos.getFuenteArcade(20f));
+        cartelTitulo.setForeground(new Color(50, 255, 100)); // Verde brillante
+
         add(cartelTitulo);
 
         JButton botonPlay = new JButton("Play");
