@@ -15,6 +15,11 @@ public class Proyectil extends EntidadMovil implements IColisionable {
         this.estaActivo = false;
     }
 
+    public Boolean getEstaActivo() {
+        // Indica si el proyectil continúa activo
+        return estaActivo;
+    }
+
     @Override
     public Boolean verificarColision(Posicion otraPosicion) {
         return posicion.getX1() <= otraPosicion.getX2()
