@@ -67,10 +67,10 @@ public class Jefe extends EntidadMovil{
         // Crea un proyectil pequeño en la posición horizontal del jefe.
         // Su posición vertical inicial coincide con la parte inferior del jefe.
         Posicion posicionProyectil = new Posicion(
-                centroX - 2,
+                centroX - 6,
                 posicion.getY2(),
-                centroX + 2,
-                posicion.getY2() + 4
+                centroX + 6,
+                posicion.getY2() + 12
         );
 
         // Crea el proyectil con una velocidad de 7 unidades.

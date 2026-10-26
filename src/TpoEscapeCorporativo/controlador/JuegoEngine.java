@@ -58,6 +58,7 @@ public class JuegoEngine {
 
         // Comprueba si el jefe puede atacar.
         if (enemigo.puedeAtacar()) {
+
             // Crea un proyectil desde la posición actual del jefe.
             enemigo.atacar(jugador.getPosicion());
 
@@ -80,11 +81,38 @@ public class JuegoEngine {
         Iterator<Proyectil> iterador = proyectiles.iterator();
         while (iterador.hasNext()) {
             Proyectil proyectil = iterador.next();
+
             if (proyectil.getEstaActivo()) {
                 proyectil.mover();
-            } else {
+
+                // 1. Verificar colisión con el Empleado
+                if (proyectil.verificarColision(jugador.getPosicion())) {
+                    proyectil.impacto();
+                    jugador.recibirDanio(20);  // Resta 20 de vida
+                }
+
+                // 2. Verificar colisión con los Muros interiores (ignora el techo perimetral en Y <= 40)
+                if (proyectil.getEstaActivo()) {
+                    for (Muro muro : muros) {
+                        // Solo colisiona con muros que estén adentro de la oficina (Y >= 72)
+                        if (muro.getPosicion().getY1() >= 72 && muro.verificarColision(proyectil.getPosicion())) {
+                            proyectil.impacto();
+                            break;
+                        }
+                    }
+                }
+
+                // 3. Verificar si se salió de la pantalla (Y > 400 o Y < 0)
+                if (proyectil.getPosicion().getY1() > 400) {
+                    proyectil.impacto();
+                }
+            }
+
+            // Si fue impactado o salió de pantalla, se elimina de la lista
+            if (!proyectil.getEstaActivo()) {
                 iterador.remove();
             }
+
         }
 
         // NUEVO: Verificar si el jugador alcanzó la salida de escape
@@ -94,6 +122,7 @@ public class JuegoEngine {
     }
 
     public void procesarEntrada(Direccion nuevaDireccion) {
+        // Recibe la orden de movimiento y altera el estado de la entidad
         jugador.setDireccionActual(nuevaDireccion);
     }
 
@@ -103,6 +132,7 @@ public class JuegoEngine {
             char [][] mapa = gestor.cargarMapaNivel(numeroNivel);
             int tamanioCelda = 32;
 
+            // Limpiar listas anteriores
             muros.clear();
             zonaBuffos.clear();
 
@@ -138,14 +168,19 @@ public class JuegoEngine {
     }
 
     public Empleado getJugador() {
+        // Permite a la Vista (VentanaJuego) obtener los datos para el renderizado
         return jugador;
     }
 
+
     public Jefe getJefe() {
+        // Permite a la vista consultar al jefe.
         return enemigo;
     }
 
+
     public List<Proyectil> getProyectiles() {
+        // Devuelve una copia de la lista para consultar los proyectiles.
         return new ArrayList<>(proyectiles);
     }
 
