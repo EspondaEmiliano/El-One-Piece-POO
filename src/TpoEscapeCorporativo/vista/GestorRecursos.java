@@ -1,11 +1,15 @@
 package TpoEscapeCorporativo.vista;
 
+import TpoEscapeCorporativo.modelo.datos.Direccion;
+
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -23,8 +27,16 @@ public class GestorRecursos {
     private static final String CARPETA_SPRITES = "assets/sprites/";
 
     // Nombres de archivos estándar
-    public static final String SPRITE_EMPLEADO = "empleado_abajo.gif";
-    public static final String SPRITE_JEFE = "jefe.gif";
+    public static final String SPRITE_EMPLEADO_ABAJO = "empleado_abajo.gif";
+    public static final String SPRITE_EMPLEADO_ARRIBA = "empleado_arriba.gif";
+    public static final String SPRITE_EMPLEADO_IZQ = "empleado_izq.gif";
+    public static final String SPRITE_EMPLEADO_DER = "empleado_der.gif";
+
+    public static final String SPRITE_JEFE_DEFAULT = "jefe.gif";
+    public static final String SPRITE_JEFE_IZQ = "jefe_izq.gif";
+    public static final String SPRITE_JEFE_DER = "jefe_der.gif";
+    public static final String SPRITE_JEFE_ATAQUE = "jefe_ataque.gif";
+
     public static final String SPRITE_PROYECTIL = "proyectil.png";
     public static final String SPRITE_MURO = "muro.png";
     public static final String SPRITE_SALIDA = "salida.png";
@@ -33,7 +45,7 @@ public class GestorRecursos {
 
     // Caché en memoria (Patrón Flyweight para no saturar memoria ni disco)
     private static Font fuenteArcadeBase;
-    private static final Map<String, BufferedImage> cacheImagenes = new HashMap<>();
+    private static final Map<String, Image> cacheImagenes = new HashMap<>();
 
     // Constructor privado: clase utilitaria pura
     private GestorRecursos() {}
@@ -70,61 +82,81 @@ public class GestorRecursos {
      * Si el archivo no existe, genera dinámicamente un sprite temporal de respaldo (placeholder).
      *
      * @param nombreArchivo Nombre del archivo en assets/sprites/ (ej: "muro.png").
-     * @return BufferedImage lista para dibujar con Graphics2D.
+     * @return Image lista para dibujar con Graphics2D.
      */
-    public static BufferedImage getImagen(String nombreArchivo) {
+    public static Image getImagen(String nombreArchivo) {
         if (cacheImagenes.containsKey(nombreArchivo)) {
             return cacheImagenes.get(nombreArchivo);
         }
-
         File archivo = new File(CARPETA_SPRITES + nombreArchivo);
-        BufferedImage imagen = null;
+        Image imagen = null;
 
         if (archivo.exists()) {
-            try {
-                imagen = ImageIO.read(archivo);
-            } catch (IOException e) {
-                System.err.println("Error al leer la imagen " + nombreArchivo + ": " + e.getMessage());
+            if (nombreArchivo.toLowerCase().endsWith(".gif")) {
+                // ImageIcon preserva todos los frames animados del GIF
+                imagen = new ImageIcon(archivo.getAbsolutePath()).getImage();
+            } else {
+                try {
+                    imagen = ImageIO.read(archivo);
+                } catch (IOException e) {
+                    System.err.println("Error al leer imagen: " + e.getMessage());
+                }
             }
-        } else {
-            System.err.println("Aviso: Sprite no encontrado (" + archivo.getPath() + "). Usando placeholder.");
         }
-
-        // Si la imagen no pudo cargarse, creamos un placeholder de color de 32x32 para que el juego siga andando
         if (imagen == null) {
             imagen = crearPlaceholder(nombreArchivo);
         }
-
         cacheImagenes.put(nombreArchivo, imagen);
         return imagen;
     }
 
+    public static Image getSpriteEmpleado(Direccion direccion) {
+        switch (direccion) {
+            case ARRIBA:    return getImagen(SPRITE_EMPLEADO_ARRIBA);
+            case IZQUIERDA: return getImagen(SPRITE_EMPLEADO_IZQ);
+            case DERECHA:   return getImagen(SPRITE_EMPLEADO_DER);
+            case ABAJO:
+            default:        return getImagen(SPRITE_EMPLEADO_ABAJO);
+        }
+    }
+
+    public static Image getSpriteJefe(Direccion direccion, boolean estaAtacando) {
+        if (estaAtacando) {
+            return getImagen(SPRITE_JEFE_ATAQUE);
+        }
+        switch (direccion) {
+            case IZQUIERDA: return getImagen(SPRITE_JEFE_IZQ);
+            case DERECHA:   return getImagen(SPRITE_JEFE_DER);
+            default:        return getImagen(SPRITE_JEFE_DEFAULT);
+        }
+    }
+
     // Métodos de acceso rápido por entidad (muy cómodos para la vista)
-    public static BufferedImage getSpriteEmpleado() {
-        return getImagen(SPRITE_EMPLEADO);
+    public static Image getSpriteEmpleado() {
+        return getImagen(SPRITE_EMPLEADO_ABAJO);
     }
 
-    public static BufferedImage getSpriteJefe() {
-        return getImagen(SPRITE_JEFE);
+    public static Image getSpriteJefe() {
+        return getImagen(SPRITE_JEFE_DEFAULT);
     }
 
-    public static BufferedImage getSpriteProyectil() {
+    public static Image getSpriteProyectil() {
         return getImagen(SPRITE_PROYECTIL);
     }
 
-    public static BufferedImage getSpriteMuro() {
+    public static Image getSpriteMuro() {
         return getImagen(SPRITE_MURO);
     }
 
-    public static BufferedImage getSpriteSalida() {
+    public static Image getSpriteSalida() {
         return getImagen(SPRITE_SALIDA);
     }
 
-    public static BufferedImage getSpriteCafe() {
+    public static Image getSpriteCafe() {
         return getImagen(SPRITE_BUFFO_CAFE);
     }
 
-    public static BufferedImage getSpriteAguinaldo() {
+    public static Image getSpriteAguinaldo() {
         return getImagen(SPRITE_BUFFO_AGUINALDO);
     }
 
