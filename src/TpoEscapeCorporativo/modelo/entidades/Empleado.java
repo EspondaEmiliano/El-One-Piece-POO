@@ -136,6 +136,15 @@ public class Empleado extends EntidadMovil {
         return this.salud > 0;
     }
 
+    private Direccion ultimaDireccion = Direccion.ABAJO;
+
+    public Direccion getDireccionVisual() {
+        if (direccionActual != Direccion.NINGUNA) {
+            ultimaDireccion = direccionActual;
+        }
+        return ultimaDireccion;
+    }
+
     // --- Getters y Setters ---
 
     public int getSalud() {

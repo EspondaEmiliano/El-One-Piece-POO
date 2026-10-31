@@ -8,6 +8,7 @@ public class Jefe extends EntidadMovil{
     private int intervalAtaque;
     private long ultimoAtaque; // Momento en el que se realizó el último ataque
     private Proyectil proyectilGenerado;
+    public static final int DURACION_ANIMACION_ATAQUE_MS = 400;
 
     public Jefe(Posicion posicion, int velocidad, String nombre, int intervalAtaque) {
         super(posicion, velocidad);
@@ -80,6 +81,10 @@ public class Jefe extends EntidadMovil{
         proyectilGenerado.setDireccionActual(
                 TpoEscapeCorporativo.modelo.datos.Direccion.ABAJO
         );
+    }
+
+    public boolean estaAtacando() {
+        return (System.currentTimeMillis() - ultimoAtaque) < DURACION_ANIMACION_ATAQUE_MS;
     }
 
     // Permite que JuegoEngine obtenga el proyectil generado.
