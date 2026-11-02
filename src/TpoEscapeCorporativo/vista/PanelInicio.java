@@ -1,5 +1,7 @@
 package TpoEscapeCorporativo.vista;
 
+import TpoEscapeCorporativo.servicios.GestorAudio;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
@@ -16,6 +18,8 @@ public class PanelInicio extends JPanel {
     private JLabel lblObjetivo;
     private JLabel lblPausa;
     private JButton botonRanking;
+    private JLabel lblVolumen;
+    private JSlider sliderVolumen;
 
     public PanelInicio(PanelPrincipal panelPrincipal){
         this.panelPrincipal = panelPrincipal;
@@ -78,11 +82,33 @@ public class PanelInicio extends JPanel {
         lblPausa.setForeground(Color.YELLOW);
         add(lblPausa);
 
+        // Etiqueta de volumen arcade
+        lblVolumen = new JLabel("VOLUMEN: 70%", SwingConstants.CENTER);
+        lblVolumen.setFont(GestorRecursos.getFuenteArcade(8f));
+        lblVolumen.setForeground(Color.CYAN);
+        add(lblVolumen);
+
+        // Barra de sonido retro (JSlider)
+        sliderVolumen = new JSlider(0, 100, 70);
+        sliderVolumen.setBackground(new Color(25, 25, 25));
+        sliderVolumen.setForeground(Color.CYAN);
+        sliderVolumen.setFocusable(false);
+        sliderVolumen.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Listener: actualiza el volumen en tiempo real cuando el usuario desliza
+        sliderVolumen.addChangeListener(e -> {
+            int valor = sliderVolumen.getValue();
+            lblVolumen.setText("VOLUMEN: " + valor + "%");
+            GestorAudio.getInstance().setVolumen(valor / 100.0f);
+        });
+        add(sliderVolumen);
+
         // 5. Posicionamiento proporcional de los elementos
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
                 int ancho = getWidth();
+                int anchoSlider = 200;
 
                 // Título en la parte superior
                 cartelTitulo.setBounds((ancho - 550) / 2, 35, 550, 35);
@@ -100,8 +126,13 @@ public class PanelInicio extends JPanel {
                 lblControles.setBounds((ancho - 550) / 2, 275, 550, 20);
                 lblObjetivo.setBounds((ancho - 550) / 2, 305, 550, 20);
                 lblPausa.setBounds((ancho - 550) / 2, 335, 550, 20);
+
+                lblVolumen.setBounds((ancho - 300) / 2, 360, 300, 18);
+                sliderVolumen.setBounds((ancho - anchoSlider) / 2, 385, anchoSlider, 20);
             }
         });
+
+
     }
 
     /**

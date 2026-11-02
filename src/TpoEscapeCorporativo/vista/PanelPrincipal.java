@@ -1,13 +1,14 @@
 package TpoEscapeCorporativo.vista;
 
 import TpoEscapeCorporativo.controlador.JuegoEngine;
+import TpoEscapeCorporativo.servicios.GestorAudio;
 
 import javax.swing.*;
 import java.awt.*;
 
 /**
  * Ventana contenedora principal de la aplicación. Administra la navegación
- * entre pantallas (Menú de Inicio y Partida de Juego) mediante {@link CardLayout}.
+ * entre pantallas (Menú de Inicio, Juego y Ranking) mediante {@link CardLayout}.
  */
 public class PanelPrincipal {
 
@@ -35,14 +36,14 @@ public class PanelPrincipal {
         cardLayout = new CardLayout();
         panelPrincipal = new JPanel(cardLayout);
 
-        // Creamos los dos paneles
+        // Creamos los paneles
         PanelInicio panelInicio = new PanelInicio(this);
         panelInicio.setPreferredSize(new Dimension(PanelJuego.ANCHO, PanelJuego.ALTO));
 
         this.panelJuego = new PanelJuego(motorEngine, this);
         this.panelRanking = new PanelRanking(this);
 
-        // Agregamos ambos paneles al contenedor principal
+        // Agregamos paneles al contenedor principal
         panelPrincipal.add(panelInicio, "INICIO");
         panelPrincipal.add(this.panelJuego, "JUEGO");
         panelPrincipal.add(this.panelRanking, "RANKING");
@@ -55,12 +56,15 @@ public class PanelPrincipal {
         ventana.setResizable(false);
         ventana.setLocationRelativeTo(null);
         ventana.setVisible(true);
+
+        // Inicia la música ambiental en su propio hilo desde la pantalla de bienvenida
+        GestorAudio.getInstance().iniciarMusica();
     }
 
     /**
      * Alterna la vista visible en pantalla según su identificador.
      *
-     * @param nombre Clave de la vista ("INICIO" o "JUEGO").
+     * @param nombre Clave de la vista ("INICIO", "JUEGO" o "RANKING").
      */
     public void mostrarPanel(String nombre) {
         cardLayout.show(panelPrincipal, nombre);
@@ -71,6 +75,9 @@ public class PanelPrincipal {
             SwingUtilities.invokeLater(() -> panelJuego.requestFocusInWindow());
         } else if ("RANKING".equalsIgnoreCase(nombre) && panelRanking != null) {
             panelRanking.cargarYRefrescarDatos();
+        } else if ("INICIO".equalsIgnoreCase(nombre)) {
+            // Asegura que la música suene si se regresa al menú principal
+            GestorAudio.getInstance().iniciarMusica();
         }
     }
 }
