@@ -27,6 +27,7 @@ public class JuegoEngine {
     public static final int DURACION_JORNADA_SEGUNDOS = 60;
     public static final int PUNTOS_POR_BUFFO = 50;
     public static final int PUNTOS_BASE_ESCAPE = 500;
+    public static final int TOTAL_NIVELES = 2;
 
     private List<Muro> muros;
     private List<Proyectil> proyectiles;
@@ -134,8 +135,8 @@ public class JuegoEngine {
     }
 
     /**
-     * Desplaza los proyectiles arrojados y procesa colisiones con muros interiores
-     * y con el empleado mediante {@link ImpactoProyectilException}.
+     * Desplaza los proyectiles arrojados balísticamente por encima de los cubículos
+     * y procesa su impacto contra el empleado mediante {@link ImpactoProyectilException}.
      */
     private void actualizarProyectiles() {
         Iterator<Proyectil> iteradorProyectiles = this.proyectiles.iterator();
@@ -165,15 +166,6 @@ public class JuegoEngine {
                     }
                 }
 
-                // Colisión con muros interiores del laberinto (Y >= 72)
-                if (proyectilActual.getEstaActivo()) {
-                    for (Muro muro : this.muros) {
-                        if (muro.getPosicion().getY1() >= 72 && muro.verificarColision(proyectilActual.getPosicion())) {
-                            proyectilActual.impacto();
-                            break;
-                        }
-                    }
-                }
 
                 // Salida de la pantalla por el límite inferior
                 if (proyectilActual.getPosicion().getY1() > 400) {
@@ -292,6 +284,38 @@ public class JuegoEngine {
         }
     }
 
+    /**
+     * Evalúa si existe un nivel siguiente disponible en el juego.
+     *
+     * @return {@code true} si aún no se alcanzó el nivel final; {@code false} en caso contrario.
+     */
+    public boolean haySiguienteNivel() {
+        return this.numeroNivelActual < TOTAL_NIVELES;
+    }
+
+    /**
+     * Avanza al siguiente nivel del juego, conservando el puntaje acumulado
+     * pero restableciendo el tiempo reglamentario, proyectiles y cargando el nuevo mapa.
+     */
+    public void pasarSiguienteNivel() {
+        if (haySiguienteNivel()) {
+            this.numeroNivelActual++;
+            this.tiempoTranscurridoMilisegundos = 0;
+            this.tiempoInicioMilisegundos = System.currentTimeMillis();
+            this.proyectiles.clear();
+            this.estadoActual = EstadoJuego.JUGANDO;
+
+            cargarNivel(this.numeroNivelActual);
+        }
+    }
+
+    /**
+     * Reinicia la partida completa desde el nivel 1 restableciendo el puntaje a cero.
+     */
+    public void reiniciarPartidaCompleta() {
+        reiniciarNivel(1);
+    }
+
     // --- Métodos de consulta y Getters ---
 
     public EstadoJuego getEstadoActual() { return estadoActual; }
@@ -316,4 +340,6 @@ public class JuegoEngine {
     public List<Muro> getMuros() { return new ArrayList<>(muros); }
 
     public Salida getSalida() { return salida; }
+
+    public int getNumeroNivelActual() { return numeroNivelActual; }
 }
