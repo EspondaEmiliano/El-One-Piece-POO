@@ -15,11 +15,7 @@ import TpoEscapeCorporativo.modelo.items.Cafe;
 import TpoEscapeCorporativo.modelo.items.ZonaBuffo;
 
 import javax.swing.*;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Image;
+import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -108,11 +104,19 @@ public class PanelJuego extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // 1. Dibujar interfaz / HUD en la barra superior dedicada
-        dibujarHUD(g);
+        // 1. Calculamos la proporción basada en el tamaño actual de la ventana
+        double escalaX = (double) getWidth() / ANCHO;
+        double escalaY = (double) getHeight() / ALTO_JUEGO;
 
-        // 2. Dibujar el laberinto y entidades desplazadas debajo de la barra del HUD
-        Graphics gJuego = g.create();
+        Graphics2D g2d = (Graphics2D) g.create();
+
+        // 2. Aplicamos la proporción a todo para que se estire/encoja solo
+        g2d.scale(escalaX, escalaY);
+
+        // 3. Dibujamos todo usando este lápiz escalado (g2d)
+        dibujarHUD(g2d);
+
+        Graphics2D gJuego = (Graphics2D) g2d.create();
         gJuego.translate(0, ALTO_HUD);
 
         dibujarMapa(gJuego);
@@ -121,8 +125,9 @@ public class PanelJuego extends JPanel {
 
         gJuego.dispose();
 
-        // 3. Dibujar overlays de estado (Pausa, Victoria o Derrota)
-        dibujarOverlayEstado(g);
+        dibujarOverlayEstado(g2d);
+
+        g2d.dispose();
     }
 
     /**

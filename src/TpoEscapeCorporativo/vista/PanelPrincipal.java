@@ -28,7 +28,7 @@ public class PanelPrincipal {
 
     private void inicializarVentana() {
 
-        ventana = new JFrame("ESCAPE CORPORATIVO");
+        ventana = new JFrame("Super Escape Maravilloso del Empleado Negligente");
         ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // Inicializamos el CardLayout y el contenedor
@@ -52,7 +52,7 @@ public class PanelPrincipal {
 
         // pack() ajusta el tamaño exacto de la ventana considerando los bordes y la barra de título del SO
         ventana.pack();
-        ventana.setResizable(false);
+        ventana.setResizable(true);
         ventana.setLocationRelativeTo(null);
         ventana.setVisible(true);
     }
