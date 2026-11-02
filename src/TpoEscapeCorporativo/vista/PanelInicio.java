@@ -15,6 +15,7 @@ public class PanelInicio extends JPanel {
     private JLabel lblControles;
     private JLabel lblObjetivo;
     private JLabel lblPausa;
+    private JButton botonRanking;
 
     public PanelInicio(PanelPrincipal panelPrincipal){
         this.panelPrincipal = panelPrincipal;
@@ -47,6 +48,20 @@ public class PanelInicio extends JPanel {
         });
         add(botonPlay);
 
+        // Botón para acceder al Ranking / TPO 10
+        botonRanking = new JButton("RANKING / TOP 10");
+        botonRanking.setFont(GestorRecursos.getFuenteArcade(11f));
+        botonRanking.setBackground(new Color(20,80,140));
+        botonRanking.setForeground(Color.WHITE);
+        botonRanking.setFocusable(false);
+        botonRanking.setBorder(BorderFactory.createLineBorder(new Color(0, 180, 255), 2));
+        botonRanking.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        botonRanking.addActionListener(e -> {
+            this.panelPrincipal.mostrarPanel("RANKING");
+        });
+        add(botonRanking);
+
         // 4. Carteles de controles e instrucciones
         lblControles = new JLabel("CONTROLES: FLECHAS O W-A-S-D", SwingConstants.CENTER);
         lblControles.setFont(GestorRecursos.getFuenteArcade(8f));
@@ -72,15 +87,19 @@ public class PanelInicio extends JPanel {
                 // Título en la parte superior
                 cartelTitulo.setBounds((ancho - 550) / 2, 35, 550, 35);
 
-                // Boton central
                 int anchoBoton = 240;
-                int altoBoton = 45;
-                botonPlay.setBounds((ancho - anchoBoton) / 2, 195, anchoBoton, altoBoton);
+                int altoBoton = 36;
+
+                // Botón Play arriba
+                botonPlay.setBounds((ancho - anchoBoton) / 2, 175, anchoBoton, altoBoton);
+
+                // Botón Ranking justo debajo
+                botonRanking.setBounds((ancho - anchoBoton) / 2, 220, anchoBoton, altoBoton);
 
                 // Bloque de instrucciones inferior
-                lblControles.setBounds((ancho - 550) / 2, 280, 550, 20);
-                lblObjetivo.setBounds((ancho - 550) / 2, 310, 550, 20);
-                lblPausa.setBounds((ancho - 550) / 2, 340, 550, 20);
+                lblControles.setBounds((ancho - 550) / 2, 275, 550, 20);
+                lblObjetivo.setBounds((ancho - 550) / 2, 305, 550, 20);
+                lblPausa.setBounds((ancho - 550) / 2, 335, 550, 20);
             }
         });
     }

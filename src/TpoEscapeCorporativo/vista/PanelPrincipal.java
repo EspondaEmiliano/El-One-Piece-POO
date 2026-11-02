@@ -16,6 +16,7 @@ public class PanelPrincipal {
     private CardLayout cardLayout;
     private JuegoEngine motorEngine;
     private PanelJuego panelJuego;
+    private PanelRanking panelRanking;
 
     /**
      * Instancia el motor de juego e inicializa la ventana del juego.
@@ -38,11 +39,13 @@ public class PanelPrincipal {
         PanelInicio panelInicio = new PanelInicio(this);
         panelInicio.setPreferredSize(new Dimension(PanelJuego.ANCHO, PanelJuego.ALTO));
 
-        this.panelJuego = new PanelJuego(motorEngine);
+        this.panelJuego = new PanelJuego(motorEngine, this);
+        this.panelRanking = new PanelRanking(this);
 
         // Agregamos ambos paneles al contenedor principal
         panelPrincipal.add(panelInicio, "INICIO");
         panelPrincipal.add(this.panelJuego, "JUEGO");
+        panelPrincipal.add(this.panelRanking, "RANKING");
 
         // Añadimos el contenedor a la ventana
         ventana.add(panelPrincipal);
@@ -66,6 +69,8 @@ public class PanelPrincipal {
         if ("JUEGO".equalsIgnoreCase(nombre) && panelJuego != null) {
             panelJuego.iniciarJuego();
             SwingUtilities.invokeLater(() -> panelJuego.requestFocusInWindow());
+        } else if ("RANKING".equalsIgnoreCase(nombre) && panelRanking != null) {
+            panelRanking.cargarYRefrescarDatos();
         }
     }
 }
