@@ -5,7 +5,7 @@ import TpoEscapeCorporativo.modelo.datos.Posicion;
 
 public class Jefe extends EntidadMovil{
     private String nombre;
-    private int intervalAtaque; // Cada cuanto puede volver a atacar
+    private int intervalAtaque;
     private long ultimoAtaque; // Momento en el que se realizó el último ataque
     private Proyectil proyectilGenerado;
     public static final int DURACION_ANIMACION_ATAQUE_MS = 400;
