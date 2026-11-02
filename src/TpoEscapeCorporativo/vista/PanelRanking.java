@@ -1,0 +1,166 @@
+package TpoEscapeCorporativo.vista;
+
+import TpoEscapeCorporativo.modelo.datos.Puntaje;
+import TpoEscapeCorporativo.servicios.GestorArchivos;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+/**
+ * Pantalla que presenta la tabla de clasificación (Top 10) con los
+ * mejores puntajes y tiempos registrados de los empleados
+ */
+public class PanelRanking extends JPanel {
+
+    private final PanelPrincipal coordinadorNavegacion;
+    private final GestorArchivos servicioPersistencia;
+
+    // Componentes visuales
+    private JLabel etiquetaTituloPrincipal;
+    private JTable tablaVisualRanking;
+    private DefaultTableModel modeloDatosTabla;
+    private JScrollPane panelDesplazamientoTabla;
+    private JButton botonVolverMenu;
+
+    public PanelRanking(PanelPrincipal coordinadorNavegacion) {
+        this.coordinadorNavegacion = coordinadorNavegacion;
+        this.servicioPersistencia = new GestorArchivos();
+
+        configurarPropiedadesPanel();
+        construirComponentesVisuales();
+        configurarDisposicionYEventos();
+    }
+
+    /**
+     * Configura el fondo y el gestor de diseño del panel.
+     */
+    private void configurarPropiedadesPanel() {
+        this.setBackground(new Color(25,25,25));
+        this.setLayout(null);
+    }
+
+    /**
+     * Inicializa los componentes de la interfaz de usuario con estilo arcade.
+     */
+    private void construirComponentesVisuales() {
+        // Título superior
+        etiquetaTituloPrincipal = new JLabel("TOP 10 - EMPLEADOS DESTACADOS",SwingConstants.CENTER);
+        etiquetaTituloPrincipal.setFont(GestorRecursos.getFuenteArcade(16f));
+        etiquetaTituloPrincipal.setForeground(new Color(255,215,0));
+        add(etiquetaTituloPrincipal);
+
+        // Modelo de datos de la tabla (no editable por el usuario)
+        String [] nombresColumnas = {"#", "EMPLEADO", "PUNTOS", "TIEMPO", "FECHA"};
+        modeloDatosTabla = new DefaultTableModel(nombresColumnas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        // Tabla visual y estilización retro
+        tablaVisualRanking = new JTable(modeloDatosTabla);
+        configurarEstilosTabla();
+
+        panelDesplazamientoTabla = new JScrollPane(tablaVisualRanking);
+        panelDesplazamientoTabla.getViewport().setBackground(new Color(30,30,30));
+        panelDesplazamientoTabla.setBorder(BorderFactory.createLineBorder(new Color(60,60,60), 1));
+        this.add(panelDesplazamientoTabla);
+
+        // Botón inferior para volver al menú
+        botonVolverMenu = new JButton("VOLVER AL MENU");
+        botonVolverMenu.setFont(GestorRecursos.getFuenteArcade(11f));
+        botonVolverMenu.setBackground(new Color(180, 40, 40));
+        botonVolverMenu.setForeground(Color.white);
+        botonVolverMenu.setFocusable(false);
+        botonVolverMenu.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+        botonVolverMenu.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        this.add(botonVolverMenu);
+
+    }
+
+    /**
+     * Aplica los colores oscuros, fuentes y alineación centrada a las celdas de la tabla.
+     */
+    private void configurarEstilosTabla() {
+        tablaVisualRanking.setFont(new Font("Monospaced", Font.BOLD, 12));
+        tablaVisualRanking.setBackground(new Color(30,30,30));
+        tablaVisualRanking.setForeground(Color.WHITE);
+        tablaVisualRanking.setRowHeight(24);
+        tablaVisualRanking.setGridColor(new Color(50, 50, 50));
+        tablaVisualRanking.setSelectionBackground(new Color(70, 70, 20));
+        tablaVisualRanking.setSelectionForeground(Color.YELLOW);
+
+        // Encabezado de la tabla
+        tablaVisualRanking.getTableHeader().setFont(GestorRecursos.getFuenteArcade(9f));
+        tablaVisualRanking.getTableHeader().setBackground(new Color(15, 15, 15));
+        tablaVisualRanking.getTableHeader().setForeground(new Color(0, 255, 200));
+        tablaVisualRanking.getTableHeader().setReorderingAllowed(false);
+
+        // Renderizador para centrar el contenido de las columnas
+        DefaultTableCellRenderer renderizadorCentrado = new DefaultTableCellRenderer();
+        renderizadorCentrado.setHorizontalAlignment(SwingConstants.CENTER);
+
+        for (int indiceColumna = 0; indiceColumna < tablaVisualRanking.getColumnCount(); indiceColumna++) {
+            tablaVisualRanking.getColumnModel().getColumn(indiceColumna).setCellRenderer(renderizadorCentrado);
+        }
+
+        // Anchos proporcionales de columnas
+        tablaVisualRanking.getColumnModel().getColumn(0).setPreferredWidth(35);  // #
+        tablaVisualRanking.getColumnModel().getColumn(1).setPreferredWidth(160); // Empleado
+        tablaVisualRanking.getColumnModel().getColumn(2).setPreferredWidth(90);  // Puntos
+        tablaVisualRanking.getColumnModel().getColumn(3).setPreferredWidth(80);  // Tiempo
+        tablaVisualRanking.getColumnModel().getColumn(4).setPreferredWidth(135); // Fecha
+    }
+
+    /**
+     * Define las dimensiones fijas de los componentes y los listeners de acción.
+     */
+    private void configurarDisposicionYEventos() {
+        etiquetaTituloPrincipal.setBounds(25, 20, 550, 30);
+        panelDesplazamientoTabla.setBounds(35, 65, 530, 290);
+        botonVolverMenu.setBounds(180, 375, 240, 40);
+
+        botonVolverMenu.addActionListener(eventoClick -> {
+            coordinadorNavegacion.mostrarPanel("INICIO");
+        });
+    }
+
+    /**
+     * Lee la lista de mejores puntajes desde el archivo binario y puebla la tabla.
+     * Debe invocarse cada vez que se navega hacia este panel.
+     */
+    public void cargarYRefrescarDatos() {
+        modeloDatosTabla.setRowCount(0); // Limpia filas anteriores
+
+        List<Puntaje> listaMejoresPuntajes = servicioPersistencia.cargarMejoresPuntajes();
+        DateTimeFormatter formateadorFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        if (listaMejoresPuntajes.isEmpty()) {
+            modeloDatosTabla.addRow(new Object[]{"-", "SIN REGISTROS AUN", "0 pts", "00:00", "--/--/----"});
+            return;
+        }
+
+        int posicionEscalafon = 1;
+        for (Puntaje puntajeActual : listaMejoresPuntajes) {
+            String fechaFormateada = (puntajeActual.getFechaRegistro() != null)
+                    ? puntajeActual.getFechaRegistro().format(formateadorFecha)
+                    : "Fecha desc.";
+
+            Object[] datosFila = new Object[]{
+                    "#" + posicionEscalafon,
+                    puntajeActual.getNombreJugador(),
+                    puntajeActual.getPuntos() + " pts",
+                    puntajeActual.getTiempoFormateado(),
+                    fechaFormateada
+            };
+
+            modeloDatosTabla.addRow(datosFila);
+            posicionEscalafon++;
+        }
+    }
+}

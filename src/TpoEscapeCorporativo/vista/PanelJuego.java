@@ -14,8 +14,7 @@ import TpoEscapeCorporativo.modelo.items.Aguinaldo;
 import TpoEscapeCorporativo.modelo.items.Cafe;
 import TpoEscapeCorporativo.modelo.items.ZonaBuffo;
 
-import javax.swing.JPanel;
-import javax.swing.Timer;
+import javax.swing.*;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
@@ -32,10 +31,13 @@ public class PanelJuego extends JPanel {
     public static final int ALTO = ALTO_JUEGO + ALTO_HUD;
 
     private final JuegoEngine motor;
+    private final PanelPrincipal panelPrincipal;
     private Timer timer;
+    private boolean puntajeRegistrado = false;
 
-    public PanelJuego(JuegoEngine motor) {
+    public PanelJuego(JuegoEngine motor, PanelPrincipal panelPrincipal) {
         this.motor = motor;
+        this.panelPrincipal = panelPrincipal;
 
         this.setPreferredSize(new Dimension(ANCHO, ALTO));
         this.setBackground(new Color(25, 25, 25));
@@ -45,12 +47,46 @@ public class PanelJuego extends JPanel {
         configurarControles();
     }
 
+    // Constructor sobrecargado por compatibilidad
+    public PanelJuego(JuegoEngine motor) {
+        this(motor, null);
+    }
+
     private void configurarGameLoop() {
         this.timer = new Timer(16, e -> {
             motor.actualizar();
             repaint();
-            if (motor.getEstadoActual().esFinDePartida()) {
+
+            if (motor.getEstadoActual() != null && motor.getEstadoActual().esFinDePartida()) {
                 timer.stop();
+
+                // Si ganó la partida y aún no registró su puntaje en el ranking
+                if (motor.getEstadoActual() == EstadoJuego.VICTORIA && !puntajeRegistrado) {
+                    puntajeRegistrado = true;
+                    solicitarYGuardarPuntajeJugador();
+                }
+            }
+        });
+    }
+
+    /**
+     * Solicita al empleado su nombre mediante un cuadro de diálogo Swing
+     * y persiste su récord en el archivo binario del Top 10
+     */
+    private void solicitarYGuardarPuntajeJugador() {
+        SwingUtilities.invokeLater(() -> {
+            String mensaje = "Has logrado escapar!\nTu puntaje: " + motor.getPuntajeAcumulado() + "\n\nIngresa tu alias para el top 10:";
+            String aliasIngresado = JOptionPane.showInputDialog(
+                    this,
+                    mensaje,
+                    "Registrar Récord",
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
+            // Si cancela la ventana o deja en blanco, motor asignará "Empleado"
+            if (aliasIngresado != null) {
+                motor.guardarPuntaje(aliasIngresado);
+                repaint();
             }
         });
     }
@@ -207,21 +243,34 @@ public class PanelJuego extends JPanel {
             g.setColor(Color.WHITE);
             dibujarTextoCentrado(g, "Presiona 'P' para continuar", ALTO / 2 + 15);
         } else if (estado.esFinDePartida()) {
-            g.setColor(new Color(0, 0, 0, 190));
+            g.setColor(new Color(0, 0, 0, 200));
             g.fillRect(0, 0, ANCHO, ALTO);
 
             boolean esVictoria = (estado == EstadoJuego.VICTORIA);
             g.setFont(GestorRecursos.getFuenteArcade(18f));
             g.setColor(esVictoria ? Color.GREEN : Color.RED);
-            dibujarTextoCentrado(g, esVictoria ? "¡VICTORIA!" : "GAME OVER", ALTO / 2 - 40);
+            dibujarTextoCentrado(g, esVictoria ? "¡NIVEL " + motor.getNumeroNivelActual() + " COMPLETADO!" : "GAME OVER", ALTO / 2 - 50);
 
             g.setFont(GestorRecursos.getFuenteArcade(8f));
             g.setColor(Color.WHITE);
-            dibujarTextoCentrado(g, estado.getMensajeDescriptivo(), ALTO / 2);
+            dibujarTextoCentrado(g, estado.getMensajeDescriptivo(), ALTO / 2 - 15);
 
-            g.setFont(GestorRecursos.getFuenteArcade(11f));
+            g.setFont(GestorRecursos.getFuenteArcade(10f));
             g.setColor(new Color(255, 215, 0));
-            dibujarTextoCentrado(g, "Puntaje final: " + motor.getPuntajeAcumulado(), ALTO / 2 + 35);
+            dibujarTextoCentrado(g, "Puntaje acumulado: " + motor.getPuntajeAcumulado(), ALTO / 2 + 15);
+
+            // Opciones interactivas para el jugador
+            g.setFont(GestorRecursos.getFuenteArcade(9f));
+            if (esVictoria && motor.haySiguienteNivel()) {
+                g.setColor(Color.CYAN);
+                dibujarTextoCentrado(g, "[ENTER] - SIGUIENTE NIVEL", ALTO / 2 + 50);
+                g.setColor(Color.LIGHT_GRAY);
+                dibujarTextoCentrado(g, "[M] - VOLVER AL MENU PRINCIPAL", ALTO / 2 + 75);
+            } else {
+                g.setColor(Color.YELLOW);
+                dibujarTextoCentrado(g, "[R] - REINTENTAR / [M] - VOLVER AL MENU", ALTO / 2 + 60);
+            }
+
         }
     }
 
@@ -238,7 +287,40 @@ public class PanelJuego extends JPanel {
         this.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                switch (e.getKeyCode()) {
+                int codigoTecla = e.getKeyCode();
+
+                // Acciones de fin de partida (victoria o derrota)
+                if (motor.getEstadoActual() != null && motor.getEstadoActual().esFinDePartida()) {
+                    if (codigoTecla == KeyEvent.VK_ENTER && motor.getEstadoActual() == EstadoJuego.VICTORIA) {
+                        if (motor.haySiguienteNivel()) {
+                            puntajeRegistrado = false;
+                            motor.pasarSiguienteNivel();
+                            iniciarJuego();
+                        } else {
+                            // Si completo el último nivel, ENTER lo devuelve al menú principal
+                            motor.reiniciarPartidaCompleta();
+                            if (panelPrincipal != null) {
+                                panelPrincipal.mostrarPanel("INICIO");
+                            }
+                        }
+                    }
+                    // Reintentar el nivel actual con R
+                    else if (codigoTecla == KeyEvent.VK_R) {
+                        puntajeRegistrado = false;
+                        motor.reiniciarNivel(motor.getNumeroNivelActual());
+                        iniciarJuego();
+                    }
+                    // Volver al menú principal con M
+                    else if (codigoTecla == KeyEvent.VK_M) {
+                        motor.reiniciarPartidaCompleta();
+                        if (panelPrincipal != null) {
+                            panelPrincipal.mostrarPanel("INICIO");
+                        }
+                    }
+                }
+
+                // Gestión de movimiento y pausa
+                switch (codigoTecla) {
                     case KeyEvent.VK_UP:
                     case KeyEvent.VK_W:
                         motor.procesarEntrada(Direccion.ARRIBA);
@@ -265,11 +347,12 @@ public class PanelJuego extends JPanel {
 
             @Override
             public void keyReleased(KeyEvent e) {
-                int codigo = e.getKeyCode();
-                if (codigo == KeyEvent.VK_UP || codigo == KeyEvent.VK_W ||
-                    codigo == KeyEvent.VK_DOWN || codigo == KeyEvent.VK_S ||
-                    codigo == KeyEvent.VK_LEFT || codigo == KeyEvent.VK_A ||
-                    codigo == KeyEvent.VK_RIGHT || codigo == KeyEvent.VK_D) {
+                int codigoTecla = e.getKeyCode();
+                // Frena al personaje solo si la tecla liberada correspondía a una dirección
+                if (codigoTecla == KeyEvent.VK_UP || codigoTecla == KeyEvent.VK_W ||
+                        codigoTecla == KeyEvent.VK_DOWN || codigoTecla == KeyEvent.VK_S ||
+                        codigoTecla == KeyEvent.VK_LEFT || codigoTecla == KeyEvent.VK_A ||
+                        codigoTecla == KeyEvent.VK_RIGHT || codigoTecla == KeyEvent.VK_D) {
                     motor.procesarEntrada(Direccion.NINGUNA);
                 }
             }
