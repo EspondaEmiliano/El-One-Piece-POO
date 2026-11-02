@@ -53,7 +53,7 @@ public class PanelPrincipal {
 
         // pack() ajusta el tamaño exacto de la ventana considerando los bordes y la barra de título del SO
         ventana.pack();
-        ventana.setResizable(false);
+        ventana.setResizable(true);
         ventana.setLocationRelativeTo(null);
         ventana.setVisible(true);
 
