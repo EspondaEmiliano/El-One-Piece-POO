@@ -102,10 +102,21 @@ public class JuegoEngine {
 
         // 3. Evaluar recolección de potenciadores en el laberinto
         for (ZonaBuffo zona : this.zonaBuffos) {
+            // Comprueba si el empleado colisionó con un potenciador disponible.
             if (!zona.isRecolectado() && zona.verificarColision(this.jugador.getPosicion())) {
+                // Obtiene el potenciador de la zona.
                 Buffo buffoConsumido = zona.consumirBuffo();
+                // Aplica el efecto del potenciador sobre el empleado.
                 this.jugador.agregarBuffo(buffoConsumido);
-                this.puntajeAcumulado += PUNTOS_POR_BUFFO;
+                // Si el potenciador es un Aguinaldo, utiliza sus puntos bonus.
+                if (buffoConsumido instanceof Aguinaldo) {
+                    Aguinaldo aguinaldo = (Aguinaldo) buffoConsumido;
+                    // Suma los 500 puntos definidos en Aguinaldo.
+                    this.puntajeAcumulado += aguinaldo.getPuntosBonus();
+                } else {
+                    // Los demás potenciadores suman los puntos generales.
+                    this.puntajeAcumulado += PUNTOS_POR_BUFFO;
+                }
             }
         }
 
