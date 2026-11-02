@@ -12,6 +12,7 @@ import TpoEscapeCorporativo.modelo.items.Aguinaldo;
 import TpoEscapeCorporativo.modelo.items.Cafe;
 import TpoEscapeCorporativo.modelo.items.ZonaBuffo;
 import TpoEscapeCorporativo.servicios.GestorArchivos;
+import TpoEscapeCorporativo.servicios.GestorAudio;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -152,6 +153,7 @@ public class JuegoEngine {
                     proyectilActual.impacto();
 
                     try {
+                        GestorAudio.reproducirImpactoPala();
                         this.jugador.recibirDanio(20);
 
                         // Si la salud llega a cero, se pasa a estado de derrota
