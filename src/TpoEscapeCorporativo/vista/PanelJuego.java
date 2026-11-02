@@ -13,6 +13,7 @@ import TpoEscapeCorporativo.modelo.entidades.Proyectil;
 import TpoEscapeCorporativo.modelo.items.Aguinaldo;
 import TpoEscapeCorporativo.modelo.items.Cafe;
 import TpoEscapeCorporativo.modelo.items.ZonaBuffo;
+import TpoEscapeCorporativo.servicios.GestorAudio;
 
 import javax.swing.*;
 import java.awt.Color;
@@ -59,6 +60,7 @@ public class PanelJuego extends JPanel {
 
             if (motor.getEstadoActual() != null && motor.getEstadoActual().esFinDePartida()) {
                 timer.stop();
+                GestorAudio.getInstance().detenerMusica();
 
                 // Si ganó la partida y aún no registró su puntaje en el ranking
                 if (motor.getEstadoActual() == EstadoJuego.VICTORIA && !puntajeRegistrado) {
@@ -95,12 +97,14 @@ public class PanelJuego extends JPanel {
         this.requestFocusInWindow();
         if (!timer.isRunning()) {
             timer.start();
+            GestorAudio.getInstance().iniciarMusica();
         }
     }
 
     public void pausarJuego() {
         if (timer.isRunning()) {
             timer.stop();
+            GestorAudio.getInstance().pausarMusica();
         }
     }
 
@@ -340,6 +344,11 @@ public class PanelJuego extends JPanel {
                     case KeyEvent.VK_P:
                     case KeyEvent.VK_ESCAPE:
                         motor.alternarPausa();
+                        if (motor.getEstadoActual() == EstadoJuego.PAUSADO) {
+                            GestorAudio.getInstance().pausarMusica();
+                        } else if (motor.getEstadoActual() == EstadoJuego.JUGANDO) {
+                            GestorAudio.getInstance().iniciarMusica();
+                        }
                         repaint();
                         break;
                 }
