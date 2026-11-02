@@ -3,12 +3,27 @@ package TpoEscapeCorporativo.modelo.entidades;
 import TpoEscapeCorporativo.modelo.datos.Direccion;
 import TpoEscapeCorporativo.modelo.datos.Posicion;
 
+/**
+ * Representa al antagonista del juego que patrulla el pasillo superior,
+ * sigue horizontalmente al empleado y dispara proyectiles periódicamente.
+ */
 public class Jefe extends EntidadMovil{
     private String nombre;
     private int intervalAtaque;
-    private long ultimoAtaque; // Momento en el que se realizó el último ataque
+    private long ultimoAtaque;
     private Proyectil proyectilGenerado;
 
+    /** Duración en milisegundos de la animación de disparo. */
+    public static final int DURACION_ANIMACION_ATAQUE_MS = 400;
+
+    /**
+     * Inicializa al jefe con sus parámetros de patrulla y cadencia de fuego.
+     *
+     * @param posicion Hitbox inicial en el pasillo superior.
+     * @param velocidad Velocidad de seguimiento horizontal.
+     * @param nombre Nombre descriptivo del jefe.
+     * @param intervalAtaque Cadencia de disparo en milisegundos.
+     */
     public Jefe(Posicion posicion, int velocidad, String nombre, int intervalAtaque) {
         super(posicion, velocidad);
         this.nombre = nombre;
@@ -16,6 +31,11 @@ public class Jefe extends EntidadMovil{
         this.ultimoAtaque = 0;
     }
 
+    /**
+     * Evalúa si transcurrió el intervalo requerido para realizar un nuevo disparo.
+     *
+     * @return {@code true} si puede disparar; {@code false} si está en recarga.
+     */
     public boolean puedeAtacar() {
         // Determina si el jefe ya puede realizar otro ataque
 
@@ -24,11 +44,19 @@ public class Jefe extends EntidadMovil{
         return tiempoActual - ultimoAtaque >= intervalAtaque; // Comprueba si transcurrió el intervalo establecido.
     }
 
+    /**
+     * Registra el timestamp del instante en el que se ejecuta el ataque.
+     */
     public void registrarAtaque() {
         // Registra el momento en el que se realiza un ataque
         ultimoAtaque = System.currentTimeMillis(); // Guarda el instante del ataque para calcular el próximo intervalo
     }
 
+    /**
+     * Desplaza horizontalmente al jefe para alinearse con la posición del empleado.
+     *
+     * @param posicionEmpleado Hitbox actual del jugador a perseguir.
+     */
     public void seguirEmpleado(Posicion posicionEmpleado) {
         // Mueve horizontalmente al jefe para seguir al empleado
 
@@ -60,6 +88,11 @@ public class Jefe extends EntidadMovil{
 
     }
 
+    /**
+     * Instancia un proyectil en la base del jefe con dirección descendente.
+     *
+     * @param posicionObjetivo Coordenadas del objetivo al que se apunta.
+     */
     public void atacar(Posicion posicionObjetivo) {
         // Calcula el centro horizontal del jefe.
         int centroX = (posicion.getX1() + posicion.getX2()) / 2;
@@ -82,12 +115,21 @@ public class Jefe extends EntidadMovil{
         );
     }
 
-    // Permite que JuegoEngine obtenga el proyectil generado.
+    /**
+     * Consulta si el jefe se encuentra dentro de la ventana temporal de animación de ataque.
+     *
+     * @return {@code true} si está atacando; {@code false} si está en reposo/patrulla.
+     */
+    public boolean estaAtacando() {
+        return (System.currentTimeMillis() - ultimoAtaque) < DURACION_ANIMACION_ATAQUE_MS;
+    }
+
+    /** @return El último proyectil instanciado listo para ser incorporado al juego. */
     public Proyectil getProyectilGenerado() {
         return proyectilGenerado;
     }
 
-    // Permite limpiar la referencia una vez que JuegoEngine lo incorpora.
+    /** Limpia la referencia del proyectil una vez añadido a la lista del motor. */
     public void limpiarProyectilGenerado() {
         proyectilGenerado = null;
     }

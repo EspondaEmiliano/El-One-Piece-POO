@@ -50,6 +50,7 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **Conocimientos:** Manejo básico de Bash e ingeniería de requerimientos, y sé bastante sobre componentes de PC (marcas y modelos).
 * **Gustos:** Me gusta ver series, jugar videojuegos solo y con amigos, juntarme con ellos y hacer ejercicio. También disfruto leer e informarme sobre los cambios en las tendencias de los componentes de PC (modelos, arquitecturas, nuevos procesos de fabricación y, en general, todas las novedades de este tema).
 * **Logros:** Tuve un buen rendimiento en la escuela secundaria y fui abanderado, además de haber recibido múltiples diplomas académicos.
+
 ---
 
 ## Bitácora de Clases y Avances del Equipo
@@ -62,7 +63,8 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **28-09-26** - Pensamos la idea del TP y empezamos a trabajar en el UML
 * **05-10-26** - Entrega de la primera parte del TPO
 * **10-10-26** - Terminamos de definir el UML y creamos las carpetas del TPO
-* **13-10-26** - Creamos las ramas y definimos atributos y metodos basicos en EntidadMovil, emplado, dirección y posición
-* **18-10-26** - Definimos atributos en EntidadEstatica y agregamos metodos en IColisionable y EntidadMovil.java, ademas de implementar herencia en Muro, crear el Main y crear las bases funcionales en vista
-* **19-10-26** - Implementamos clase Empleado con manejo de salud y buffos, tamaños dinamicos en vista, boton y facilidad para cambiar la fuente, nueva fuente, clase GestorRecursos, clase PanelJuego, sistema de carga de sprites y actualizar VentanaJuego
-* **26-10-26** - Implementación del sistema de potenciadores (interfaz Buffo, Cafe, Aguinaldo y ZonaBuffo), colisiones del empleado con muros, calibración de patrullaje exterior y disparo del Jefe, diseño y carga dinámica de mapas desde archivo (nivel_1.txt), controles por teclado (WASD/flechas), renderizado completo de mapa y HUD en PanelJuego, y vinculación de inicio en VentanaJuego.
+* **13-10-26** - Creamos las ramas y definimos atributos y métodos básicos en EntidadMovil, emplado, dirección y posición
+* **18-10-26** - Definimos atributos en EntidadEstatica y agregamos métodos en IColisionable y EntidadMovil.java, además de implementar herencia en Muro, crear el Main y crear las bases funcionales en vista
+* **19-10-26** - Implementamos clase Empleado con manejo de salud y buffos, tamaños dinámicos en vista, botón y facilidad para cambiar la fuente, nueva fuente, clase GestorRecursos, clase PanelJuego, sistema de carga de sprites y actualizar VentanaJuego
+* **26-10-26** - Implementación del sistema de potenciadores (interfaz Buffo, Cafe, Aguinaldo y ZonaBuffo), colisiones del empleado con muros, calibración de patrullaje exterior y disparo del Jefe, diseño y carga dinámica de mapas desde archivo (nivel_1.txt), controles por teclado (WASD/flechas), renderizado completo de mapa y HUD en PanelJuego, reestructuración modular de la vista con PanelPrincipal (CardLayout) y PanelInicio, e integración del sistema de combate y colisiones de proyectiles con muros y jugador.
+* **02-11-26** - Implementación de pantalla Top 10 (PanelRanking) con persistencia y tabla arcade retro, progresión multinivel completa con matriz para nivel 2 (nivel_2.txt), controles interactivos de transición de victoria y derrota (ENTER/R/M), y optimización balística en proyectiles aéreos del Jefe.

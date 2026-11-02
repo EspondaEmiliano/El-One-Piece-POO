@@ -5,6 +5,10 @@ import TpoEscapeCorporativo.controlador.JuegoEngine;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Ventana contenedora principal de la aplicación. Administra la navegación
+ * entre pantallas (Menú de Inicio y Partida de Juego) mediante {@link CardLayout}.
+ */
 public class PanelPrincipal {
 
     private JFrame ventana;
@@ -12,58 +16,61 @@ public class PanelPrincipal {
     private CardLayout cardLayout;
     private JuegoEngine motorEngine;
     private PanelJuego panelJuego;
+    private PanelRanking panelRanking;
 
+    /**
+     * Instancia el motor de juego e inicializa la ventana del juego.
+     */
     public PanelPrincipal() {
         this.motorEngine = new JuegoEngine();
         inicializarVentana();
     }
 
     private void inicializarVentana() {
-        System.out.println("Hola, mundo! (La vista se empezó a inicializar)");
 
-        ventana = new JFrame("Super Escape Maravilloso del Empleado Negligente");
-        ventana.setSize(600, 400);
+        ventana = new JFrame("ESCAPE CORPORATIVO");
         ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        ventana.setLocationRelativeTo(null);
 
         // Inicializamos el CardLayout y el contenedor
         cardLayout = new CardLayout();
         panelPrincipal = new JPanel(cardLayout);
 
-        // 1. Pantalla de Menú
+        // Creamos los dos paneles
         PanelInicio panelInicio = new PanelInicio(this);
+        panelInicio.setPreferredSize(new Dimension(PanelJuego.ANCHO, PanelJuego.ALTO));
 
-        // 2. Pantalla de Juego activa (le pasamos 'this')
         this.panelJuego = new PanelJuego(motorEngine, this);
+        this.panelRanking = new PanelRanking(this);
 
-        // 3. Pantalla de Victoria (le pasamos 'this')
-        PanelVictoria panelVictoria = new PanelVictoria(this);
-
-        // Agregamos las tres pantallas al CardLayout
+        // Agregamos ambos paneles al contenedor principal
         panelPrincipal.add(panelInicio, "INICIO");
         panelPrincipal.add(this.panelJuego, "JUEGO");
-        panelPrincipal.add(panelVictoria, "VICTORIA");
+        panelPrincipal.add(this.panelRanking, "RANKING");
 
         // Añadimos el contenedor a la ventana
         ventana.add(panelPrincipal);
+
+        // pack() ajusta el tamaño exacto de la ventana considerando los bordes y la barra de título del SO
+        ventana.pack();
+        ventana.setResizable(false);
+        ventana.setLocationRelativeTo(null);
         ventana.setVisible(true);
     }
 
-    // Cambia de pantalla y gestiona el foco del teclado
+    /**
+     * Alterna la vista visible en pantalla según su identificador.
+     *
+     * @param nombre Clave de la vista ("INICIO" o "JUEGO").
+     */
     public void mostrarPanel(String nombre) {
         cardLayout.show(panelPrincipal, nombre);
 
+        // Cuando la vista pasa a ser "JUEGO", solicitamos el foco y arrancamos el loop
         if ("JUEGO".equalsIgnoreCase(nombre) && panelJuego != null) {
             panelJuego.iniciarJuego();
             SwingUtilities.invokeLater(() -> panelJuego.requestFocusInWindow());
+        } else if ("RANKING".equalsIgnoreCase(nombre) && panelRanking != null) {
+            panelRanking.cargarYRefrescarDatos();
         }
-    }
-
-    // NUEVO: Método mediador invocado cuando el jugador escapa
-    public void finalizarPartidaConVictoria() {
-        if (panelJuego != null) {
-            panelJuego.pausarJuego(); // 1. Frena el Game Loop
-        }
-        mostrarPanel("VICTORIA");     // 2. Muestra la pantalla de triunfo
     }
 }

@@ -1,4 +1,5 @@
 package TpoEscapeCorporativo.vista;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
@@ -8,56 +9,128 @@ public class PanelInicio extends JPanel {
 
     private PanelPrincipal panelPrincipal;
 
+    // Componentes visuales
+    private JLabel cartelTitulo;
+    private JButton botonPlay;
+    private JLabel lblControles;
+    private JLabel lblObjetivo;
+    private JLabel lblPausa;
+    private JButton botonRanking;
+
     public PanelInicio(PanelPrincipal panelPrincipal){
         this.panelPrincipal = panelPrincipal;
         inicializarPanel();
     }
 
-    private void inicializarPanel(){
-        System.out.println("Hola, mundo! (El panel de inicio se empezó a inicializar)");
+    private void inicializarPanel() {
+        // 1. Mismo fondo carbón oscuro que PanelJuego
+        this.setBackground(new Color(25, 25, 25));
+        this.setLayout(null);
 
-        // Mantenemos el layout en null para tus setBounds y proporciones
-        setLayout(null);
-        setBackground(new Color(15, 25, 15)); // Negro del menu
-
-
-        JLabel cartelTitulo = new JLabel("Super Escape Maravilloso del Empleado Negligente", SwingConstants.CENTER);
-        cartelTitulo.setFont(GestorRecursos.getFuenteArcade(20f));
-        cartelTitulo.setForeground(new Color(50, 255, 100)); // Verde brillante
-
+        // 2. Título Arcade en color dorado
+        cartelTitulo = new JLabel("ESCAPE CORPORATIVO", SwingConstants.CENTER);
+        cartelTitulo.setFont(GestorRecursos.getFuenteArcade(18f));
+        cartelTitulo.setForeground(new Color(255,215,0)); // Dorado
         add(cartelTitulo);
 
-        JButton botonPlay = new JButton("Play");
+        // Botón estilo máquina arcade con cursor de mano y borde neón
+        botonPlay = new JButton("INICIAR JUEGO");
+        botonPlay.setFont(GestorRecursos.getFuenteArcade(12f));
+        botonPlay.setBackground(new Color(30,130,60)); // Verde oscuro
+        botonPlay.setForeground(Color.WHITE);
+        botonPlay.setFocusable(false);
+        botonPlay.setBorder(BorderFactory.createLineBorder(Color.GREEN, 2)); // Borde verde neón
+        botonPlay.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         // VINCULACIÓN: Aquí hacemos que el botón ordene el cambio de panel al hacer clic
         botonPlay.addActionListener(e -> {
             this.panelPrincipal.mostrarPanel("JUEGO");
         });
-
         add(botonPlay);
 
-        // Adaptarse al tamaño que le dé el usuario al panel principal/ventana
+        // Botón para acceder al Ranking / TPO 10
+        botonRanking = new JButton("RANKING / TOP 10");
+        botonRanking.setFont(GestorRecursos.getFuenteArcade(11f));
+        botonRanking.setBackground(new Color(20,80,140));
+        botonRanking.setForeground(Color.WHITE);
+        botonRanking.setFocusable(false);
+        botonRanking.setBorder(BorderFactory.createLineBorder(new Color(0, 180, 255), 2));
+        botonRanking.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        botonRanking.addActionListener(e -> {
+            this.panelPrincipal.mostrarPanel("RANKING");
+        });
+        add(botonRanking);
+
+        // 4. Carteles de controles e instrucciones
+        lblControles = new JLabel("CONTROLES: FLECHAS O W-A-S-D", SwingConstants.CENTER);
+        lblControles.setFont(GestorRecursos.getFuenteArcade(8f));
+        lblControles.setForeground(Color.CYAN);
+        add(lblControles);
+
+        lblObjetivo = new JLabel("ESQUIVA AL JEFE Y LLEGA A LA SALIDA [S]", SwingConstants.CENTER);
+        lblObjetivo.setFont(GestorRecursos.getFuenteArcade(8f));
+        lblObjetivo.setForeground(Color.LIGHT_GRAY);
+        add(lblObjetivo);
+
+        lblPausa = new JLabel("PAUSA: TECLA 'P'", SwingConstants.CENTER);
+        lblPausa.setFont(GestorRecursos.getFuenteArcade(8f));
+        lblPausa.setForeground(Color.YELLOW);
+        add(lblPausa);
+
+        // 5. Posicionamiento proporcional de los elementos
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                // Adaptar el Título usando getWidth() y getHeight() del panel
-                int anchoCartel = (int)(getWidth() * 0.80);
-                int posXCartel = (getWidth() - anchoCartel) / 2;
-                int posYCartel = (int)(getHeight() * 0.05);
-                cartelTitulo.setBounds(posXCartel, posYCartel, anchoCartel, 40);
+                int ancho = getWidth();
 
-                // Adaptar tamaño letra
-                int tamanioLetra = getWidth() / 80;
-                if (tamanioLetra < 14) tamanioLetra = 7; // Tamaño mínimo
-                if (tamanioLetra > 28) tamanioLetra = 14; // Tamaño máximo
-                cartelTitulo.setFont(GestorRecursos.getFuenteArcade((float) tamanioLetra));
+                // Título en la parte superior
+                cartelTitulo.setBounds((ancho - 550) / 2, 35, 550, 35);
 
-                // Adaptar el Botón
-                int anchoBoton = (int)(getWidth() * 0.30);
-                int posXBoton = (getWidth() - anchoBoton) / 2;
-                int posYBoton = (int)(getHeight() * 0.25);
-                botonPlay.setBounds(posXBoton, posYBoton, anchoBoton, 35);
+                int anchoBoton = 240;
+                int altoBoton = 36;
+
+                // Botón Play arriba
+                botonPlay.setBounds((ancho - anchoBoton) / 2, 175, anchoBoton, altoBoton);
+
+                // Botón Ranking justo debajo
+                botonRanking.setBounds((ancho - anchoBoton) / 2, 220, anchoBoton, altoBoton);
+
+                // Bloque de instrucciones inferior
+                lblControles.setBounds((ancho - 550) / 2, 275, 550, 20);
+                lblObjetivo.setBounds((ancho - 550) / 2, 305, 550, 20);
+                lblPausa.setBounds((ancho - 550) / 2, 335, 550, 20);
             }
         });
+    }
+
+    /**
+     * Dibuja los sprites del empleado y del jefe enfrentados
+     * en el espacio libre entre el título y el botón.
+     */
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        int centroX = getWidth() / 2;
+        int posY = 100;
+        int tamanioSprite = 48; // Escalados ligeramente para el menú
+
+        // Empleado a la izquierda
+        Image spriteEmpleado = GestorRecursos.getSpriteEmpleado();
+        if (spriteEmpleado != null) {
+            g.drawImage(spriteEmpleado, centroX - 110, posY, tamanioSprite, tamanioSprite, this);
+        }
+
+        // Versus o flecha en el centro
+        g.setFont(GestorRecursos.getFuenteArcade(12f));
+        g.setColor(Color.RED);
+        g.drawString("VS", centroX - 12, posY + 32);
+
+        // Jefe a la derecha
+        Image spriteJefe = GestorRecursos.getSpriteJefe();
+        if (spriteJefe != null) {
+            g.drawImage(spriteJefe, centroX + 60, posY, tamanioSprite, tamanioSprite, this);
+        }
     }
 }
