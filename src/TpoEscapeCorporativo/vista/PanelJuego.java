@@ -2,8 +2,9 @@ package TpoEscapeCorporativo.vista;
 
 import TpoEscapeCorporativo.controlador.JuegoEngine;
 import TpoEscapeCorporativo.interfaces.Buffo;
-import TpoEscapeCorporativo.modelo.datos.Posicion;
 import TpoEscapeCorporativo.modelo.datos.Direccion;
+import TpoEscapeCorporativo.modelo.datos.EstadoJuego;
+import TpoEscapeCorporativo.modelo.datos.Posicion;
 import TpoEscapeCorporativo.modelo.entidades.Empleado;
 import TpoEscapeCorporativo.modelo.entidades.Jefe;
 import TpoEscapeCorporativo.modelo.entidades.Muro;
@@ -17,15 +18,18 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.image.BufferedImage;
 
 public class PanelJuego extends JPanel {
 
     public static final int ANCHO = 600;
-    public static final int ALTO = 400;
+    public static final int ALTO_JUEGO = 400;
+    public static final int ALTO_HUD = 55;
+    public static final int ALTO = ALTO_JUEGO + ALTO_HUD;
 
     private final JuegoEngine motor;
     private Timer timer;
@@ -45,6 +49,9 @@ public class PanelJuego extends JPanel {
         this.timer = new Timer(16, e -> {
             motor.actualizar();
             repaint();
+            if (motor.getEstadoActual().esFinDePartida()) {
+                timer.stop();
+            }
         });
     }
 
@@ -63,20 +70,23 @@ public class PanelJuego extends JPanel {
 
     @Override
     protected void paintComponent(Graphics g) {
-
         super.paintComponent(g);
 
-        // 1. Dibujar el mapa (muros y salida de escape)
-        dibujarMapa(g);
-
-        // 2. Dibujar ítems / zonas de buffos
-        dibujarBuffos(g);
-
-        // 3. Dibujar entidades (jugador, jefe, proyectiles)
-        dibujarEntidades(g);
-
-        // 4. Dibujar interfaz / HUD (salud y buffos activos)
+        // 1. Dibujar interfaz / HUD en la barra superior dedicada
         dibujarHUD(g);
+
+        // 2. Dibujar el laberinto y entidades desplazadas debajo de la barra del HUD
+        Graphics gJuego = g.create();
+        gJuego.translate(0, ALTO_HUD);
+
+        dibujarMapa(gJuego);
+        dibujarBuffos(gJuego);
+        dibujarEntidades(gJuego);
+
+        gJuego.dispose();
+
+        // 3. Dibujar overlays de estado (Pausa, Victoria o Derrota)
+        dibujarOverlayEstado(g);
     }
 
     /**
@@ -91,14 +101,14 @@ public class PanelJuego extends JPanel {
                 int ancho = posicion.getX2() - x;
                 int alto = posicion.getY2() - y;
 
-                BufferedImage sprite = null;
+                Image sprite = null;
                 if (zona.getBuffo() instanceof Cafe ) {
                     sprite = GestorRecursos.getSpriteCafe();
                 } else if (zona.getBuffo() instanceof Aguinaldo) {
                     sprite = GestorRecursos.getSpriteAguinaldo();
                 }
                 if (sprite != null) {
-                    g.drawImage(sprite, x, y, ancho, alto, null);
+                    g.drawImage(sprite, x, y, ancho, alto, this);
                 }
             }
         }
@@ -111,60 +121,118 @@ public class PanelJuego extends JPanel {
         // Dibujar jugador
         Empleado jugador = motor.getJugador();
         if (jugador != null) {
-            Posicion posicionJugador = jugador.getPosicion();
-            BufferedImage spriteJugador = GestorRecursos.getSpriteEmpleado();
-            g.drawImage(spriteJugador, posicionJugador.getX1(), posicionJugador.getY1(),
-                    posicionJugador.getX2() - posicionJugador.getX1(), posicionJugador.getY2() - posicionJugador.getY1(), null);
+            Posicion pos = jugador.getPosicion();
+            Image spriteJugador = GestorRecursos.getSpriteEmpleado(jugador.getDireccionVisual());
+            g.drawImage(spriteJugador, pos.getX1(), pos.getY1(),
+                    pos.getX2() - pos.getX1(), pos.getY2() - pos.getY1(), this);
         }
 
         // Dibujar jefe
         Jefe jefe = motor.getJefe();
         if (jefe != null) {
-            Posicion posicionJefe = jefe.getPosicion();
-            BufferedImage spriteJefe = GestorRecursos.getSpriteJefe();
-            g.drawImage(spriteJefe, posicionJefe.getX1(),posicionJefe.getY1(),
-                    posicionJefe.getX2() - posicionJefe.getX1(), posicionJefe.getY2() - posicionJefe.getY1(), null);
+            Posicion pos = jefe.getPosicion();
+            Image spriteJefe = GestorRecursos.getSpriteJefe(jefe.getDireccionActual(), jefe.estaAtacando());
+            g.drawImage(spriteJefe, pos.getX1(), pos.getY1(),
+                    pos.getX2() - pos.getX1(), pos.getY2() - pos.getY1(), this);
         }
 
         // Dibujar proyectiles
         for (Proyectil proyectil : motor.getProyectiles()) {
             if (proyectil.getEstaActivo()) {
                 Posicion posicionProyectil = proyectil.getPosicion();
-                BufferedImage spriteProyectil = GestorRecursos.getSpriteProyectil();
+                Image spriteProyectil = GestorRecursos.getSpriteProyectil();
                 g.drawImage(spriteProyectil, posicionProyectil.getX1(), posicionProyectil.getY1(),
-                        posicionProyectil.getX2() - posicionProyectil.getX1(), posicionProyectil.getY2() - posicionProyectil.getY1(), null);
+                        posicionProyectil.getX2() - posicionProyectil.getX1(), posicionProyectil.getY2() - posicionProyectil.getY1(), this);
             }
         }
     }
 
     /**
-     * Dibuja los indicadores en pantalla: salud restante y buffos activos temporales.
+     * Dibuja la barra superior con los indicadores: salud, velocidad, tiempo restante y puntaje.
      */
     private void dibujarHUD(Graphics g) {
+        // Fondo de la barra superior del HUD
+        g.setColor(new Color(18, 18, 18));
+        g.fillRect(0, 0, ANCHO, ALTO_HUD);
+
+        // Línea divisoria entre el HUD y el área de juego
+        g.setColor(new Color(55, 55, 55));
+        g.drawLine(0, ALTO_HUD - 1, ANCHO, ALTO_HUD - 1);
+
         Empleado jugador = motor.getJugador();
         if (jugador == null) return;
 
         g.setFont(GestorRecursos.getFuenteArcade(11f));
 
-        // Salud
+        // Fila 1: Salud, Tiempo y Puntaje
         g.setColor(jugador.getSalud() > 30 ? Color.GREEN : Color.RED);
-        g.drawString("HP: " + jugador.getSalud() + "/100", 15, 25);
+        g.drawString("HP: " + jugador.getSalud() + "/100", 15, 23);
 
-        // Velocidad actual (para evidenciar el efecto del Café)
+        int tiempoRestante = motor.getTiempoRestanteSegundos();
+        g.setColor(tiempoRestante <= 10 ? Color.RED : Color.CYAN);
+        g.drawString("TIEMPO: " + tiempoRestante + "s", 235, 23);
+
+        g.setColor(new Color(255, 215, 0)); // Dorado
+        g.drawString("PTS: " + motor.getPuntajeAcumulado(), 450, 23);
+
+        // Fila 2: Velocidad y Buff activo
         g.setColor(Color.WHITE);
-        g.drawString("VEL: " + jugador.getVelocidad(), 15, 45);
+        g.drawString("VEL: " + jugador.getVelocidad(), 15, 43);
 
-        // Buffos activos
-        int offsetY = 65;
-        for (Buffo buffo : jugador.getBuffosActivos()) {
-            g.setColor(new Color(255,215,0)); // Dorado
-            g.drawString("BUFF ACTIVO: " + buffo.getNombre(), 15, offsetY);
-            offsetY += 18;
+        if (!jugador.getBuffosActivos().isEmpty()) {
+            g.setFont(GestorRecursos.getFuenteArcade(9f));
+            g.setColor(new Color(255, 215, 0));
+            g.drawString("BUFF: " + jugador.getBuffosActivos().get(0).getNombre(), 235, 43);
         }
     }
 
     /**
-     * Configura el teclado para mover al empleado con las flechas o con W, A, S, D.
+     * Dibuja carteles informativos superpuestos según el estado actual de la partida.
+     */
+    private void dibujarOverlayEstado(Graphics g) {
+        EstadoJuego estado = motor.getEstadoActual();
+        if (estado == null || estado == EstadoJuego.JUGANDO) {
+            return;
+        }
+
+        if (estado == EstadoJuego.PAUSADO) {
+            g.setColor(new Color(0, 0, 0, 170));
+            g.fillRect(0, 0, ANCHO, ALTO);
+
+            g.setFont(GestorRecursos.getFuenteArcade(18f));
+            g.setColor(Color.YELLOW);
+            dibujarTextoCentrado(g, "JUEGO EN PAUSA", ALTO / 2 - 15);
+
+            g.setFont(GestorRecursos.getFuenteArcade(9f));
+            g.setColor(Color.WHITE);
+            dibujarTextoCentrado(g, "Presiona 'P' para continuar", ALTO / 2 + 15);
+        } else if (estado.esFinDePartida()) {
+            g.setColor(new Color(0, 0, 0, 190));
+            g.fillRect(0, 0, ANCHO, ALTO);
+
+            boolean esVictoria = (estado == EstadoJuego.VICTORIA);
+            g.setFont(GestorRecursos.getFuenteArcade(18f));
+            g.setColor(esVictoria ? Color.GREEN : Color.RED);
+            dibujarTextoCentrado(g, esVictoria ? "¡VICTORIA!" : "GAME OVER", ALTO / 2 - 40);
+
+            g.setFont(GestorRecursos.getFuenteArcade(8f));
+            g.setColor(Color.WHITE);
+            dibujarTextoCentrado(g, estado.getMensajeDescriptivo(), ALTO / 2);
+
+            g.setFont(GestorRecursos.getFuenteArcade(11f));
+            g.setColor(new Color(255, 215, 0));
+            dibujarTextoCentrado(g, "Puntaje final: " + motor.getPuntajeAcumulado(), ALTO / 2 + 35);
+        }
+    }
+
+    private void dibujarTextoCentrado(Graphics g, String texto, int y) {
+        FontMetrics fm = g.getFontMetrics();
+        int x = (ANCHO - fm.stringWidth(texto)) / 2;
+        g.drawString(texto, x, y);
+    }
+
+    /**
+     * Configura el teclado para mover al empleado con las flechas o con W, A, S, D, y pausar con P o ESC.
      */
     private void configurarControles() {
         this.addKeyListener(new KeyAdapter() {
@@ -172,28 +240,38 @@ public class PanelJuego extends JPanel {
             public void keyPressed(KeyEvent e) {
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_UP:
-                        case KeyEvent.VK_W:
-                            motor.procesarEntrada(Direccion.ARRIBA);
-                            break;
+                    case KeyEvent.VK_W:
+                        motor.procesarEntrada(Direccion.ARRIBA);
+                        break;
                     case KeyEvent.VK_DOWN:
-                        case KeyEvent.VK_S:
-                            motor.procesarEntrada(Direccion.ABAJO);
-                            break;
+                    case KeyEvent.VK_S:
+                        motor.procesarEntrada(Direccion.ABAJO);
+                        break;
                     case KeyEvent.VK_LEFT:
-                        case KeyEvent.VK_A:
-                            motor.procesarEntrada(Direccion.IZQUIERDA);
-                            break;
+                    case KeyEvent.VK_A:
+                        motor.procesarEntrada(Direccion.IZQUIERDA);
+                        break;
                     case KeyEvent.VK_RIGHT:
-                        case KeyEvent.VK_D:
-                            motor.procesarEntrada(Direccion.DERECHA);
-                            break;
+                    case KeyEvent.VK_D:
+                        motor.procesarEntrada(Direccion.DERECHA);
+                        break;
+                    case KeyEvent.VK_P:
+                    case KeyEvent.VK_ESCAPE:
+                        motor.alternarPausa();
+                        repaint();
+                        break;
                 }
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
-                // Al soltar la tecla, se frena el personaje
-                motor.procesarEntrada(Direccion.NINGUNA);
+                int codigo = e.getKeyCode();
+                if (codigo == KeyEvent.VK_UP || codigo == KeyEvent.VK_W ||
+                    codigo == KeyEvent.VK_DOWN || codigo == KeyEvent.VK_S ||
+                    codigo == KeyEvent.VK_LEFT || codigo == KeyEvent.VK_A ||
+                    codigo == KeyEvent.VK_RIGHT || codigo == KeyEvent.VK_D) {
+                    motor.procesarEntrada(Direccion.NINGUNA);
+                }
             }
         });
     }
@@ -206,18 +284,17 @@ public class PanelJuego extends JPanel {
         Salida salida = motor.getSalida();
         if (salida != null) {
             Posicion posS = salida.getPosicion();
-            BufferedImage spriteSalida = GestorRecursos.getSpriteSalida();
+            Image spriteSalida = GestorRecursos.getSpriteSalida();
             g.drawImage(spriteSalida, posS.getX1(), posS.getY1(),
-                    posS.getX2() - posS.getX1(), posS.getY2() - posS.getY1(), null);
+                    posS.getX2() - posS.getX1(), posS.getY2() - posS.getY1(), this);
         }
 
         // Dibujar los muros
-        BufferedImage spriteMuro = GestorRecursos.getSpriteMuro();
+        Image spriteMuro = GestorRecursos.getSpriteMuro();
         for (Muro muro : motor.getMuros()) {
             Posicion posM = muro.getPosicion();
             g.drawImage(spriteMuro, posM.getX1(), posM.getY1(),
-                    posM.getX2() - posM.getX1(), posM.getY2() - posM.getY1(), null);
+                    posM.getX2() - posM.getX1(), posM.getY2() - posM.getY1(), this);
         }
     }
-
 }

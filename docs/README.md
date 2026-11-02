@@ -116,14 +116,23 @@ src/TpoEscapeCorporativo/
 ├── servicios/
 │   └── GestorArchivos.java            # Persistencia de ranking (serialización) y carga de matrices de nivel (.txt)
 └── vista/
-    └── VentanaJuego.java              # Ventana gráfica Swing con canvas de renderizado y doble búfer
+    ├── GestorRecursos.java            # Carga y escalado de fuentes arcade y sprites/animaciones pixel art
+    ├── PanelInicio.java               # Pantalla de bienvenida con título, botón Play y redimensionamiento dinámico
+    ├── PanelJuego.java                # Canvas principal con Game Loop (Timer), renderizado y captura de teclado
+    └── PanelPrincipal.java            # Contenedor JFrame con CardLayout para alternar entre inicio y juego activo
 ```
 
 ---
 
-## Diagrama de Clases UML
+## Diagramas de Arquitectura y Clases UML
 
-El siguiente diagrama detalla la jerarquía de herencia, relaciones estructurales y contratos de interfaces que articulan la solución:
+Para garantizar una separación rigurosa de responsabilidades acorde al patrón **MVC** y facilitar la lectura técnica, el modelado estático del sistema se organiza en dos diagramas complementarios:
+1. **Dominio y Motor:** Modela las jerarquías de herencia, entidades, interfaces polimórficas, persistencia y el motor central (`JuegoEngine`).
+2. **Interfaz de Usuario (Vista):** Modela las ventanas y paneles Swing, el gestor de recursos y su comunicación con `JuegoEngine`.
+
+---
+
+### 1. Diagrama de Clases: Dominio y Motor (Modelo y Controlador)
 
 ```mermaid
 classDiagram
@@ -134,9 +143,10 @@ classDiagram
     }
     class Buffo {
         <<interface>>
-        +aplicarEfecto(Empleado empleado) void
-        +reducirTiempo() void
+        +aplicar(Empleado empleado) void
+        +actualizarTiempo(int deltaMs) void
         +estaActivo() boolean
+        +getNombre() String
     }
 
     %% Jerarquía de Entidades Base
@@ -146,66 +156,99 @@ classDiagram
         #int velocidad
         #Direccion direccionActual
         +mover() void
+        +getPosicion() Posicion
+        +getVelocidad() int
+        +setVelocidad(int velocidad) void
+        +getDireccionActual() Direccion
+        +setDireccionActual(Direccion direccionActual) void
     }
     class EntidadEstatica {
         <<abstract>>
         #Posicion posicion
-        #int ancho
-        #int alto
+        +getPosicion() Posicion
     }
 
     %% Implementaciones de Entidades Móviles
     class Empleado {
         -int salud
         -List~Buffo~ buffosActivos
+        +mover(List~Muro~ muros) void
         +recibirDanio(int danio) void
         +agregarBuffo(Buffo buffo) void
+        +actualizarBuffos(int deltaMs) void
+        +getSalud() int
+        +getBuffosActivos() List~Buffo~
     }
     class Jefe {
-        -int rangoAtaque
-        +patrullar() void
-        +perseguir(Empleado target) void
-        +lanzarProyectil(Empleado target) Proyectil
+        -String nombre
+        -int tiempoEntreAtaques
+        -long ultimoAtaqueTiempo
+        -Proyectil proyectilGenerado
+        +seguirEmpleado(Posicion posicionEmpleado) void
+        +puedeAtacar() boolean
+        +atacar(Posicion posicionEmpleado) void
+        +registrarAtaque() void
+        +getProyectilGenerado() Proyectil
+        +limpiarProyectilGenerado() void
     }
     class Proyectil {
-        -int danio
-        -Direccion trayectoria
-        +avanzar() void
+        -int dx
+        -int dy
+        -boolean estaActivo
+        +mover() void
+        +impacto() void
+        +getEstaActivo() boolean
     }
 
     %% Implementaciones de Entidades Estáticas
     class Muro {
-        -boolean destruible
+        +verificarColision(Posicion otraPosicion) boolean
     }
     class Salida {
-        -boolean habilitada
-        +activarVictoria() void
+        +esAlcanzada(Posicion posicionJugador) Boolean
     }
     class ZonaBuffo {
-        -Buffo buffoDisponible
-        +entregarBuffo() Buffo
+        -Buffo buffo
+        -boolean recolectado
+        +verificarColision(Posicion otraPosicion) boolean
+        +consumirBuffo() Buffo
+        +isRecolectado() boolean
+        +getBuffo() Buffo
     }
 
     %% Implementaciones de Buffos
     class Cafe {
-        -int duracionSegundos
-        -int multiplicadorVelocidad
-        +aplicarEfecto(Empleado empleado) void
+        -int tiempoRestanteMs
+        -int incrementoVelocidad
+        +aplicar(Empleado empleado) void
+        +actualizarTiempo(int deltaMs) void
+        +estaActivo() boolean
+        +getNombre() String
     }
     class Aguinaldo {
-        -int duracionSegundos
-        -int vidasExtra
-        +aplicarEfecto(Empleado empleado) void
+        -int saludRecuperada
+        -int puntosExtra
+        -boolean aplicado
+        +aplicar(Empleado empleado) void
+        +actualizarTiempo(int deltaMs) void
+        +estaActivo() boolean
+        +getNombre() String
     }
 
     %% Clases de Soporte / Datos
     class Posicion {
-        -int x
-        -int y
-        +getX() int
-        +getY() int
-        +setX(int x) void
-        +setY(int y) void
+        -int x1
+        -int y1
+        -int x2
+        -int y2
+        +getX1() int
+        +getY1() int
+        +getX2() int
+        +getY2() int
+        +setX1(int x1) void
+        +setY1(int y1) void
+        +setX2(int x2) void
+        +setY2(int y2) void
     }
     class Direccion {
         <<enumeration>>
@@ -213,6 +256,9 @@ classDiagram
         ABAJO
         IZQUIERDA
         DERECHA
+        NINGUNA
+        +getDx() int
+        +getDy() int
     }
     class Puntaje {
         -String nombreJugador
@@ -226,18 +272,23 @@ classDiagram
         +compareTo(Puntaje nuevoPuntaje) int 
     }
 
-    %% Controlador, Vista, Excepciones y Servicios
+    %% Controlador Principal
     class JuegoEngine {
-        -boolean enEjecucion
-        -Thread gameLoopThread
-        +iniciar() void
-        +detener() void
-        +actualizarFisica() void
-        +renderizar() void
-    }
-    class VentanaJuego {
-        +mostrarPantalla() void
-        +actualizarCanvas() void
+        -List~Muro~ muros
+        -List~Proyectil~ proyectiles
+        -List~ZonaBuffo~ zonaBuffos
+        -Empleado jugador
+        -Jefe enemigo
+        -Salida salida
+        +actualizar() void
+        +procesarEntrada(Direccion nuevaDireccion) void
+        +cargarNivel(int numeroNivel) void
+        +getJugador() Empleado
+        +getJefe() Jefe
+        +getProyectiles() List~Proyectil~
+        +getZonasBuffo() List~ZonaBuffo~
+        +getMuros() List~Muro~
+        +getSalida() Salida
     }
     class GestorArchivos {
         -String rutaRanking
@@ -277,18 +328,148 @@ classDiagram
     EntidadEstatica *-- Posicion
     EntidadMovil --> Direccion
 
-    %% Orquestación
+    %% Orquestación Modelo-Controlador
     JuegoEngine --> Empleado : gestiona
     JuegoEngine --> Jefe : gestiona
-    JuegoEngine --> VentanaJuego : actualiza vista
+    JuegoEngine --> Salida : gestiona
+    JuegoEngine o-- Muro : contiene
+    JuegoEngine o-- Proyectil : contiene
+    JuegoEngine o-- ZonaBuffo : contiene
     JuegoEngine ..> ImpactoProyectilException : atrapa/lanza
-    JuegoEngine --> GestorArchivos : persiste estado
-    
+    JuegoEngine --> GestorArchivos : persiste y carga niveles
+
     %% Persistencia y Excepciones
     Puntaje ..|> Comparable
     Puntaje ..|> Serializable
     GestorArchivos ..> NivelNoEncontradoException : lanza
     GestorArchivos ..> Puntaje : serializa/recupera
+```
+
+---
+
+### 2. Diagrama de Clases: Interfaz de Usuario (Vista - Swing)
+
+```mermaid
+classDiagram
+    class PanelPrincipal {
+        -JFrame ventana
+        -JPanel panelPrincipal
+        -CardLayout cardLayout
+        -JuegoEngine motorEngine
+        -PanelJuego panelJuego
+        +mostrarPanel(String nombre) void
+        -inicializarVentana() void
+    }
+    class PanelInicio {
+        -PanelPrincipal panelPrincipal
+        -inicializarPanel() void
+    }
+    class PanelJuego {
+        +static final int ANCHO
+        +static final int ALTO
+        -JuegoEngine motor
+        -Timer timer
+        +iniciarJuego() void
+        +pausarJuego() void
+        #paintComponent(Graphics g) void
+        -dibujarMapa(Graphics g) void
+        -dibujarBuffos(Graphics g) void
+        -dibujarEntidades(Graphics g) void
+        -dibujarHUD(Graphics g) void
+        -configurarControles() void
+        -configurarGameLoop() void
+    }
+    class GestorRecursos {
+        +getFuenteArcade(float tamanio) Font
+        +getSpriteEmpleado() BufferedImage
+        +getSpriteJefe() BufferedImage
+        +getSpriteProyectil() BufferedImage
+        +getSpriteMuro() BufferedImage
+        +getSpriteSalida() BufferedImage
+        +getSpriteCafe() BufferedImage
+        +getSpriteAguinaldo() BufferedImage
+    }
+    class JuegoEngine {
+        <<Controlador / Fachada>>
+        +actualizar() void
+        +procesarEntrada(Direccion d) void
+        +getJugador() Empleado
+        +getJefe() Jefe
+        +getProyectiles() List~Proyectil~
+        +getMuros() List~Muro~
+        +getZonasBuffo() List~ZonaBuffo~
+        +getSalida() Salida
+    }
+
+    %% Relaciones de la Capa Vista
+    PanelPrincipal o-- PanelInicio : aloja
+    PanelPrincipal o-- PanelJuego : aloja
+    PanelPrincipal --> JuegoEngine : instancia y vincula
+    PanelInicio --> PanelPrincipal : solicita cambio de pantalla
+    PanelJuego --> JuegoEngine : lee estado y envía entradas
+    PanelJuego ..> GestorRecursos : obtiene imágenes y sprites
+    PanelInicio ..> GestorRecursos : obtiene fuentes
+```
+
+---
+
+## Diagrama de Secuencia: Ciclo de Juego (Game Loop) y Colisiones
+
+El siguiente diagrama detalla la interacción dinámica y temporal entre los componentes de la Vista (Swing), el Controlador (`JuegoEngine`) y las entidades del Modelo durante el arranque y la ejecución en tiempo real:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Jugador
+    participant PI as PanelInicio
+    participant PP as PanelPrincipal
+    participant PJ as PanelJuego
+    participant JE as JuegoEngine
+    participant E as Empleado
+    participant J as Jefe
+    participant P as Proyectil
+
+    %% 1. Inicio de partida
+    Jugador->>PI: Clic en botón "Play"
+    PI->>PP: mostrarPanel("JUEGO")
+    PP->>PJ: iniciarJuego() y requestFocusInWindow()
+    Note over PJ: Inicia Timer a 60 FPS (~16ms)
+
+    %% 2. Ciclo de actualización (Game Loop)
+    loop Bucle de Juego (Timer cada 16ms)
+        PJ->>JE: actualizar()
+        
+        %% Movimiento Empleado
+        JE->>E: mover(muros)
+        JE->>E: actualizarBuffos(16)
+        
+        %% Jefe e IA
+        JE->>J: seguirEmpleado(posicionEmpleado)
+        JE->>J: puedeAtacar()
+        alt El Jefe puede atacar
+            JE->>J: atacar(posicionEmpleado)
+            J-->>JE: Proyectil instanciado
+            Note over JE: Agrega proyectil a lista activa
+            JE->>J: registrarAtaque()
+        end
+
+        %% Balística y Colisiones
+        loop Por cada Proyectil activo
+            JE->>P: mover()
+            alt Colisiona con Empleado
+                JE->>P: impacto()
+                JE->>E: recibirDanio(20)
+            else Colisiona con Muro interior o límite
+                JE->>P: impacto()
+                Note over JE: Se remueve el proyectil inactivo
+            end
+        end
+
+        %% 3. Redibujado en pantalla
+        PJ->>PJ: repaint()
+        PJ->>JE: getJugador(), getJefe(), getMuros(), getProyectiles()
+        PJ->>PJ: dibujarMapa(), dibujarBuffos(), dibujarEntidades(), dibujarHUD()
+    end
 ```
 
 ---
@@ -311,11 +492,12 @@ El sistema modela fielmente las exigencias académicas de la materia mediante la
 ## Concurrencia y Aspectos Técnicos
 
 - **Bucle Principal Multihilo (Game Loop):**  
-  Implementado mediante `Runnable` en `JuegoEngine`, manteniendo un hilo de ejecución secundario con una tasa estable de ciclos de actualización de física (`tick()`) y refresco visual (`render()`), independiente del hilo de interfaz de usuario de Swing (Event Dispatch Thread).
+  Implementado mediante un temporizador asíncrono Swing (`javax.swing.Timer` a 60 FPS / ~16ms) en `PanelJuego`, que desacopla la lógica de actualización en `JuegoEngine.actualizar()` del repintado gráfico periódico.
 - **Prevención de Parpadeo (Double Buffering):**  
-  Mecanismo provisto por Java Swing y `Graphics2D` dentro de `PanelInicio` para realizar el renderizado en un búfer de memoria intermedio antes de transferirlo al canvas visible.
+  Mecanismo nativo provisto por Java Swing y `JPanel` que realiza el renderizado en un búfer de memoria antes de transferirlo al canvas visible.
 - **Persistencia de Datos:**  
   Administrada por `GestorArchivos` para garantizar el almacenamiento duradero del Top 10 del ranking mediante serialización binaria (`Serializable`) y la carga dinámica de mapas matriciales desde archivos de texto plano (.txt).
+
 ---
 
 ## Alcance y Plan de Trabajo

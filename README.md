@@ -49,10 +49,7 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **Objetivos:** Terminar la carrera y trabajar en el área.
 * **Conocimientos:** Manejo básico de Bash e ingeniería de requerimientos, y sé bastante sobre componentes de PC (marcas y modelos).
 * **Gustos:** Me gusta ver series, jugar videojuegos solo y con amigos, juntarme con ellos y hacer ejercicio. También disfruto leer e informarme sobre los cambios en las tendencias de los componentes de PC (modelos, arquitecturas, nuevos procesos de fabricación y, en general, todas las novedades de este tema).
-* **Logros:** Tuve un buen rendimiento en la escuela secundaria y fui abanderado, además de haber recibido múltiples diplomas académicos.
----
-
-## Bitácora de Clases y Avances del Equipo
+* **Logros:** Tuve un buen rendimiento en la escuela secundaria y fui abanderado, además de haber recibido múltiples diplomas académicos.\n---\n\n## Bitácora de Clases y Avances del Equipo
 * **10-08-26** - Ejercicios propuestos de IfElse.
 * **24-08-26** - Resolución de la Guia de Ejercitación.
 * **31-08-26** - Resolución de la Actividad Grupal Clase UML.
@@ -65,4 +62,4 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **13-10-26** - Creamos las ramas y definimos atributos y metodos basicos en EntidadMovil, emplado, dirección y posición
 * **18-10-26** - Definimos atributos en EntidadEstatica y agregamos metodos en IColisionable y EntidadMovil.java, ademas de implementar herencia en Muro, crear el Main y crear las bases funcionales en vista
 * **19-10-26** - Implementamos clase Empleado con manejo de salud y buffos, tamaños dinamicos en vista, boton y facilidad para cambiar la fuente, nueva fuente, clase GestorRecursos, clase PanelJuego, sistema de carga de sprites y actualizar VentanaJuego
-* **26-10-26** - Implementación del sistema de potenciadores (interfaz Buffo, Cafe, Aguinaldo y ZonaBuffo), colisiones del empleado con muros, calibración de patrullaje exterior y disparo del Jefe, diseño y carga dinámica de mapas desde archivo (nivel_1.txt), controles por teclado (WASD/flechas), renderizado completo de mapa y HUD en PanelJuego, y vinculación de inicio en VentanaJuego.
+* **26-10-26** - Implementación del sistema de potenciadores (interfaz Buffo, Cafe, Aguinaldo y ZonaBuffo), colisiones del empleado con muros, calibración de patrullaje exterior y disparo del Jefe, diseño y carga dinámica de mapas desde archivo (nivel_1.txt), controles por teclado (WASD/flechas), renderizado completo de mapa y HUD en PanelJuego, reestructuración modular de la vista con PanelPrincipal (CardLayout) y PanelInicio, e integración del sistema de combate y colisiones de proyectiles con muros y jugador.
