@@ -118,13 +118,39 @@ public class PanelRanking extends JPanel {
     }
 
     /**
-     * Define las dimensiones fijas de los componentes y los listeners de acción.
+     * Define las dimensiones proporcionales de los componentes y los listeners de acción.
      */
     private void configurarDisposicionYEventos() {
-        etiquetaTituloPrincipal.setBounds(25, 20, 550, 30);
-        panelDesplazamientoTabla.setBounds(35, 65, 530, 290);
-        botonVolverMenu.setBounds(180, 375, 240, 40);
+        // Hacemos que el panel escuche cuando cambia de tamaño
+        this.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                int anchoVentana = getWidth();
+                int altoVentana = getHeight();
 
+                // 1. Título superior: centrado y ancho proporcional (85% del ancho de la ventana)
+                int anchoTitulo = (int) (anchoVentana * 0.85);
+                int xTitulo = (anchoVentana - anchoTitulo) / 2;
+                int yTitulo = (int) (altoVentana * 0.05); // 5% desde arriba
+                etiquetaTituloPrincipal.setBounds(xTitulo, yTitulo, anchoTitulo, 30);
+
+                // 2. Tabla / JScrollPane: ocupa el centro con márgenes proporcionales
+                int anchoTabla = (int) (anchoVentana * 0.88);
+                int xTabla = (anchoVentana - anchoTabla) / 2;
+                int yTabla = (int) (altoVentana * 0.16); // Debajo del título
+                int altoTabla = (int) (altoVentana * 0.65); // Ocupa el 65% del alto
+                panelDesplazamientoTabla.setBounds(xTabla, yTabla, anchoTabla, altoTabla);
+
+                // 3. Botón inferior: centrado horizontalmente cerca del pie de página
+                int anchoBoton = (int) (anchoVentana * 0.40); // 40% del ancho de la ventana
+                int xBoton = (anchoVentana - anchoBoton) / 2;
+                int yBoton = (int) (altoVentana * 0.85); // 85% hacia abajo
+                int altoBoton = 40;
+                botonVolverMenu.setBounds(xBoton, yBoton, anchoBoton, altoBoton);
+            }
+        });
+
+        // Evento de clic del botón (se mantiene igual)
         botonVolverMenu.addActionListener(eventoClick -> {
             coordinadorNavegacion.mostrarPanel("INICIO");
         });
