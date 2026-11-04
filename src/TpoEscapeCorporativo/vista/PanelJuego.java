@@ -301,40 +301,51 @@ public class PanelJuego extends JPanel {
                 codigoTecla == KeyEvent.VK_D;
     }
 
-    // Actualiza la dirección del empleado según las teclas que siguen presionadas.
+    // Convierte una tecla del teclado en una dirección de movimiento.
+    private Direccion obtenerDireccion(int tecla) {
+
+        switch (tecla) {
+            case KeyEvent.VK_UP:
+            case KeyEvent.VK_W:
+                return Direccion.ARRIBA;
+
+            case KeyEvent.VK_DOWN:
+            case KeyEvent.VK_S:
+                return Direccion.ABAJO;
+
+            case KeyEvent.VK_LEFT:
+            case KeyEvent.VK_A:
+                return Direccion.IZQUIERDA;
+
+            case KeyEvent.VK_RIGHT:
+            case KeyEvent.VK_D:
+                return Direccion.DERECHA;
+
+            default:
+                // Si no es una tecla de movimiento, devuelve null.
+                return null;
+        }
+    }
+
+    // Actualiza la dirección según las teclas que siguen presionadas.
     private void actualizarDireccion() {
 
-        // Por defecto, el personaje permanece detenido.
+        // Por defecto, el empleado permanece detenido.
         Direccion direccion = Direccion.NINGUNA;
 
-        // Recorremos las teclas en el orden en que fueron presionadas.
+        // Recorremos las teclas presionadas en orden.
         for (Integer tecla : teclasPresionadas) {
 
-            // La última tecla de movimiento recorrida determina la dirección.
-            switch (tecla) {
-                case KeyEvent.VK_UP:
-                case KeyEvent.VK_W:
-                    direccion = Direccion.ARRIBA;
-                    break;
+            // Obtenemos la dirección correspondiente a la tecla.
+            Direccion nuevaDireccion = obtenerDireccion(tecla);
 
-                case KeyEvent.VK_DOWN:
-                case KeyEvent.VK_S:
-                    direccion = Direccion.ABAJO;
-                    break;
-
-                case KeyEvent.VK_LEFT:
-                case KeyEvent.VK_A:
-                    direccion = Direccion.IZQUIERDA;
-                    break;
-
-                case KeyEvent.VK_RIGHT:
-                case KeyEvent.VK_D:
-                    direccion = Direccion.DERECHA;
-                    break;
+            // Si es una tecla de movimiento, actualizamos la dirección.
+            if (nuevaDireccion != null) {
+                direccion = nuevaDireccion;
             }
         }
 
-        // Enviamos la dirección resultante al motor del juego.
+        // Enviamos la dirección resultante al motor.
         motor.procesarEntrada(direccion);
     }
 
@@ -353,52 +364,66 @@ public class PanelJuego extends JPanel {
             public void keyPressed(KeyEvent e) {
                 int codigoTecla = e.getKeyCode();
 
-                // Acciones de fin de partida (victoria o derrota)
-                if (motor.getEstadoActual() != null && motor.getEstadoActual().esFinDePartida()) {
-                    if (codigoTecla == KeyEvent.VK_ENTER && motor.getEstadoActual() == EstadoJuego.VICTORIA) {
+                // Verificamos si la partida terminó.
+                if (motor.getEstadoActual() != null &&
+                        motor.getEstadoActual().esFinDePartida()) {
+
+                    // ENTER permite avanzar al siguiente nivel si ganamos.
+                    if (codigoTecla == KeyEvent.VK_ENTER &&
+                            motor.getEstadoActual() == EstadoJuego.VICTORIA) {
+
                         if (motor.haySiguienteNivel()) {
                             puntajeRegistrado = false;
                             motor.pasarSiguienteNivel();
+                            teclasPresionadas.clear();
                             iniciarJuego();
                         } else {
-                            // Si completo el último nivel, ENTER lo devuelve al menú principal
+                            // Si terminamos el último nivel, volvemos al menú.
                             motor.reiniciarPartidaCompleta();
+                            teclasPresionadas.clear();
+
                             if (panelPrincipal != null) {
                                 panelPrincipal.mostrarPanel("INICIO");
                             }
                         }
+                        return;
                     }
-                    // Reintentar el nivel actual con R
-                    else if (codigoTecla == KeyEvent.VK_R) {
+
+                    // R permite reiniciar el nivel actual.
+                    if (codigoTecla == KeyEvent.VK_R) {
                         puntajeRegistrado = false;
                         motor.reiniciarNivel(motor.getNumeroNivelActual());
+                        teclasPresionadas.clear();
                         iniciarJuego();
+                        return;
                     }
-                    // Volver al menú principal con M
-                    else if (codigoTecla == KeyEvent.VK_M) {
+
+                    // M permite volver al menú principal.
+                    if (codigoTecla == KeyEvent.VK_M) {
                         motor.reiniciarPartidaCompleta();
+                        teclasPresionadas.clear();
+
                         if (panelPrincipal != null) {
                             panelPrincipal.mostrarPanel("INICIO");
                         }
+                        return;
                     }
                 }
 
-                // Gestión de movimiento y pausa.
-                if (esTeclaMovimiento(codigoTecla)) {
+                // Obtenemos la dirección correspondiente a la tecla presionada.
+                Direccion direccion = obtenerDireccion(codigoTecla);
 
-                    // Eliminamos la tecla si ya estaba registrada.
-                    // Esto permite actualizar su prioridad si vuelve a presionarse.
-                    teclasPresionadas.remove(codigoTecla);
-
-                    // Registramos la tecla como la última presionada.
-                    teclasPresionadas.add(codigoTecla);
+                // Si es una tecla de movimiento, actualizamos las teclas presionadas.
+                if (direccion != null) {
+                    // Evitamos modificar el orden si la tecla ya estaba presionada.
+                    if (!teclasPresionadas.contains(codigoTecla)) {
+                        teclasPresionadas.add(codigoTecla);
+                    }
 
                     // Actualizamos la dirección del empleado.
                     actualizarDireccion();
-
                 } else {
-
-                    // Gestión de las teclas especiales.
+                    // Gestionamos las teclas especiales.
                     switch (codigoTecla) {
                         case KeyEvent.VK_P:
                         case KeyEvent.VK_ESCAPE:
@@ -414,11 +439,13 @@ public class PanelJuego extends JPanel {
 
                 int codigoTecla = e.getKeyCode();
 
-                // Eliminamos de la colección la tecla que se acaba de soltar.
-                teclasPresionadas.remove(codigoTecla);
+                // Eliminamos la tecla que acaba de liberarse.
+                boolean teclaEliminada = teclasPresionadas.remove(codigoTecla);
 
-                // Recalculamos la dirección según las teclas que siguen presionadas.
-                actualizarDireccion();
+                // Si era una tecla de movimiento, recalculamos la dirección.
+                if (teclaEliminada) {
+                    actualizarDireccion();
+                }
             }
         });
     }
