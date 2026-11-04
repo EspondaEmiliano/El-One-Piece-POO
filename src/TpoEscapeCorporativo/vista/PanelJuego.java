@@ -19,6 +19,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Set;
+import java.util.LinkedHashSet;
 
 public class PanelJuego extends JPanel {
 
@@ -31,6 +33,9 @@ public class PanelJuego extends JPanel {
     private final PanelPrincipal panelPrincipal;
     private Timer timer;
     private boolean puntajeRegistrado = false;
+    // Almacena las teclas de movimiento que actualmente están presionadas.
+    // LinkedHashSet conserva el orden en que se agregaron las teclas.
+    private final Set<Integer> teclasPresionadas = new LinkedHashSet<>();
 
     public PanelJuego(JuegoEngine motor, PanelPrincipal panelPrincipal) {
         this.motor = motor;
@@ -283,6 +288,56 @@ public class PanelJuego extends JPanel {
         }
     }
 
+    // Comprueba si una tecla corresponde a una dirección de movimiento.
+    private boolean esTeclaMovimiento(int codigoTecla) {
+
+        return codigoTecla == KeyEvent.VK_UP ||
+                codigoTecla == KeyEvent.VK_W ||
+                codigoTecla == KeyEvent.VK_DOWN ||
+                codigoTecla == KeyEvent.VK_S ||
+                codigoTecla == KeyEvent.VK_LEFT ||
+                codigoTecla == KeyEvent.VK_A ||
+                codigoTecla == KeyEvent.VK_RIGHT ||
+                codigoTecla == KeyEvent.VK_D;
+    }
+
+    // Actualiza la dirección del empleado según las teclas que siguen presionadas.
+    private void actualizarDireccion() {
+
+        // Por defecto, el personaje permanece detenido.
+        Direccion direccion = Direccion.NINGUNA;
+
+        // Recorremos las teclas en el orden en que fueron presionadas.
+        for (Integer tecla : teclasPresionadas) {
+
+            // La última tecla de movimiento recorrida determina la dirección.
+            switch (tecla) {
+                case KeyEvent.VK_UP:
+                case KeyEvent.VK_W:
+                    direccion = Direccion.ARRIBA;
+                    break;
+
+                case KeyEvent.VK_DOWN:
+                case KeyEvent.VK_S:
+                    direccion = Direccion.ABAJO;
+                    break;
+
+                case KeyEvent.VK_LEFT:
+                case KeyEvent.VK_A:
+                    direccion = Direccion.IZQUIERDA;
+                    break;
+
+                case KeyEvent.VK_RIGHT:
+                case KeyEvent.VK_D:
+                    direccion = Direccion.DERECHA;
+                    break;
+            }
+        }
+
+        // Enviamos la dirección resultante al motor del juego.
+        motor.procesarEntrada(direccion);
+    }
+
     private void dibujarTextoCentrado(Graphics g, String texto, int y) {
         FontMetrics fm = g.getFontMetrics();
         int x = (ANCHO - fm.stringWidth(texto)) / 2;
@@ -328,47 +383,42 @@ public class PanelJuego extends JPanel {
                     }
                 }
 
-                // Gestión de movimiento y pausa
-                switch (codigoTecla) {
-                    case KeyEvent.VK_UP:
-                    case KeyEvent.VK_W:
-                        motor.procesarEntrada(Direccion.ARRIBA);
-                        break;
-                    case KeyEvent.VK_DOWN:
-                    case KeyEvent.VK_S:
-                        motor.procesarEntrada(Direccion.ABAJO);
-                        break;
-                    case KeyEvent.VK_LEFT:
-                    case KeyEvent.VK_A:
-                        motor.procesarEntrada(Direccion.IZQUIERDA);
-                        break;
-                    case KeyEvent.VK_RIGHT:
-                    case KeyEvent.VK_D:
-                        motor.procesarEntrada(Direccion.DERECHA);
-                        break;
-                    case KeyEvent.VK_P:
-                    case KeyEvent.VK_ESCAPE:
-                        motor.alternarPausa();
-                        if (motor.getEstadoActual() == EstadoJuego.PAUSADO) {
-                            GestorAudio.getInstance().pausarMusica();
-                        } else if (motor.getEstadoActual() == EstadoJuego.JUGANDO) {
-                            GestorAudio.getInstance().iniciarMusica();
-                        }
-                        repaint();
-                        break;
+                // Gestión de movimiento y pausa.
+                if (esTeclaMovimiento(codigoTecla)) {
+
+                    // Eliminamos la tecla si ya estaba registrada.
+                    // Esto permite actualizar su prioridad si vuelve a presionarse.
+                    teclasPresionadas.remove(codigoTecla);
+
+                    // Registramos la tecla como la última presionada.
+                    teclasPresionadas.add(codigoTecla);
+
+                    // Actualizamos la dirección del empleado.
+                    actualizarDireccion();
+
+                } else {
+
+                    // Gestión de las teclas especiales.
+                    switch (codigoTecla) {
+                        case KeyEvent.VK_P:
+                        case KeyEvent.VK_ESCAPE:
+                            motor.alternarPausa();
+                            repaint();
+                            break;
+                    }
                 }
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
+
                 int codigoTecla = e.getKeyCode();
-                // Frena al personaje solo si la tecla liberada correspondía a una dirección
-                if (codigoTecla == KeyEvent.VK_UP || codigoTecla == KeyEvent.VK_W ||
-                        codigoTecla == KeyEvent.VK_DOWN || codigoTecla == KeyEvent.VK_S ||
-                        codigoTecla == KeyEvent.VK_LEFT || codigoTecla == KeyEvent.VK_A ||
-                        codigoTecla == KeyEvent.VK_RIGHT || codigoTecla == KeyEvent.VK_D) {
-                    motor.procesarEntrada(Direccion.NINGUNA);
-                }
+
+                // Eliminamos de la colección la tecla que se acaba de soltar.
+                teclasPresionadas.remove(codigoTecla);
+
+                // Recalculamos la dirección según las teclas que siguen presionadas.
+                actualizarDireccion();
             }
         });
     }
