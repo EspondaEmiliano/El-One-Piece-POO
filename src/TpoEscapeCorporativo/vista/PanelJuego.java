@@ -22,6 +22,11 @@ import java.awt.event.KeyEvent;
 import java.util.Set;
 import java.util.LinkedHashSet;
 
+/**
+ * Lienzo principal de renderizado del juego. Dibuja el laberinto, los proyectiles,
+ * las zonas de potenciadores, las entidades vivas, la interfaz superior (HUD)
+ * y gestiona las entradas de teclado del usuario.
+ */
 public class PanelJuego extends JPanel {
 
     public static final int ANCHO = 600;
@@ -33,8 +38,7 @@ public class PanelJuego extends JPanel {
     private final PanelPrincipal panelPrincipal;
     private Timer timer;
     private boolean puntajeRegistrado = false;
-    // Almacena las teclas de movimiento que actualmente están presionadas.
-    // LinkedHashSet conserva el orden en que se agregaron las teclas.
+    // Almacena las teclas de movimiento que actualmente están presionadas conservando el orden de pulsación.
     private final Set<Integer> teclasPresionadas = new LinkedHashSet<>();
 
     public PanelJuego(JuegoEngine motor, PanelPrincipal panelPrincipal) {
@@ -49,7 +53,6 @@ public class PanelJuego extends JPanel {
         configurarControles();
     }
 
-    // Constructor sobrecargado por compatibilidad
     public PanelJuego(JuegoEngine motor) {
         this(motor, null);
     }
@@ -63,7 +66,6 @@ public class PanelJuego extends JPanel {
                 timer.stop();
                 GestorAudio.getInstance().detenerMusica();
 
-                // Si ganó la partida y aún no registró su puntaje en el ranking
                 if (motor.getEstadoActual() == EstadoJuego.VICTORIA && !puntajeRegistrado) {
                     puntajeRegistrado = true;
                     solicitarYGuardarPuntajeJugador();
@@ -74,7 +76,7 @@ public class PanelJuego extends JPanel {
 
     /**
      * Solicita al empleado su nombre mediante un cuadro de diálogo Swing
-     * y persiste su récord en el archivo binario del Top 10
+     * y persiste su récord en el archivo binario del Top 10.
      */
     private void solicitarYGuardarPuntajeJugador() {
         SwingUtilities.invokeLater(() -> {
@@ -86,7 +88,6 @@ public class PanelJuego extends JPanel {
                     JOptionPane.PLAIN_MESSAGE
             );
 
-            // Si cancela la ventana o deja en blanco, motor asignará "Empleado"
             if (aliasIngresado != null) {
                 motor.guardarPuntaje(aliasIngresado);
                 repaint();
@@ -113,16 +114,13 @@ public class PanelJuego extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // 1. Calculamos la proporción basada en el tamaño actual de la ventana
+        // Escalado proporcional en función del tamaño de ventana
         double escalaX = (double) getWidth() / ANCHO;
         double escalaY = (double) getHeight() / ALTO;
 
         Graphics2D g2d = (Graphics2D) g.create();
-
-        // 2. Aplicamos la proporción a todo para que se estire/encoja solo
         g2d.scale(escalaX, escalaY);
 
-        // 3. Dibujamos todo usando este lápiz escalado (g2d)
         dibujarHUD(g2d);
 
         Graphics2D gJuego = (Graphics2D) g2d.create();
@@ -152,7 +150,7 @@ public class PanelJuego extends JPanel {
                 int alto = posicion.getY2() - y;
 
                 Image sprite = null;
-                if (zona.getBuffo() instanceof Cafe ) {
+                if (zona.getBuffo() instanceof Cafe) {
                     sprite = GestorRecursos.getSpriteCafe();
                 } else if (zona.getBuffo() instanceof Aguinaldo) {
                     sprite = GestorRecursos.getSpriteAguinaldo();
@@ -165,19 +163,34 @@ public class PanelJuego extends JPanel {
     }
 
     /**
-     * Dibuja las entidades activas del juego.
+     * Dibuja las entidades activas del juego: el empleado, el jefe y los proyectiles.
      */
     private void dibujarEntidades(Graphics g) {
-        // Dibujar jugador
+        // Renderizado del empleado y de su escudo protector si se encuentra activo
         Empleado jugador = motor.getJugador();
         if (jugador != null) {
             Posicion pos = jugador.getPosicion();
+            int x = pos.getX1();
+            int y = pos.getY1();
+            int ancho = pos.getX2() - x;
+            int alto = pos.getY2() - y;
+
+            if (jugador.tieneEscudo()) {
+                Graphics2D gHalo = (Graphics2D) g.create();
+                gHalo.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                gHalo.setColor(new Color(0, 220, 255, 60));
+                gHalo.fillOval(x - 4, y - 4, ancho + 8, alto + 8);
+                gHalo.setColor(new Color(0, 255, 255, 190));
+                gHalo.setStroke(new BasicStroke(1.5f));
+                gHalo.drawOval(x - 4, y - 4, ancho + 8, alto + 8);
+                gHalo.dispose();
+            }
+
             Image spriteJugador = GestorRecursos.getSpriteEmpleado(jugador.getDireccionVisual());
-            g.drawImage(spriteJugador, pos.getX1(), pos.getY1(),
-                    pos.getX2() - pos.getX1(), pos.getY2() - pos.getY1(), this);
+            g.drawImage(spriteJugador, x, y, ancho, alto, this);
         }
 
-        // Dibujar jefe
+        // Renderizado del jefe
         Jefe jefe = motor.getJefe();
         if (jefe != null) {
             Posicion pos = jefe.getPosicion();
@@ -186,7 +199,7 @@ public class PanelJuego extends JPanel {
                     pos.getX2() - pos.getX1(), pos.getY2() - pos.getY1(), this);
         }
 
-        // Dibujar proyectiles
+        // Renderizado de las palas proyectadas
         for (Proyectil proyectil : motor.getProyectiles()) {
             if (proyectil.getEstaActivo()) {
                 Posicion posicionProyectil = proyectil.getPosicion();
@@ -198,14 +211,12 @@ public class PanelJuego extends JPanel {
     }
 
     /**
-     * Dibuja la barra superior con los indicadores: salud, velocidad, tiempo restante y puntaje.
+     * Dibuja la barra superior del HUD con el estado del escudo, tiempo restante, puntaje, velocidad y nivel.
      */
     private void dibujarHUD(Graphics g) {
-        // Fondo de la barra superior del HUD
         g.setColor(new Color(18, 18, 18));
         g.fillRect(0, 0, ANCHO, ALTO_HUD);
 
-        // Línea divisoria entre el HUD y el área de juego
         g.setColor(new Color(55, 55, 55));
         g.drawLine(0, ALTO_HUD - 1, ANCHO, ALTO_HUD - 1);
 
@@ -214,26 +225,35 @@ public class PanelJuego extends JPanel {
 
         g.setFont(GestorRecursos.getFuenteArcade(11f));
 
-        // Fila 1: Salud, Tiempo y Puntaje
-        g.setColor(jugador.getSalud() > 30 ? Color.GREEN : Color.RED);
-        g.drawString("HP: " + jugador.getSalud() + "/100", 15, 23);
+        // Fila 1: Indicador de Escudo, Tiempo Restante y Puntaje Acumulado
+        if (jugador.tieneEscudo()) {
+            g.setColor(new Color(50, 255, 100));
+            g.drawString("ESCUDO: ACTIVO", 15, 23);
+        } else {
+            g.setColor(new Color(130, 130, 130));
+            g.drawString("ESCUDO: INACTIVO", 15, 23);
+        }
 
         int tiempoRestante = motor.getTiempoRestanteSegundos();
         g.setColor(tiempoRestante <= 10 ? Color.RED : Color.CYAN);
         g.drawString("TIEMPO: " + tiempoRestante + "s", 235, 23);
 
-        g.setColor(new Color(255, 215, 0)); // Dorado
+        g.setColor(new Color(255, 215, 0));
         g.drawString("PTS: " + motor.getPuntajeAcumulado(), 450, 23);
 
-        // Fila 2: Velocidad y Buff activo
+        // Fila 2: Velocidad de desplazamiento, Buff consumible activo y Nivel actual
         g.setColor(Color.WHITE);
         g.drawString("VEL: " + jugador.getVelocidad(), 15, 43);
 
         if (!jugador.getBuffosActivos().isEmpty()) {
             g.setFont(GestorRecursos.getFuenteArcade(9f));
             g.setColor(new Color(255, 215, 0));
-            g.drawString("BUFF: " + jugador.getBuffosActivos().get(0).getNombre(), 235, 43);
+            g.drawString("BUFF: " + jugador.getBuffosActivos().get(0).getNombre(), 215, 43);
         }
+
+        g.setFont(GestorRecursos.getFuenteArcade(10f));
+        g.setColor(new Color(0, 220, 255));
+        g.drawString("NIVEL: " + motor.getNumeroNivelActual() + "/" + motor.getTotalNiveles(), 450, 43);
     }
 
     /**
@@ -273,24 +293,28 @@ public class PanelJuego extends JPanel {
             g.setColor(new Color(255, 215, 0));
             dibujarTextoCentrado(g, "Puntaje acumulado: " + motor.getPuntajeAcumulado(), ALTO / 2 + 15);
 
-            // Opciones interactivas para el jugador
+            // Opciones interactivas según si restan niveles por superar
             g.setFont(GestorRecursos.getFuenteArcade(9f));
-            if (esVictoria && motor.haySiguienteNivel()) {
-                g.setColor(Color.CYAN);
-                dibujarTextoCentrado(g, "[ENTER] - SIGUIENTE NIVEL", ALTO / 2 + 50);
-                g.setColor(Color.LIGHT_GRAY);
-                dibujarTextoCentrado(g, "[M] - VOLVER AL MENU PRINCIPAL", ALTO / 2 + 75);
+            if (esVictoria) {
+                if (motor.haySiguienteNivel()) {
+                    g.setColor(Color.CYAN);
+                    dibujarTextoCentrado(g, "[ENTER] - SIGUIENTE NIVEL", ALTO / 2 + 50);
+                    g.setColor(Color.LIGHT_GRAY);
+                    dibujarTextoCentrado(g, "[M] - VOLVER AL MENU PRINCIPAL", ALTO / 2 + 75);
+                } else {
+                    g.setColor(new Color(255, 215, 0));
+                    dibujarTextoCentrado(g, "¡FELICITACIONES! HAS COMPLETADO TODOS LOS NIVELES", ALTO / 2 + 50);
+                    g.setColor(Color.CYAN);
+                    dibujarTextoCentrado(g, "[ENTER] / [M] - VOLVER AL MENU PRINCIPAL", ALTO / 2 + 75);
+                }
             } else {
                 g.setColor(Color.YELLOW);
                 dibujarTextoCentrado(g, "[R] - REINTENTAR / [M] - VOLVER AL MENU", ALTO / 2 + 60);
             }
-
         }
     }
 
-    // Comprueba si una tecla corresponde a una dirección de movimiento.
     private boolean esTeclaMovimiento(int codigoTecla) {
-
         return codigoTecla == KeyEvent.VK_UP ||
                 codigoTecla == KeyEvent.VK_W ||
                 codigoTecla == KeyEvent.VK_DOWN ||
@@ -301,51 +325,33 @@ public class PanelJuego extends JPanel {
                 codigoTecla == KeyEvent.VK_D;
     }
 
-    // Convierte una tecla del teclado en una dirección de movimiento.
     private Direccion obtenerDireccion(int tecla) {
-
         switch (tecla) {
             case KeyEvent.VK_UP:
             case KeyEvent.VK_W:
                 return Direccion.ARRIBA;
-
             case KeyEvent.VK_DOWN:
             case KeyEvent.VK_S:
                 return Direccion.ABAJO;
-
             case KeyEvent.VK_LEFT:
             case KeyEvent.VK_A:
                 return Direccion.IZQUIERDA;
-
             case KeyEvent.VK_RIGHT:
             case KeyEvent.VK_D:
                 return Direccion.DERECHA;
-
             default:
-                // Si no es una tecla de movimiento, devuelve null.
                 return null;
         }
     }
 
-    // Actualiza la dirección según las teclas que siguen presionadas.
     private void actualizarDireccion() {
-
-        // Por defecto, el empleado permanece detenido.
         Direccion direccion = Direccion.NINGUNA;
-
-        // Recorremos las teclas presionadas en orden.
         for (Integer tecla : teclasPresionadas) {
-
-            // Obtenemos la dirección correspondiente a la tecla.
             Direccion nuevaDireccion = obtenerDireccion(tecla);
-
-            // Si es una tecla de movimiento, actualizamos la dirección.
             if (nuevaDireccion != null) {
                 direccion = nuevaDireccion;
             }
         }
-
-        // Enviamos la dirección resultante al motor.
         motor.procesarEntrada(direccion);
     }
 
@@ -364,24 +370,16 @@ public class PanelJuego extends JPanel {
             public void keyPressed(KeyEvent e) {
                 int codigoTecla = e.getKeyCode();
 
-                // Verificamos si la partida terminó.
-                if (motor.getEstadoActual() != null &&
-                        motor.getEstadoActual().esFinDePartida()) {
-
-                    // ENTER permite avanzar al siguiente nivel si ganamos.
-                    if (codigoTecla == KeyEvent.VK_ENTER &&
-                            motor.getEstadoActual() == EstadoJuego.VICTORIA) {
-
+                if (motor.getEstadoActual() != null && motor.getEstadoActual().esFinDePartida()) {
+                    if (codigoTecla == KeyEvent.VK_ENTER && motor.getEstadoActual() == EstadoJuego.VICTORIA) {
                         if (motor.haySiguienteNivel()) {
                             puntajeRegistrado = false;
                             motor.pasarSiguienteNivel();
                             teclasPresionadas.clear();
                             iniciarJuego();
                         } else {
-                            // Si terminamos el último nivel, volvemos al menú.
                             motor.reiniciarPartidaCompleta();
                             teclasPresionadas.clear();
-
                             if (panelPrincipal != null) {
                                 panelPrincipal.mostrarPanel("INICIO");
                             }
@@ -389,7 +387,6 @@ public class PanelJuego extends JPanel {
                         return;
                     }
 
-                    // R permite reiniciar el nivel actual.
                     if (codigoTecla == KeyEvent.VK_R) {
                         puntajeRegistrado = false;
                         motor.reiniciarNivel(motor.getNumeroNivelActual());
@@ -398,11 +395,9 @@ public class PanelJuego extends JPanel {
                         return;
                     }
 
-                    // M permite volver al menú principal.
                     if (codigoTecla == KeyEvent.VK_M) {
                         motor.reiniciarPartidaCompleta();
                         teclasPresionadas.clear();
-
                         if (panelPrincipal != null) {
                             panelPrincipal.mostrarPanel("INICIO");
                         }
@@ -410,20 +405,13 @@ public class PanelJuego extends JPanel {
                     }
                 }
 
-                // Obtenemos la dirección correspondiente a la tecla presionada.
                 Direccion direccion = obtenerDireccion(codigoTecla);
-
-                // Si es una tecla de movimiento, actualizamos las teclas presionadas.
                 if (direccion != null) {
-                    // Evitamos modificar el orden si la tecla ya estaba presionada.
                     if (!teclasPresionadas.contains(codigoTecla)) {
                         teclasPresionadas.add(codigoTecla);
                     }
-
-                    // Actualizamos la dirección del empleado.
                     actualizarDireccion();
                 } else {
-                    // Gestionamos las teclas especiales.
                     switch (codigoTecla) {
                         case KeyEvent.VK_P:
                         case KeyEvent.VK_ESCAPE:
@@ -436,13 +424,8 @@ public class PanelJuego extends JPanel {
 
             @Override
             public void keyReleased(KeyEvent e) {
-
                 int codigoTecla = e.getKeyCode();
-
-                // Eliminamos la tecla que acaba de liberarse.
                 boolean teclaEliminada = teclasPresionadas.remove(codigoTecla);
-
-                // Si era una tecla de movimiento, recalculamos la dirección.
                 if (teclaEliminada) {
                     actualizarDireccion();
                 }
@@ -454,7 +437,6 @@ public class PanelJuego extends JPanel {
      * Dibuja los muros y la puerta de salida cargados desde el archivo de mapa.
      */
     private void dibujarMapa(Graphics g) {
-        // Dibujar la salida
         Salida salida = motor.getSalida();
         if (salida != null) {
             Posicion posS = salida.getPosicion();
@@ -463,7 +445,6 @@ public class PanelJuego extends JPanel {
                     posS.getX2() - posS.getX1(), posS.getY2() - posS.getY1(), this);
         }
 
-        // Dibujar los muros
         Image spriteMuro = GestorRecursos.getSpriteMuro();
         for (Muro muro : motor.getMuros()) {
             Posicion posM = muro.getPosicion();

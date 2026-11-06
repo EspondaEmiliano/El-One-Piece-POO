@@ -1,76 +1,93 @@
 package TpoEscapeCorporativo.modelo.items;
 
-import  TpoEscapeCorporativo.interfaces.Buffo;
-import  TpoEscapeCorporativo.modelo.entidades.Empleado;
+import TpoEscapeCorporativo.interfaces.Buffo;
+import TpoEscapeCorporativo.modelo.entidades.Empleado;
 
 /**
- * Representa un potenciador instantáneo de Aguinaldo.
- * Recupera salud al empleado (hasta su máximo de 100) y otorga puntos de bonificación.
+ * Representa el potenciador de Aguinaldo.
+ * Actúa como un escudo protector que permite al empleado absorber un (1)
+ * impacto de proyectil sin ser derrotado, además de otorgar puntos de bonificación.
  */
-public class Aguinaldo implements  Buffo {
+public class Aguinaldo implements Buffo {
 
-    private static final int SALUD_RECUPERADA_DEFAULT = 25; // +25 HP
-    private static final int PUNTOS_BONUS_DEFAULT = 500;    // +500 puntos
+    private static final int PUNTOS_BONUS_DEFAULT = 500; // +500 puntos
 
-    private final int saludRecuperada;
-    private final int  puntosBonus;
-    private boolean yaAplicado;
+    private final int puntosBonus;
+    private boolean roto;
 
     /**
-     * Constructor por defecto: recupera 25 de salud y otorga 500 puntos bonus.
+     * Constructor por defecto: otorga 500 puntos bonus y provee un escudo protector.
      */
     public Aguinaldo() {
-        this(SALUD_RECUPERADA_DEFAULT, PUNTOS_BONUS_DEFAULT);
+        this(PUNTOS_BONUS_DEFAULT);
     }
 
     /**
      * Constructor configurable.
      *
-     * @param saludRecuperada   Puntos de vida que restaura al empleado.
-     * @param puntosBonus       Puntos que suma a la puntuación del juego.
+     * @param puntosBonus Puntos que suma a la puntuación del juego al recolectarlo.
+     */
+    public Aguinaldo(int puntosBonus) {
+        this.puntosBonus = puntosBonus;
+        this.roto = false;
+    }
+
+    /**
+     * Constructor de compatibilidad (mantiene firma previa para pruebas o instanciaciones legadas).
+     *
+     * @param saludRecuperada Obsoleto: conservado por compatibilidad.
+     * @param puntosBonus     Puntos que suma al recolectarlo.
      */
     public Aguinaldo(int saludRecuperada, int puntosBonus) {
-        this.saludRecuperada = saludRecuperada;
-        this.puntosBonus = puntosBonus;
-        this.yaAplicado = false;
+        this(puntosBonus);
     }
 
     @Override
     public void aplicar(Empleado empleado) {
-        if (!yaAplicado && empleado != null) {
-            // Recupera vida hasta el límite máximo de salud (100)
-            int saludNueva = Math.min(Empleado.SALUD_DEFAULT, empleado.getSalud() + saludRecuperada);
-            empleado.setSalud(saludNueva);
-            this.yaAplicado = true;
+        if (empleado != null) {
+            empleado.setTieneEscudo(true);
+            this.roto = false;
         }
     }
 
     @Override
     public void remover(Empleado empleado) {
-        // Al ser un efecto de curación/consumible instantáneo, no requiere revertirse al expirar
+        if (empleado != null) {
+            empleado.setTieneEscudo(false);
+        }
     }
 
     @Override
     public void actualizar(long deltaTiempo) {
-        // No requiere conteo de tiempo porque se aplica de forma inmediata
+        // El escudo no expira por tiempo; permanece activo hasta que una pala impacta al empleado.
     }
 
     @Override
     public boolean estaExpirado() {
-        // Una vez aplicado se considera finalizado para liberarlo de la lista
-        return yaAplicado;
+        return roto;
+    }
+
+    /**
+     * Quiebra el escudo al absorber el impacto de un proyectil.
+     */
+    public void romper() {
+        this.roto = true;
     }
 
     @Override
     public String getNombre() {
-        return "Aguinaldo";
-    }
-
-    public int getSaludRecuperada() {
-        return saludRecuperada;
+        return "Escudo (Aguinaldo)";
     }
 
     public int getPuntosBonus() {
         return puntosBonus;
+    }
+
+    /**
+     * Conservado por compatibilidad de firma con versiones anteriores.
+     */
+    @Deprecated
+    public int getSaludRecuperada() {
+        return 0;
     }
 }

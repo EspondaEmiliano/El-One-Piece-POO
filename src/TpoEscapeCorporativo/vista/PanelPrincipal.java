@@ -80,4 +80,23 @@ public class PanelPrincipal {
             GestorAudio.getInstance().iniciarMusica();
         }
     }
+
+    /**
+     * Prepara el motor en un nivel específico y transiciona la vista a la pantalla de juego.
+     *
+     * @param numeroNivel Identificador del nivel en el que iniciará la partida.
+     */
+    public void iniciarJuegoEnNivel(int numeroNivel) {
+        motorEngine.reiniciarNivel(numeroNivel);
+        mostrarPanel("JUEGO");
+    }
+
+    /**
+     * Retorna la instancia del motor de juego administrada por la ventana.
+     *
+     * @return Motor de simulación y lógica de juego.
+     */
+    public JuegoEngine getMotorEngine() {
+        return motorEngine;
+    }
 }
