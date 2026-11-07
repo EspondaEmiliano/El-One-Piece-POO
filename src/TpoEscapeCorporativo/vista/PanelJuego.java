@@ -33,6 +33,10 @@ public class PanelJuego extends JPanel {
     private final PanelPrincipal panelPrincipal;
     private Timer timer;
     private boolean puntajeRegistrado = false;
+
+    // Almacena el alias durante la partida para no volver a solicitarlo en los siguientes niveles
+    private String aliasJugadorActual = null;
+
     // Almacena las teclas de movimiento que actualmente están presionadas.
     // LinkedHashSet conserva el orden en que se agregaron las teclas.
     private final Set<Integer> teclasPresionadas = new LinkedHashSet<>();
@@ -74,23 +78,31 @@ public class PanelJuego extends JPanel {
 
     /**
      * Solicita al empleado su nombre mediante un cuadro de diálogo Swing
-     * y persiste su récord en el archivo binario del Top 10
+     * la primera vez que supera un nivel, y en los niveles posteriores reutiliza
+     * automáticamente el mismo alias sin interrumpir la experiencia.
      */
     private void solicitarYGuardarPuntajeJugador() {
         SwingUtilities.invokeLater(() -> {
-            String mensaje = "Has logrado escapar!\nTu puntaje: " + motor.getPuntajeAcumulado() + "\n\nIngresa tu alias para el top 10:";
-            String aliasIngresado = JOptionPane.showInputDialog(
-                    this,
-                    mensaje,
-                    "Registrar Récord",
-                    JOptionPane.PLAIN_MESSAGE
-            );
+            // Solo muestra el popup si el jugador aún no ingresó su alias en esta partida
+            if (this.aliasJugadorActual == null || this.aliasJugadorActual.trim().isEmpty()) {
+                String mensaje = "¡Has logrado escapar!\nTu puntaje: " + motor.getPuntajeAcumulado() + "\n\nIngresa tu alias para el Top 10:";
+                String aliasIngresado = JOptionPane.showInputDialog(
+                        this,
+                        mensaje,
+                        "Registrar Récord",
+                        JOptionPane.PLAIN_MESSAGE
+                );
 
-            // Si cancela la ventana o deja en blanco, motor asignará "Empleado"
-            if (aliasIngresado != null) {
-                motor.guardarPuntaje(aliasIngresado);
-                repaint();
+                if (aliasIngresado != null && !aliasIngresado.trim().isEmpty()) {
+                    this.aliasJugadorActual = aliasIngresado.trim();
+                } else {
+                    this.aliasJugadorActual = "Empleado";
+                }
             }
+
+            // Persiste el récord utilizando el alias memorizado de la sesión
+            motor.guardarPuntaje(this.aliasJugadorActual);
+            repaint();
         });
     }
 
@@ -381,6 +393,7 @@ public class PanelJuego extends JPanel {
                             // Si terminamos el último nivel, volvemos al menú.
                             motor.reiniciarPartidaCompleta();
                             teclasPresionadas.clear();
+                            aliasJugadorActual = null;
 
                             if (panelPrincipal != null) {
                                 panelPrincipal.mostrarPanel("INICIO");
@@ -402,6 +415,7 @@ public class PanelJuego extends JPanel {
                     if (codigoTecla == KeyEvent.VK_M) {
                         motor.reiniciarPartidaCompleta();
                         teclasPresionadas.clear();
+                        aliasJugadorActual = null;
 
                         if (panelPrincipal != null) {
                             panelPrincipal.mostrarPanel("INICIO");
