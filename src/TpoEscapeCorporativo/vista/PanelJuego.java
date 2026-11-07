@@ -428,6 +428,13 @@ public class PanelJuego extends JPanel {
                         case KeyEvent.VK_P:
                         case KeyEvent.VK_ESCAPE:
                             motor.alternarPausa();
+                            if (motor.getEstadoActual() == EstadoJuego.PAUSADO) {
+                                GestorAudio.getInstance().pausarMusica();
+                                teclasPresionadas.clear();
+                                motor.procesarEntrada(Direccion.NINGUNA);
+                            } else if (motor.getEstadoActual() == EstadoJuego.JUGANDO) {
+                                GestorAudio.getInstance().iniciarMusica();
+                            }
                             repaint();
                             break;
                     }
