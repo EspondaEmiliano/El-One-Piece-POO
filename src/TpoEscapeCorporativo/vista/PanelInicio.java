@@ -33,13 +33,13 @@ public class PanelInicio extends JPanel {
 
         // 2. Título Arcade en color dorado
         cartelTitulo = new JLabel("ESCAPE CORPORATIVO", SwingConstants.CENTER);
-        cartelTitulo.setFont(GestorRecursos.getFuenteArcade(18f));
+        cartelTitulo.setFont(GestorRecursos.getFuenteArcade(22f));
         cartelTitulo.setForeground(new Color(255,215,0)); // Dorado
         add(cartelTitulo);
 
         // Botón estilo máquina arcade con cursor de mano y borde neón
         botonPlay = new JButton("INICIAR JUEGO");
-        botonPlay.setFont(GestorRecursos.getFuenteArcade(12f));
+        botonPlay.setFont(GestorRecursos.getFuenteArcade(13f));
         botonPlay.setBackground(new Color(30,130,60)); // Verde oscuro
         botonPlay.setForeground(Color.WHITE);
         botonPlay.setFocusable(false);
@@ -52,9 +52,9 @@ public class PanelInicio extends JPanel {
         });
         add(botonPlay);
 
-        // Botón para acceder al Ranking / TPO 10
+        // Botón para acceder al Ranking / TOP 10
         botonRanking = new JButton("RANKING / TOP 10");
-        botonRanking.setFont(GestorRecursos.getFuenteArcade(11f));
+        botonRanking.setFont(GestorRecursos.getFuenteArcade(12f));
         botonRanking.setBackground(new Color(20,80,140));
         botonRanking.setForeground(Color.WHITE);
         botonRanking.setFocusable(false);
@@ -68,23 +68,23 @@ public class PanelInicio extends JPanel {
 
         // 4. Carteles de controles e instrucciones
         lblControles = new JLabel("CONTROLES: FLECHAS O W-A-S-D", SwingConstants.CENTER);
-        lblControles.setFont(GestorRecursos.getFuenteArcade(8f));
+        lblControles.setFont(GestorRecursos.getFuenteArcade(9f));
         lblControles.setForeground(Color.CYAN);
         add(lblControles);
 
         lblObjetivo = new JLabel("ESQUIVA AL JEFE Y LLEGA A LA SALIDA [S]", SwingConstants.CENTER);
-        lblObjetivo.setFont(GestorRecursos.getFuenteArcade(8f));
+        lblObjetivo.setFont(GestorRecursos.getFuenteArcade(9f));
         lblObjetivo.setForeground(Color.LIGHT_GRAY);
         add(lblObjetivo);
 
-        lblPausa = new JLabel("PAUSA: TECLA 'P'", SwingConstants.CENTER);
-        lblPausa.setFont(GestorRecursos.getFuenteArcade(8f));
+        lblPausa = new JLabel("PAUSA: TECLA 'P' O 'ESC'", SwingConstants.CENTER);
+        lblPausa.setFont(GestorRecursos.getFuenteArcade(9f));
         lblPausa.setForeground(Color.YELLOW);
         add(lblPausa);
 
         // Etiqueta de volumen arcade
         lblVolumen = new JLabel("VOLUMEN: 70%", SwingConstants.CENTER);
-        lblVolumen.setFont(GestorRecursos.getFuenteArcade(8f));
+        lblVolumen.setFont(GestorRecursos.getFuenteArcade(9f));
         lblVolumen.setForeground(Color.CYAN);
         add(lblVolumen);
 
@@ -103,65 +103,67 @@ public class PanelInicio extends JPanel {
         });
         add(sliderVolumen);
 
-        // 5. Posicionamiento proporcional de los elementos
+        // 5. Posicionamiento armónico y proporcional de los elementos en 900x680
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
                 int ancho = getWidth();
-                int anchoSlider = 200;
+                int alto = getHeight();
 
                 // Título en la parte superior
-                cartelTitulo.setBounds((ancho - 550) / 2, 35, 550, 35);
+                cartelTitulo.setBounds((ancho - 700) / 2, (int) (alto * 0.05), 700, 45);
 
-                int anchoBoton = 240;
-                int altoBoton = 36;
+                int anchoBoton = 280;
+                int altoBoton = 44;
+                int yBotones = (int) (alto * 0.35);
 
                 // Botón Play arriba
-                botonPlay.setBounds((ancho - anchoBoton) / 2, 175, anchoBoton, altoBoton);
+                botonPlay.setBounds((ancho - anchoBoton) / 2, yBotones, anchoBoton, altoBoton);
 
                 // Botón Ranking justo debajo
-                botonRanking.setBounds((ancho - anchoBoton) / 2, 220, anchoBoton, altoBoton);
+                botonRanking.setBounds((ancho - anchoBoton) / 2, yBotones + 55, anchoBoton, altoBoton);
 
                 // Bloque de instrucciones inferior
-                lblControles.setBounds((ancho - 550) / 2, 275, 550, 20);
-                lblObjetivo.setBounds((ancho - 550) / 2, 305, 550, 20);
-                lblPausa.setBounds((ancho - 550) / 2, 335, 550, 20);
+                int yInstrucciones = (int) (alto * 0.54);
+                lblControles.setBounds((ancho - 650) / 2, yInstrucciones, 650, 24);
+                lblObjetivo.setBounds((ancho - 650) / 2, yInstrucciones + 30, 650, 24);
+                lblPausa.setBounds((ancho - 650) / 2, yInstrucciones + 60, 650, 24);
 
-                lblVolumen.setBounds((ancho - 300) / 2, 360, 300, 18);
-                sliderVolumen.setBounds((ancho - anchoSlider) / 2, 385, anchoSlider, 20);
+                int anchoSlider = 250;
+                int yVolumen = (int) (alto * 0.75);
+                lblVolumen.setBounds((ancho - 300) / 2, yVolumen, 300, 20);
+                sliderVolumen.setBounds((ancho - anchoSlider) / 2, yVolumen + 25, anchoSlider, 24);
             }
         });
-
-
     }
 
     /**
      * Dibuja los sprites del empleado y del jefe enfrentados
-     * en el espacio libre entre el título y el botón.
+     * en el espacio libre entre el título y los botones.
      */
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
         int centroX = getWidth() / 2;
-        int posY = 100;
-        int tamanioSprite = 48; // Escalados ligeramente para el menú
+        int posY = (int) (getHeight() * 0.16);
+        int tamanioSprite = 64; // Escalado a 64px para resolución grande 900x680
 
         // Empleado a la izquierda
         Image spriteEmpleado = GestorRecursos.getSpriteEmpleado();
         if (spriteEmpleado != null) {
-            g.drawImage(spriteEmpleado, centroX - 110, posY, tamanioSprite, tamanioSprite, this);
+            g.drawImage(spriteEmpleado, centroX - 140, posY, tamanioSprite, tamanioSprite, this);
         }
 
         // Versus o flecha en el centro
-        g.setFont(GestorRecursos.getFuenteArcade(12f));
+        g.setFont(GestorRecursos.getFuenteArcade(16f));
         g.setColor(Color.RED);
-        g.drawString("VS", centroX - 12, posY + 32);
+        g.drawString("VS", centroX - 16, posY + 42);
 
         // Jefe a la derecha
         Image spriteJefe = GestorRecursos.getSpriteJefe();
         if (spriteJefe != null) {
-            g.drawImage(spriteJefe, centroX + 60, posY, tamanioSprite, tamanioSprite, this);
+            g.drawImage(spriteJefe, centroX + 76, posY, tamanioSprite, tamanioSprite, this);
         }
     }
 }
