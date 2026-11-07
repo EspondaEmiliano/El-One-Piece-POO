@@ -28,7 +28,7 @@ public class JuegoEngine {
     public static final int DURACION_JORNADA_SEGUNDOS = 60;
     public static final int PUNTOS_POR_BUFFO = 50;
     public static final int PUNTOS_BASE_ESCAPE = 500;
-    public static final int TOTAL_NIVELES = 2;
+    public static final int TOTAL_NIVELES = 4;
 
     private List<Muro> muros;
     private List<Proyectil> proyectiles;
@@ -103,47 +103,40 @@ public class JuegoEngine {
 
         // 3. Evaluar recolección de potenciadores en el laberinto
         for (ZonaBuffo zona : this.zonaBuffos) {
-            // Comprueba si el empleado colisionó con un potenciador disponible.
             if (!zona.isRecolectado() && zona.verificarColision(this.jugador.getPosicion())) {
-                // Obtiene el potenciador de la zona.
                 Buffo buffoConsumido = zona.consumirBuffo();
-                // Aplica el efecto del potenciador sobre el empleado.
                 this.jugador.agregarBuffo(buffoConsumido);
-                // Si el potenciador es un Aguinaldo, utiliza sus puntos bonus.
+
                 if (buffoConsumido instanceof Aguinaldo) {
                     Aguinaldo aguinaldo = (Aguinaldo) buffoConsumido;
-                    // Suma los 500 puntos definidos en Aguinaldo.
                     this.puntajeAcumulado += aguinaldo.getPuntosBonus();
                 } else {
-                    // Los demás potenciadores suman los puntos generales.
                     this.puntajeAcumulado += PUNTOS_POR_BUFFO;
                 }
             }
         }
 
-        // 4. Evaluar condición de victoria al pisar la salida de escape
-        if (this.salida != null && this.salida.esAlcanzada(this.jugador.getPosicion())) {
-            this.estadoActual = EstadoJuego.VICTORIA;
-            calcularBonificacionVictoria();
-            return;
-        }
-
-        // 5. Patrulla exterior del Jefe (seguimiento horizontal y disparo balístico)
+        // 4. Persecución del jefe y emisión de proyectiles balísticos
         this.enemigo.seguirEmpleado(this.jugador.getPosicion());
-
         if (this.enemigo.puedeAtacar()) {
             this.enemigo.atacar(this.jugador.getPosicion());
             Proyectil nuevoProyectil = this.enemigo.getProyectilGenerado();
 
             if (nuevoProyectil != null) {
                 this.proyectiles.add(nuevoProyectil);
-                this.enemigo.registrarAtaque();
                 this.enemigo.limpiarProyectilGenerado();
             }
+            this.enemigo.registrarAtaque();
         }
 
-        // 6. Actualizar proyectiles y resolver impactos balísticos
+        // 5. Trayectoria de proyectiles y verificación de impactos
         actualizarProyectiles();
+
+        // 6. Condición de Victoria: llegada a la salida
+        if (this.salida.esAlcanzada(this.jugador.getPosicion())) {
+            this.estadoActual = EstadoJuego.VICTORIA;
+            calcularBonificacionVictoria();
+        }
     }
 
     /**
@@ -155,38 +148,34 @@ public class JuegoEngine {
 
         while (iteradorProyectiles.hasNext()) {
             Proyectil proyectilActual = iteradorProyectiles.next();
+            proyectilActual.mover();
 
-            if (proyectilActual.getEstaActivo()) {
-                proyectilActual.mover();
+            // Colisión contra el Empleado
+            if (proyectilActual.verificarColision(this.jugador.getPosicion())) {
+                proyectilActual.impacto();
 
-                // Colisión balística contra el empleado
-                if (proyectilActual.verificarColision(this.jugador.getPosicion())) {
-                    proyectilActual.impacto();
+                try {
+                    GestorAudio.reproducirImpactoPala();
+                    this.jugador.recibirDanio(20);
 
-                    try {
-                        GestorAudio.reproducirImpactoPala();
-                        this.jugador.recibirDanio(20);
-
-                        // Si la salud llega a cero, se pasa a estado de derrota
-                        if (this.jugador.getSalud() <= 0) {
-                            this.estadoActual = EstadoJuego.DERROTA_VIDA;
-                        }
-
-                        throw new ImpactoProyectilException("Proyectil de trabajo impactó al empleado.");
-                    } catch (ImpactoProyectilException excepcionImpacto) {
-                        System.out.println("[ALERTA] " + excepcionImpacto.getMessage()
-                                + " Salud restante: " + this.jugador.getSalud());
+                    // Si la salud llega a cero, se pasa a estado de derrota
+                    if (this.jugador.getSalud() <= 0) {
+                        this.estadoActual = EstadoJuego.DERROTA_VIDA;
                     }
-                }
 
-
-                // Salida de la pantalla por el límite inferior
-                if (proyectilActual.getPosicion().getY1() > 400) {
-                    proyectilActual.impacto();
+                    throw new ImpactoProyectilException("Proyectil de trabajo impactó al empleado.");
+                } catch (ImpactoProyectilException excepcionImpacto) {
+                    System.out.println("[ALERTA] " + excepcionImpacto.getMessage()
+                            + " Salud restante: " + this.jugador.getSalud());
                 }
             }
 
-            // Remoción de proyectiles inactivos
+            // Salida de la pantalla por el límite inferior
+            if (proyectilActual.getPosicion().getY1() > 400) {
+                proyectilActual.impacto();
+            }
+
+            // Purga de proyectiles desactivados
             if (!proyectilActual.getEstaActivo()) {
                 iteradorProyectiles.remove();
             }
@@ -205,7 +194,7 @@ public class JuegoEngine {
     }
 
     /**
-     * Guarda el puntaje final del jugador en el ranking binario mediante GestorArchivos.
+     * Persiste el récord obtenido por el jugador en la tabla Top 10 del ranking.
      *
      * @param aliasJugador Nombre o identificador del empleado para el Top 10.
      * @return {@code true} si el puntaje se serializó con éxito; {@code false} en caso contrario.
@@ -278,7 +267,15 @@ public class JuegoEngine {
                             this.jugador = new Empleado(posicionEmpleado, 2);
                             break;
                         case 'J':
-                            this.enemigo = new Jefe(posicion, 1, "Jefe", 1500);
+                            // Cadencia de disparo progresiva según la dificultad del nivel
+                            int cadenciaJefe;
+                            switch (numeroNivel) {
+                                case 1: cadenciaJefe = 2000; break; // 2.0s (Nivel 1: Primer Paso)
+                                case 2: cadenciaJefe = 1700; break; // 1.7s (Nivel 2: Laberinto Corporativo)
+                                case 3: cadenciaJefe = 1400; break; // 1.4s (Nivel 3: Ruta Dual)
+                                default: cadenciaJefe = 1100; break; // 1.1s (Nivel 4: El Búnker Central)
+                            }
+                            this.enemigo = new Jefe(posicion, 1, "Jefe", cadenciaJefe);
                             break;
                         case 'S':
                             this.salida = new Salida(posicion);
