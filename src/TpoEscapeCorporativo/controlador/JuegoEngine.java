@@ -42,7 +42,9 @@ public class JuegoEngine {
     private int tiempoLimiteSegundos;
     private long tiempoInicioMilisegundos;
     private long tiempoTranscurridoMilisegundos;
+    private long tiempoAcumuladoNivelesPreviosMs;
     private int puntajeAcumulado;
+    private int puntajeBaseNivelActual;
 
     private final GestorArchivos gestorArchivos;
 
@@ -57,19 +59,26 @@ public class JuegoEngine {
 
         this.numeroNivelActual = 1;
         this.tiempoLimiteSegundos = DURACION_JORNADA_SEGUNDOS;
+        this.tiempoAcumuladoNivelesPreviosMs = 0;
+        this.puntajeBaseNivelActual = 0;
 
         reiniciarNivel(this.numeroNivelActual);
     }
 
     /**
      * Reinicia el estado del juego para un nivel específico, rearmando el mapa,
-     * reiniciando cronómetros, listas de proyectiles y puntaje.
+     * reiniciando cronómetros, listas de proyectiles y restableciendo el puntaje
+     * al acumulado hasta el inicio de dicho nivel.
      *
      * @param numeroNivel Índice numérico del mapa a cargar.
      */
     public void reiniciarNivel(int numeroNivel) {
         this.numeroNivelActual = numeroNivel;
-        this.puntajeAcumulado = 0;
+        if (numeroNivel == 1) {
+            this.puntajeBaseNivelActual = 0;
+            this.tiempoAcumuladoNivelesPreviosMs = 0;
+        }
+        this.puntajeAcumulado = this.puntajeBaseNivelActual;
         this.tiempoTranscurridoMilisegundos = 0;
         this.tiempoInicioMilisegundos = System.currentTimeMillis();
         this.proyectiles.clear();
@@ -204,7 +213,7 @@ public class JuegoEngine {
                 ? aliasJugador.trim()
                 : "Empleado";
 
-        long tiempoTotalEmpleadoSegundos = this.tiempoTranscurridoMilisegundos / 1000;
+        long tiempoTotalEmpleadoSegundos = (this.tiempoAcumuladoNivelesPreviosMs + this.tiempoTranscurridoMilisegundos) / 1000;
         Puntaje registro = new Puntaje(nombreFinal, this.puntajeAcumulado, tiempoTotalEmpleadoSegundos);
 
         try {
@@ -304,12 +313,14 @@ public class JuegoEngine {
     }
 
     /**
-     * Avanza al siguiente nivel del juego, conservando el puntaje acumulado
-     * pero restableciendo el tiempo reglamentario, proyectiles y cargando el nuevo mapa.
+     * Avanza al siguiente nivel del juego, conservando el puntaje acumulado y el tiempo total
+     * pero restableciendo el tiempo reglamentario del nivel, proyectiles y cargando el nuevo mapa.
      */
     public void pasarSiguienteNivel() {
         if (haySiguienteNivel()) {
             this.numeroNivelActual++;
+            this.puntajeBaseNivelActual = this.puntajeAcumulado;
+            this.tiempoAcumuladoNivelesPreviosMs += this.tiempoTranscurridoMilisegundos;
             this.tiempoTranscurridoMilisegundos = 0;
             this.tiempoInicioMilisegundos = System.currentTimeMillis();
             this.proyectiles.clear();
@@ -323,6 +334,8 @@ public class JuegoEngine {
      * Reinicia la partida completa desde el nivel 1 restableciendo el puntaje a cero.
      */
     public void reiniciarPartidaCompleta() {
+        this.puntajeBaseNivelActual = 0;
+        this.tiempoAcumuladoNivelesPreviosMs = 0;
         reiniciarNivel(1);
     }
 

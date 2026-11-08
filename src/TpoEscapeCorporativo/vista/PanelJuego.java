@@ -67,8 +67,10 @@ public class PanelJuego extends JPanel {
                 timer.stop();
                 GestorAudio.getInstance().detenerMusica();
 
-                // Si ganó la partida y aún no registró su puntaje en el ranking
-                if (motor.getEstadoActual() == EstadoJuego.VICTORIA && !puntajeRegistrado) {
+                // Si ganó el último nivel de la partida y aún no registró su puntaje en el ranking
+                if (motor.getEstadoActual() == EstadoJuego.VICTORIA
+                        && !motor.haySiguienteNivel()
+                        && !puntajeRegistrado) {
                     puntajeRegistrado = true;
                     solicitarYGuardarPuntajeJugador();
                 }
@@ -78,14 +80,13 @@ public class PanelJuego extends JPanel {
 
     /**
      * Solicita al empleado su nombre mediante un cuadro de diálogo Swing
-     * la primera vez que supera un nivel, y en los niveles posteriores reutiliza
-     * automáticamente el mismo alias sin interrumpir la experiencia.
+     * al completar la partida (o al retirarse con puntos acumulados) y persiste
+     * el récord consolidado en el Top 10.
      */
     private void solicitarYGuardarPuntajeJugador() {
         SwingUtilities.invokeLater(() -> {
-            // Solo muestra el popup si el jugador aún no ingresó su alias en esta partida
             if (this.aliasJugadorActual == null || this.aliasJugadorActual.trim().isEmpty()) {
-                String mensaje = "¡Has logrado escapar!\nTu puntaje: " + motor.getPuntajeAcumulado() + "\n\nIngresa tu alias para el Top 10:";
+                String mensaje = "¡Has logrado escapar de la corporación!\nTu puntaje final: " + motor.getPuntajeAcumulado() + "\n\nIngresa tu alias para el Top 10:";
                 String aliasIngresado = JOptionPane.showInputDialog(
                         this,
                         mensaje,
@@ -291,7 +292,7 @@ public class PanelJuego extends JPanel {
                 g.setColor(Color.CYAN);
                 dibujarTextoCentrado(g, "[ENTER] - SIGUIENTE NIVEL", ALTO / 2 + 50);
                 g.setColor(Color.LIGHT_GRAY);
-                dibujarTextoCentrado(g, "[M] - VOLVER AL MENU PRINCIPAL", ALTO / 2 + 75);
+                dibujarTextoCentrado(g, "[M] - GUARDAR Y VOLVER AL MENU", ALTO / 2 + 75);
             } else {
                 g.setColor(Color.YELLOW);
                 dibujarTextoCentrado(g, "[R] - REINTENTAR / [M] - VOLVER AL MENU", ALTO / 2 + 60);
@@ -390,13 +391,14 @@ public class PanelJuego extends JPanel {
                             teclasPresionadas.clear();
                             iniciarJuego();
                         } else {
-                            // Si terminamos el último nivel, volvemos al menú.
+                            // Si terminamos el último nivel, mostramos la pantalla final de Victoria.
                             motor.reiniciarPartidaCompleta();
                             teclasPresionadas.clear();
                             aliasJugadorActual = null;
+                            puntajeRegistrado = false;
 
                             if (panelPrincipal != null) {
-                                panelPrincipal.mostrarPanel("INICIO");
+                                panelPrincipal.mostrarPanel("VICTORIA");
                             }
                         }
                         return;
@@ -411,11 +413,22 @@ public class PanelJuego extends JPanel {
                         return;
                     }
 
-                    // M permite volver al menú principal.
+                    // M permite volver al menú principal (guardando récord si había ganado el nivel).
                     if (codigoTecla == KeyEvent.VK_M) {
+                        if (motor.getEstadoActual() == EstadoJuego.VICTORIA && !puntajeRegistrado) {
+                            puntajeRegistrado = true;
+                            String alias = JOptionPane.showInputDialog(
+                                    PanelJuego.this,
+                                    "¡Nivel completado!\nTu puntaje: " + motor.getPuntajeAcumulado() + "\n\nIngresa tu alias para el Top 10:",
+                                    "Registrar Récord",
+                                    JOptionPane.PLAIN_MESSAGE
+                            );
+                            motor.guardarPuntaje(alias);
+                        }
                         motor.reiniciarPartidaCompleta();
                         teclasPresionadas.clear();
                         aliasJugadorActual = null;
+                        puntajeRegistrado = false;
 
                         if (panelPrincipal != null) {
                             panelPrincipal.mostrarPanel("INICIO");

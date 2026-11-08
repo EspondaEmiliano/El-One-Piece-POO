@@ -8,7 +8,7 @@ import java.awt.*;
 
 /**
  * Ventana contenedora principal de la aplicación. Administra la navegación
- * entre pantallas (Menú de Inicio, Juego y Ranking) mediante {@link CardLayout}.
+ * entre pantallas (Menú de Inicio, Juego, Ranking y Victoria) mediante {@link CardLayout}.
  * Configura una resolución fija óptima de 900x680 px sin deformación de aspecto.
  */
 public class PanelPrincipal {
@@ -22,6 +22,7 @@ public class PanelPrincipal {
     private JuegoEngine motorEngine;
     private PanelJuego panelJuego;
     private PanelRanking panelRanking;
+    private PanelVictoria panelVictoria;
 
     /**
      * Instancia el motor de juego e inicializa la ventana del juego.
@@ -51,10 +52,14 @@ public class PanelPrincipal {
         this.panelRanking = new PanelRanking(this);
         this.panelRanking.setPreferredSize(new Dimension(ANCHO_VENTANA, ALTO_VENTANA));
 
+        this.panelVictoria = new PanelVictoria(this);
+        this.panelVictoria.setPreferredSize(new Dimension(ANCHO_VENTANA, ALTO_VENTANA));
+
         // Agregamos paneles al contenedor principal
         panelPrincipal.add(panelInicio, "INICIO");
         panelPrincipal.add(this.panelJuego, "JUEGO");
         panelPrincipal.add(this.panelRanking, "RANKING");
+        panelPrincipal.add(this.panelVictoria, "VICTORIA");
 
         // Añadimos el contenedor a la ventana
         ventana.add(panelPrincipal);
@@ -74,7 +79,7 @@ public class PanelPrincipal {
      * Alterna la vista visible en pantalla según su identificador.
      * Sincroniza la música de fondo y los loops de animación.
      *
-     * @param nombre Nombre de la tarjeta ("INICIO", "JUEGO" o "RANKING").
+     * @param nombre Nombre de la tarjeta ("INICIO", "JUEGO", "RANKING" o "VICTORIA").
      */
     public void mostrarPanel(String nombre) {
         cardLayout.show(panelPrincipal, nombre);
