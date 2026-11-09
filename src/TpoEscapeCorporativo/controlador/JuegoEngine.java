@@ -152,10 +152,10 @@ public class JuegoEngine {
 
         if (this.enemigo.puedeAtacar()) {
             this.enemigo.atacar(this.jugador.getPosicion());
-            Proyectil nuevoProyectil = this.enemigo.getProyectilGenerado();
+            List<Proyectil> nuevosProyectiles = this.enemigo.getProyectilesGenerados();
 
-            if (nuevoProyectil != null) {
-                this.proyectiles.add(nuevoProyectil);
+            if (!nuevosProyectiles.isEmpty()) {
+                this.proyectiles.addAll(nuevosProyectiles);
                 this.enemigo.registrarAtaque();
                 this.enemigo.limpiarProyectilGenerado();
             }
@@ -305,21 +305,23 @@ public class JuegoEngine {
                             this.jugador = new Empleado(posicionEmpleado, 2);
                             break;
                         case 'J':
-                            // Configura velocidad y cadencia progresiva del jefe según la dificultad del mapa
+                            // Configura velocidad, cadencia y modalidad de ataque según la dificultad del nivel
                             int velocidadJefe = 1;
                             int cadenciaJefe;
+                            boolean ataqueTriple = false;
                             if (this.gestorArchivos.esNivelFinal(numeroNivel)) {
-                                velocidadJefe = 2;    // El jefe patrulla al doble de velocidad en el nivel final
-                                cadenciaJefe = 2;   // Dispara cada 0.95 segundos
+                                velocidadJefe = 1;
+                                cadenciaJefe = 2000;
+                                ataqueTriple = true;
                             } else {
                                 switch (numeroNivel) {
-                                    case 1: cadenciaJefe = 2000; break; // 2.0s (Nivel 1: Primer Paso)
-                                    case 2: cadenciaJefe = 1700; break; // 1.7s (Nivel 2: Laberinto Corporativo)
-                                    case 3: cadenciaJefe = 1400; break; // 1.4s (Nivel 3: Ruta Dual)
-                                    default: cadenciaJefe = 1100; break; // 1.1s (Nivel 4: El Búnker Central)
+                                    case 1: cadenciaJefe = 2000; break;
+                                    case 2: cadenciaJefe = 1700; break;
+                                    case 3: cadenciaJefe = 1400; break;
+                                    default: cadenciaJefe = 1100; break;
                                 }
                             }
-                            this.enemigo = new Jefe(posicion, velocidadJefe, "Jefe", cadenciaJefe);
+                            this.enemigo = new Jefe(posicion, velocidadJefe, "Jefe", cadenciaJefe, ataqueTriple);
                             break;
                         case 'S':
                             this.salida = new Salida(posicion);
