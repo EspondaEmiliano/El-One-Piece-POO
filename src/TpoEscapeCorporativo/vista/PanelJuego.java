@@ -38,7 +38,11 @@ public class PanelJuego extends JPanel {
     private final PanelPrincipal panelPrincipal;
     private Timer timer;
     private boolean puntajeRegistrado = false;
-    // Almacena las teclas de movimiento que actualmente están presionadas conservando el orden de pulsación.
+
+    // Almacena el alias durante la partida para no volver a solicitarlo entre niveles
+    private String aliasJugadorActual = null;
+
+    // Almacena las teclas de movimiento que actualmente están presionadas conservando el orden de pulsación
     private final Set<Integer> teclasPresionadas = new LinkedHashSet<>();
 
     public PanelJuego(JuegoEngine motor, PanelPrincipal panelPrincipal) {
@@ -57,6 +61,15 @@ public class PanelJuego extends JPanel {
         this(motor, null);
     }
 
+    /**
+     * Restablece las banderas de sesión y el estado de teclas antes de comenzar una nueva partida.
+     */
+    public void prepararNuevaPartida() {
+        this.puntajeRegistrado = false;
+        this.aliasJugadorActual = null;
+        this.teclasPresionadas.clear();
+    }
+
     private void configurarGameLoop() {
         this.timer = new Timer(16, e -> {
             motor.actualizar();
@@ -66,7 +79,10 @@ public class PanelJuego extends JPanel {
                 timer.stop();
                 GestorAudio.getInstance().detenerMusica();
 
-                if (motor.getEstadoActual() == EstadoJuego.VICTORIA && !puntajeRegistrado) {
+                // Registra automáticamente el récord al completar el último nivel
+                if (motor.getEstadoActual() == EstadoJuego.VICTORIA
+                        && !motor.haySiguienteNivel()
+                        && !puntajeRegistrado) {
                     puntajeRegistrado = true;
                     solicitarYGuardarPuntajeJugador();
                 }
@@ -75,23 +91,30 @@ public class PanelJuego extends JPanel {
     }
 
     /**
-     * Solicita al empleado su nombre mediante un cuadro de diálogo Swing
-     * y persiste su récord en el archivo binario del Top 10.
+     * Solicita al empleado su alias mediante un cuadro de diálogo Swing
+     * al completar la partida y persiste el récord consolidado en el Top 10.
      */
     private void solicitarYGuardarPuntajeJugador() {
         SwingUtilities.invokeLater(() -> {
-            String mensaje = "Has logrado escapar!\nTu puntaje: " + motor.getPuntajeAcumulado() + "\n\nIngresa tu alias para el top 10:";
-            String aliasIngresado = JOptionPane.showInputDialog(
-                    this,
-                    mensaje,
-                    "Registrar Récord",
-                    JOptionPane.PLAIN_MESSAGE
-            );
+            if (this.aliasJugadorActual == null || this.aliasJugadorActual.trim().isEmpty()) {
+                String mensaje = "¡Has logrado escapar de la corporación!\nTu puntaje final: " + motor.getPuntajeAcumulado() + "\n\nIngresa tu alias para el Top 10:";
+                String aliasIngresado = JOptionPane.showInputDialog(
+                        this,
+                        mensaje,
+                        "Registrar Récord",
+                        JOptionPane.PLAIN_MESSAGE
+                );
 
-            if (aliasIngresado != null) {
-                motor.guardarPuntaje(aliasIngresado);
-                repaint();
+                if (aliasIngresado != null && !aliasIngresado.trim().isEmpty()) {
+                    this.aliasJugadorActual = aliasIngresado.trim();
+                } else {
+                    this.aliasJugadorActual = "Empleado";
+                }
             }
+
+            // Persiste el récord utilizando el alias memorizado de la sesión
+            motor.guardarPuntaje(this.aliasJugadorActual);
+            repaint();
         });
     }
 
@@ -114,7 +137,7 @@ public class PanelJuego extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // Escalado proporcional en función del tamaño de ventana
+        // Escalado proporcional al tamaño actual del panel
         double escalaX = (double) getWidth() / ANCHO;
         double escalaY = (double) getHeight() / ALTO;
 
@@ -253,7 +276,12 @@ public class PanelJuego extends JPanel {
 
         g.setFont(GestorRecursos.getFuenteArcade(10f));
         g.setColor(new Color(0, 220, 255));
-        g.drawString("NIVEL: " + motor.getNumeroNivelActual() + "/" + motor.getTotalNiveles(), 450, 43);
+        if (motor.esNivelFinalActual()) {
+            g.setColor(new Color(255, 215, 0));
+            g.drawString("NIVEL: FINAL", 450, 43);
+        } else {
+            g.drawString("NIVEL: " + motor.getNumeroNivelActual() + "/" + motor.getTotalNiveles(), 450, 43);
+        }
     }
 
     /**
@@ -283,7 +311,16 @@ public class PanelJuego extends JPanel {
             boolean esVictoria = (estado == EstadoJuego.VICTORIA);
             g.setFont(GestorRecursos.getFuenteArcade(18f));
             g.setColor(esVictoria ? Color.GREEN : Color.RED);
-            dibujarTextoCentrado(g, esVictoria ? "¡NIVEL " + motor.getNumeroNivelActual() + " COMPLETADO!" : "GAME OVER", ALTO / 2 - 50);
+            String tituloEstado;
+            if (!esVictoria) {
+                tituloEstado = "GAME OVER";
+            } else if (motor.esNivelFinalActual()) {
+                tituloEstado = "¡NIVEL FINAL COMPLETADO!";
+                g.setFont(GestorRecursos.getFuenteArcade(16f));
+            } else {
+                tituloEstado = "¡NIVEL " + motor.getNumeroNivelActual() + " COMPLETADO!";
+            }
+            dibujarTextoCentrado(g, tituloEstado, ALTO / 2 - 50);
 
             g.setFont(GestorRecursos.getFuenteArcade(8f));
             g.setColor(Color.WHITE);
@@ -293,19 +330,19 @@ public class PanelJuego extends JPanel {
             g.setColor(new Color(255, 215, 0));
             dibujarTextoCentrado(g, "Puntaje acumulado: " + motor.getPuntajeAcumulado(), ALTO / 2 + 15);
 
-            // Opciones interactivas según si restan niveles por superar
+            // Opciones interactivas según el resultado y niveles restantes
             g.setFont(GestorRecursos.getFuenteArcade(9f));
             if (esVictoria) {
                 if (motor.haySiguienteNivel()) {
                     g.setColor(Color.CYAN);
                     dibujarTextoCentrado(g, "[ENTER] - SIGUIENTE NIVEL", ALTO / 2 + 50);
                     g.setColor(Color.LIGHT_GRAY);
-                    dibujarTextoCentrado(g, "[M] - VOLVER AL MENU PRINCIPAL", ALTO / 2 + 75);
+                    dibujarTextoCentrado(g, "[M] - GUARDAR Y VOLVER AL MENU", ALTO / 2 + 75);
                 } else {
                     g.setColor(new Color(255, 215, 0));
                     dibujarTextoCentrado(g, "¡FELICITACIONES! HAS COMPLETADO TODOS LOS NIVELES", ALTO / 2 + 50);
                     g.setColor(Color.CYAN);
-                    dibujarTextoCentrado(g, "[ENTER] / [M] - VOLVER AL MENU PRINCIPAL", ALTO / 2 + 75);
+                    dibujarTextoCentrado(g, "[ENTER] - CONTINUAR / [M] - VOLVER AL MENU", ALTO / 2 + 75);
                 }
             } else {
                 g.setColor(Color.YELLOW);
@@ -371,6 +408,7 @@ public class PanelJuego extends JPanel {
                 int codigoTecla = e.getKeyCode();
 
                 if (motor.getEstadoActual() != null && motor.getEstadoActual().esFinDePartida()) {
+                    // ENTER avanza al siguiente nivel o abre la pantalla de Victoria al completar el último
                     if (codigoTecla == KeyEvent.VK_ENTER && motor.getEstadoActual() == EstadoJuego.VICTORIA) {
                         if (motor.haySiguienteNivel()) {
                             puntajeRegistrado = false;
@@ -379,14 +417,16 @@ public class PanelJuego extends JPanel {
                             iniciarJuego();
                         } else {
                             motor.reiniciarPartidaCompleta();
-                            teclasPresionadas.clear();
+                            prepararNuevaPartida();
+
                             if (panelPrincipal != null) {
-                                panelPrincipal.mostrarPanel("INICIO");
+                                panelPrincipal.mostrarPanel("VICTORIA");
                             }
                         }
                         return;
                     }
 
+                    // R reinicia el nivel actual
                     if (codigoTecla == KeyEvent.VK_R) {
                         puntajeRegistrado = false;
                         motor.reiniciarNivel(motor.getNumeroNivelActual());
@@ -395,9 +435,23 @@ public class PanelJuego extends JPanel {
                         return;
                     }
 
+                    // M vuelve al menú principal, ofreciendo guardar el récord si superó un nivel
                     if (codigoTecla == KeyEvent.VK_M) {
+                        if (motor.getEstadoActual() == EstadoJuego.VICTORIA && !puntajeRegistrado) {
+                            puntajeRegistrado = true;
+                            String alias = JOptionPane.showInputDialog(
+                                    PanelJuego.this,
+                                    "¡Nivel completado!\nTu puntaje: " + motor.getPuntajeAcumulado() + "\n\nIngresa tu alias para el Top 10:",
+                                    "Registrar Récord",
+                                    JOptionPane.PLAIN_MESSAGE
+                            );
+                            if (alias != null) {
+                                motor.guardarPuntaje(alias);
+                            }
+                        }
                         motor.reiniciarPartidaCompleta();
-                        teclasPresionadas.clear();
+                        prepararNuevaPartida();
+
                         if (panelPrincipal != null) {
                             panelPrincipal.mostrarPanel("INICIO");
                         }
@@ -416,6 +470,13 @@ public class PanelJuego extends JPanel {
                         case KeyEvent.VK_P:
                         case KeyEvent.VK_ESCAPE:
                             motor.alternarPausa();
+                            if (motor.getEstadoActual() == EstadoJuego.PAUSADO) {
+                                GestorAudio.getInstance().pausarMusica();
+                                teclasPresionadas.clear();
+                                motor.procesarEntrada(Direccion.NINGUNA);
+                            } else if (motor.getEstadoActual() == EstadoJuego.JUGANDO) {
+                                GestorAudio.getInstance().iniciarMusica();
+                            }
                             repaint();
                             break;
                     }

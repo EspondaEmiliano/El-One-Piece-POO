@@ -8,9 +8,13 @@ import java.awt.*;
 
 /**
  * Ventana contenedora principal de la aplicación. Administra la navegación
- * entre pantallas (Menú de Inicio, Juego y Ranking) mediante {@link CardLayout}.
+ * entre pantallas (Menú de Inicio, Juego, Ranking y Victoria) mediante {@link CardLayout}.
+ * Configura una resolución fija óptima de 900x680 px sin deformación de aspecto.
  */
 public class PanelPrincipal {
+
+    public static final int ANCHO_VENTANA = 900;
+    public static final int ALTO_VENTANA = 680;
 
     private JFrame ventana;
     private JPanel panelPrincipal;
@@ -18,6 +22,7 @@ public class PanelPrincipal {
     private JuegoEngine motorEngine;
     private PanelJuego panelJuego;
     private PanelRanking panelRanking;
+    private PanelVictoria panelVictoria;
 
     /**
      * Instancia el motor de juego e inicializa la ventana del juego.
@@ -32,28 +37,37 @@ public class PanelPrincipal {
         ventana = new JFrame("ESCAPE CORPORATIVO");
         ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Inicializamos el CardLayout y el contenedor
+        // Inicializamos el CardLayout y el contenedor con dimensiones fijas 900x680
         cardLayout = new CardLayout();
         panelPrincipal = new JPanel(cardLayout);
+        panelPrincipal.setPreferredSize(new Dimension(ANCHO_VENTANA, ALTO_VENTANA));
 
-        // Creamos los paneles
+        // Creamos los paneles con el tamaño dimensionado
         PanelInicio panelInicio = new PanelInicio(this);
-        panelInicio.setPreferredSize(new Dimension(PanelJuego.ANCHO, PanelJuego.ALTO));
+        panelInicio.setPreferredSize(new Dimension(ANCHO_VENTANA, ALTO_VENTANA));
 
         this.panelJuego = new PanelJuego(motorEngine, this);
+        this.panelJuego.setPreferredSize(new Dimension(ANCHO_VENTANA, ALTO_VENTANA));
+
         this.panelRanking = new PanelRanking(this);
+        this.panelRanking.setPreferredSize(new Dimension(ANCHO_VENTANA, ALTO_VENTANA));
+
+        this.panelVictoria = new PanelVictoria(this);
+        this.panelVictoria.setPreferredSize(new Dimension(ANCHO_VENTANA, ALTO_VENTANA));
 
         // Agregamos paneles al contenedor principal
         panelPrincipal.add(panelInicio, "INICIO");
         panelPrincipal.add(this.panelJuego, "JUEGO");
         panelPrincipal.add(this.panelRanking, "RANKING");
+        panelPrincipal.add(this.panelVictoria, "VICTORIA");
 
         // Añadimos el contenedor a la ventana
         ventana.add(panelPrincipal);
 
         // pack() ajusta el tamaño exacto de la ventana considerando los bordes y la barra de título del SO
         ventana.pack();
-        ventana.setResizable(true);
+        // Ventana fija: previene estiramientos que deformen los sprites o desfasen los layouts
+        ventana.setResizable(false);
         ventana.setLocationRelativeTo(null);
         ventana.setVisible(true);
 
@@ -63,31 +77,36 @@ public class PanelPrincipal {
 
     /**
      * Alterna la vista visible en pantalla según su identificador.
+     * Sincroniza la música de fondo y los loops de animación.
      *
-     * @param nombre Clave de la vista ("INICIO", "JUEGO" o "RANKING").
+     * @param nombre Nombre de la tarjeta ("INICIO", "JUEGO", "RANKING" o "VICTORIA").
      */
     public void mostrarPanel(String nombre) {
         cardLayout.show(panelPrincipal, nombre);
 
-        // Cuando la vista pasa a ser "JUEGO", solicitamos el foco y arrancamos el loop
-        if ("JUEGO".equalsIgnoreCase(nombre) && panelJuego != null) {
+        if ("JUEGO".equalsIgnoreCase(nombre)) {
             panelJuego.iniciarJuego();
             SwingUtilities.invokeLater(() -> panelJuego.requestFocusInWindow());
-        } else if ("RANKING".equalsIgnoreCase(nombre) && panelRanking != null) {
+        } else if ("RANKING".equalsIgnoreCase(nombre)) {
+            panelJuego.pausarJuego();
             panelRanking.cargarYRefrescarDatos();
-        } else if ("INICIO".equalsIgnoreCase(nombre)) {
-            // Asegura que la música suene si se regresa al menú principal
+            GestorAudio.getInstance().iniciarMusica();
+        } else {
+            panelJuego.pausarJuego();
             GestorAudio.getInstance().iniciarMusica();
         }
     }
 
     /**
-     * Prepara el motor en un nivel específico y transiciona la vista a la pantalla de juego.
+     * Prepara una nueva partida en el nivel seleccionado y transiciona a la pantalla de juego.
      *
-     * @param numeroNivel Identificador del nivel en el que iniciará la partida.
+     * @param numeroNivel Identificador del nivel inicial en el que comenzará la partida.
      */
     public void iniciarJuegoEnNivel(int numeroNivel) {
-        motorEngine.reiniciarNivel(numeroNivel);
+        if (panelJuego != null) {
+            panelJuego.prepararNuevaPartida();
+        }
+        motorEngine.iniciarPartidaEnNivel(numeroNivel);
         mostrarPanel("JUEGO");
     }
 

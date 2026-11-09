@@ -2,12 +2,14 @@ package TpoEscapeCorporativo.vista;
 
 import TpoEscapeCorporativo.modelo.datos.Puntaje;
 import TpoEscapeCorporativo.servicios.GestorArchivos;
+import TpoEscapeCorporativo.modelo.datos.ComparadorPorTiempo;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,6 +27,10 @@ public class PanelRanking extends JPanel {
     private DefaultTableModel modeloDatosTabla;
     private JScrollPane panelDesplazamientoTabla;
     private JButton botonVolverMenu;
+    private JButton botonOrdenarPuntos;
+    private JButton botonOrdenarTiempo;
+    private boolean ordenarPorPuntos = true; // Por defecto orden natural (Puntos)
+
 
     public PanelRanking(PanelPrincipal coordinadorNavegacion) {
         this.coordinadorNavegacion = coordinadorNavegacion;
@@ -52,6 +58,26 @@ public class PanelRanking extends JPanel {
         etiquetaTituloPrincipal.setFont(GestorRecursos.getFuenteArcade(16f));
         etiquetaTituloPrincipal.setForeground(new Color(255,215,0));
         add(etiquetaTituloPrincipal);
+
+        // Botón filtró: Mayor Puntaje (Comparable)
+        botonOrdenarPuntos = new JButton("MAYOR PUNTAJE");
+        botonOrdenarPuntos.setFont(GestorRecursos.getFuenteArcade(8f));
+        botonOrdenarPuntos.setBackground(new Color(255, 215, 0));
+        botonOrdenarPuntos.setForeground(Color.BLACK);
+        botonOrdenarPuntos.setFocusable(false);
+        botonOrdenarPuntos.setBorder(BorderFactory.createLineBorder(Color.WHITE, 1));
+        botonOrdenarPuntos.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        add(botonOrdenarPuntos);
+
+        // Botón filtró: Menor Tiempo / Speedrun (Comparator)
+        botonOrdenarTiempo = new JButton("MENOR TIEMPO");
+        botonOrdenarTiempo.setFont(GestorRecursos.getFuenteArcade(8f));
+        botonOrdenarTiempo.setBackground(new Color(40, 40, 40));
+        botonOrdenarTiempo.setForeground(Color.LIGHT_GRAY);
+        botonOrdenarTiempo.setFocusable(false);
+        botonOrdenarTiempo.setBorder(BorderFactory.createLineBorder(new Color(70, 70, 70), 1));
+        botonOrdenarTiempo.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        add(botonOrdenarTiempo);
 
         // Modelo de datos de la tabla (no editable por el usuario)
         String [] nombresColumnas = {"#", "EMPLEADO", "PUNTOS", "TIEMPO", "FECHA"};
@@ -134,11 +160,19 @@ public class PanelRanking extends JPanel {
                 int yTitulo = (int) (altoVentana * 0.05); // 5% desde arriba
                 etiquetaTituloPrincipal.setBounds(xTitulo, yTitulo, anchoTitulo, 30);
 
+                // Posicionamiento de botones de ordenamiento entre el título y la tabla
+                int anchoBotonFiltro = 160;
+                int altoBotonFiltro = 24;
+                int yFiltros = (int) (altoVentana * 0.12);
+                botonOrdenarPuntos.setBounds(anchoVentana / 2 - anchoBotonFiltro - 10, yFiltros, anchoBotonFiltro, altoBotonFiltro);
+                botonOrdenarTiempo.setBounds(anchoVentana / 2 + 10, yFiltros, anchoBotonFiltro, altoBotonFiltro);
+
+
                 // 2. Tabla / JScrollPane: ocupa el centro con márgenes proporcionales
                 int anchoTabla = (int) (anchoVentana * 0.88);
                 int xTabla = (anchoVentana - anchoTabla) / 2;
-                int yTabla = (int) (altoVentana * 0.16); // Debajo del título
-                int altoTabla = (int) (altoVentana * 0.65); // Ocupa el 65% del alto
+                int yTabla = (int) (altoVentana * 0.18); // Debajo del título
+                int altoTabla = (int) (altoVentana * 0.63); // Ocupa el 65% del alto
                 panelDesplazamientoTabla.setBounds(xTabla, yTabla, anchoTabla, altoTabla);
 
                 // 3. Botón inferior: centrado horizontalmente cerca del pie de página
@@ -150,10 +184,42 @@ public class PanelRanking extends JPanel {
             }
         });
 
-        // Evento de clic del botón (se mantiene igual)
+        // Evento de clic del botón
         botonVolverMenu.addActionListener(eventoClick -> {
             coordinadorNavegacion.mostrarPanel("INICIO");
         });
+
+        // Evento: ordenar por puntos (Comparable)
+        botonOrdenarPuntos.addActionListener(e -> {
+            if (!ordenarPorPuntos) {
+                ordenarPorPuntos = true;
+                actualizarEstiloBotonesFiltro();
+                cargarYRefrescarDatos();
+            }
+        });
+
+        // Evento: ordenar por tiempo (Comparator)
+        botonOrdenarTiempo.addActionListener(e -> {
+            if (ordenarPorPuntos) {
+                ordenarPorPuntos = false;
+                actualizarEstiloBotonesFiltro();
+                cargarYRefrescarDatos();
+            }
+        });
+    }
+
+    private void actualizarEstiloBotonesFiltro() {
+        if (ordenarPorPuntos) {
+            botonOrdenarPuntos.setBackground(new Color(255, 215, 0));
+            botonOrdenarPuntos.setForeground(Color.BLACK);
+            botonOrdenarTiempo.setBackground(new Color(40, 40, 40));
+            botonOrdenarTiempo.setForeground(Color.LIGHT_GRAY);
+        } else {
+            botonOrdenarTiempo.setBackground(new Color(0, 200, 255));
+            botonOrdenarTiempo.setForeground(Color.BLACK);
+            botonOrdenarPuntos.setBackground(new Color(40, 40, 40));
+            botonOrdenarPuntos.setForeground(Color.LIGHT_GRAY);
+        }
     }
 
     /**
@@ -169,6 +235,15 @@ public class PanelRanking extends JPanel {
         if (listaMejoresPuntajes.isEmpty()) {
             modeloDatosTabla.addRow(new Object[]{"-", "SIN REGISTROS AUN", "0 pts", "00:00", "--/--/----"});
             return;
+        }
+
+        // Aplicación polimórfica de ordenamiento según el criterio seleccionado:
+        if (this.ordenarPorPuntos) {
+            // Orden natural: utiliza Comparable<Puntaje> definido en Puntaje.compareTo()
+            Collections.sort(listaMejoresPuntajes);
+        } else {
+            // Orden personalizado: utiliza Comparator<Puntaje> vía ComparadorPorTiempo
+            Collections.sort(listaMejoresPuntajes, new ComparadorPorTiempo());
         }
 
         int posicionEscalafon = 1;

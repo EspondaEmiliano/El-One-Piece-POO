@@ -16,7 +16,7 @@ public class PanelInicio extends JPanel {
 
     private PanelPrincipal panelPrincipal;
 
-    // Componentes de interfaz gráfica
+    // Componentes visuales
     private JLabel cartelTitulo;
     private JButton botonPlay;
     private JButton botonSeleccionarNivel;
@@ -33,18 +33,19 @@ public class PanelInicio extends JPanel {
     }
 
     private void inicializarPanel() {
+        // Fondo carbón oscuro consistente con PanelJuego
         this.setBackground(new Color(25, 25, 25));
         this.setLayout(null);
 
-        // Título Arcade con tipografía retro y color dorado
+        // Título Arcade con tipografía retro en color dorado
         cartelTitulo = new JLabel("ESCAPE CORPORATIVO", SwingConstants.CENTER);
-        cartelTitulo.setFont(GestorRecursos.getFuenteArcade(18f));
+        cartelTitulo.setFont(GestorRecursos.getFuenteArcade(22f));
         cartelTitulo.setForeground(new Color(255, 215, 0));
         add(cartelTitulo);
 
         // Botón para iniciar el juego desde el primer nivel
         botonPlay = new JButton("INICIAR JUEGO");
-        botonPlay.setFont(GestorRecursos.getFuenteArcade(12f));
+        botonPlay.setFont(GestorRecursos.getFuenteArcade(13f));
         botonPlay.setBackground(new Color(30, 130, 60));
         botonPlay.setForeground(Color.WHITE);
         botonPlay.setFocusable(false);
@@ -57,7 +58,7 @@ public class PanelInicio extends JPanel {
 
         // Botón para desplegar el selector de niveles disponibles
         botonSeleccionarNivel = new JButton("SELECCIONAR NIVEL");
-        botonSeleccionarNivel.setFont(GestorRecursos.getFuenteArcade(11f));
+        botonSeleccionarNivel.setFont(GestorRecursos.getFuenteArcade(12f));
         botonSeleccionarNivel.setBackground(new Color(110, 40, 140));
         botonSeleccionarNivel.setForeground(Color.WHITE);
         botonSeleccionarNivel.setFocusable(false);
@@ -68,7 +69,7 @@ public class PanelInicio extends JPanel {
 
         // Botón para acceder a la tabla de récords del Top 10
         botonRanking = new JButton("RANKING / TOP 10");
-        botonRanking.setFont(GestorRecursos.getFuenteArcade(11f));
+        botonRanking.setFont(GestorRecursos.getFuenteArcade(12f));
         botonRanking.setBackground(new Color(20, 80, 140));
         botonRanking.setForeground(Color.WHITE);
         botonRanking.setFocusable(false);
@@ -79,25 +80,25 @@ public class PanelInicio extends JPanel {
         });
         add(botonRanking);
 
-        // Carteles con instrucciones operativas de juego
+        // Carteles de controles e instrucciones operativas
         lblControles = new JLabel("CONTROLES: FLECHAS O W-A-S-D", SwingConstants.CENTER);
-        lblControles.setFont(GestorRecursos.getFuenteArcade(8f));
+        lblControles.setFont(GestorRecursos.getFuenteArcade(9f));
         lblControles.setForeground(Color.CYAN);
         add(lblControles);
 
         lblObjetivo = new JLabel("ESQUIVA AL JEFE Y LLEGA A LA SALIDA [S]", SwingConstants.CENTER);
-        lblObjetivo.setFont(GestorRecursos.getFuenteArcade(8f));
+        lblObjetivo.setFont(GestorRecursos.getFuenteArcade(9f));
         lblObjetivo.setForeground(Color.LIGHT_GRAY);
         add(lblObjetivo);
 
-        lblPausa = new JLabel("PAUSA: TECLA 'P'", SwingConstants.CENTER);
-        lblPausa.setFont(GestorRecursos.getFuenteArcade(8f));
+        lblPausa = new JLabel("PAUSA: TECLA 'P' O 'ESC'", SwingConstants.CENTER);
+        lblPausa.setFont(GestorRecursos.getFuenteArcade(9f));
         lblPausa.setForeground(Color.YELLOW);
         add(lblPausa);
 
         // Indicador y control deslizante para calibrar el volumen del audio
         lblVolumen = new JLabel("VOLUMEN: 70%", SwingConstants.CENTER);
-        lblVolumen.setFont(GestorRecursos.getFuenteArcade(8f));
+        lblVolumen.setFont(GestorRecursos.getFuenteArcade(9f));
         lblVolumen.setForeground(Color.CYAN);
         add(lblVolumen);
 
@@ -113,27 +114,32 @@ public class PanelInicio extends JPanel {
         });
         add(sliderVolumen);
 
-        // Distribución geométrica responsiva de los elementos en pantalla
+        // Distribución proporcional de los elementos en resolución fija 900x680
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
                 int ancho = getWidth();
-                int anchoSlider = 200;
-                int anchoBoton = 240;
-                int altoBoton = 34;
+                int alto = getHeight();
 
-                cartelTitulo.setBounds((ancho - 550) / 2, 30, 550, 35);
+                cartelTitulo.setBounds((ancho - 700) / 2, (int) (alto * 0.05), 700, 45);
 
-                botonPlay.setBounds((ancho - anchoBoton) / 2, 155, anchoBoton, altoBoton);
-                botonSeleccionarNivel.setBounds((ancho - anchoBoton) / 2, 197, anchoBoton, altoBoton);
-                botonRanking.setBounds((ancho - anchoBoton) / 2, 239, anchoBoton, altoBoton);
+                int anchoBoton = 280;
+                int altoBoton = 44;
+                int yBotones = (int) (alto * 0.30);
 
-                lblControles.setBounds((ancho - 550) / 2, 288, 550, 18);
-                lblObjetivo.setBounds((ancho - 550) / 2, 310, 550, 18);
-                lblPausa.setBounds((ancho - 550) / 2, 332, 550, 18);
+                botonPlay.setBounds((ancho - anchoBoton) / 2, yBotones, anchoBoton, altoBoton);
+                botonSeleccionarNivel.setBounds((ancho - anchoBoton) / 2, yBotones + 54, anchoBoton, altoBoton);
+                botonRanking.setBounds((ancho - anchoBoton) / 2, yBotones + 108, anchoBoton, altoBoton);
 
-                lblVolumen.setBounds((ancho - 300) / 2, 356, 300, 16);
-                sliderVolumen.setBounds((ancho - anchoSlider) / 2, 376, anchoSlider, 20);
+                int yInstrucciones = (int) (alto * 0.58);
+                lblControles.setBounds((ancho - 650) / 2, yInstrucciones, 650, 24);
+                lblObjetivo.setBounds((ancho - 650) / 2, yInstrucciones + 30, 650, 24);
+                lblPausa.setBounds((ancho - 650) / 2, yInstrucciones + 60, 650, 24);
+
+                int anchoSlider = 250;
+                int yVolumen = (int) (alto * 0.77);
+                lblVolumen.setBounds((ancho - 300) / 2, yVolumen, 300, 20);
+                sliderVolumen.setBounds((ancho - anchoSlider) / 2, yVolumen + 25, anchoSlider, 24);
             }
         });
     }
@@ -178,28 +184,28 @@ public class PanelInicio extends JPanel {
     }
 
     /**
-     * Dibuja los avatares enfrentados del empleado y del jefe en la cabecera del menú.
+     * Dibuja los avatares enfrentados del empleado y del jefe en el espacio entre título y botones.
      */
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
         int centroX = getWidth() / 2;
-        int posY = 90;
-        int tamanioSprite = 48;
+        int posY = (int) (getHeight() * 0.16);
+        int tamanioSprite = 64;
 
         Image spriteEmpleado = GestorRecursos.getSpriteEmpleado();
         if (spriteEmpleado != null) {
-            g.drawImage(spriteEmpleado, centroX - 110, posY, tamanioSprite, tamanioSprite, this);
+            g.drawImage(spriteEmpleado, centroX - 140, posY, tamanioSprite, tamanioSprite, this);
         }
 
-        g.setFont(GestorRecursos.getFuenteArcade(12f));
+        g.setFont(GestorRecursos.getFuenteArcade(16f));
         g.setColor(Color.RED);
-        g.drawString("VS", centroX - 12, posY + 32);
+        g.drawString("VS", centroX - 16, posY + 42);
 
         Image spriteJefe = GestorRecursos.getSpriteJefe();
         if (spriteJefe != null) {
-            g.drawImage(spriteJefe, centroX + 60, posY, tamanioSprite, tamanioSprite, this);
+            g.drawImage(spriteJefe, centroX + 76, posY, tamanioSprite, tamanioSprite, this);
         }
     }
 }

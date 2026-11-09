@@ -42,8 +42,9 @@ public class JuegoEngine {
     private int tiempoLimiteSegundos;
     private long tiempoInicioMilisegundos;
     private long tiempoTranscurridoMilisegundos;
+    private long tiempoAcumuladoNivelesPreviosMs;
     private int puntajeAcumulado;
-    private int puntajeAlInicioDelNivel;
+    private int puntajeBaseNivelActual;
 
     private final GestorArchivos gestorArchivos;
 
@@ -58,9 +59,22 @@ public class JuegoEngine {
 
         this.numeroNivelActual = 1;
         this.tiempoLimiteSegundos = DURACION_JORNADA_SEGUNDOS;
-        this.puntajeAlInicioDelNivel = 0;
+        this.tiempoAcumuladoNivelesPreviosMs = 0;
+        this.puntajeBaseNivelActual = 0;
 
         reiniciarNivel(this.numeroNivelActual);
+    }
+
+    /**
+     * Inicia una nueva partida desde el nivel indicado, restableciendo
+     * el puntaje base y el tiempo acumulado de niveles previos.
+     *
+     * @param numeroNivel Índice numérico del mapa inicial elegido.
+     */
+    public void iniciarPartidaEnNivel(int numeroNivel) {
+        this.puntajeBaseNivelActual = 0;
+        this.tiempoAcumuladoNivelesPreviosMs = 0;
+        reiniciarNivel(numeroNivel);
     }
 
     /**
@@ -68,22 +82,18 @@ public class JuegoEngine {
      * - Restablece el cronómetro al límite completo (60s).
      * - Restaura todos los buffos del mapa.
      * - Reubica al jefe y al empleado en sus coordenadas originales.
-     * - Limpia los proyectiles activos.
-     * - Mantiene el estado en {@link EstadoJuego#JUGANDO} para un reinicio instantáneo sin interrupciones.
+     * - Restablece el puntaje al acumulado hasta el inicio de dicho nivel.
+     * - Limpia los proyectiles activos y mantiene el estado en {@link EstadoJuego#JUGANDO}.
      *
      * @param numeroNivel Índice numérico del mapa a cargar.
      */
     public void reiniciarNivel(int numeroNivel) {
         this.numeroNivelActual = numeroNivel;
-
         if (numeroNivel == 1) {
-            this.puntajeAcumulado = 0;
-            this.puntajeAlInicioDelNivel = 0;
-        } else {
-            // Si muere en un nivel posterior, restaura los puntos con los que inició dicho nivel
-            this.puntajeAcumulado = this.puntajeAlInicioDelNivel;
+            this.puntajeBaseNivelActual = 0;
+            this.tiempoAcumuladoNivelesPreviosMs = 0;
         }
-
+        this.puntajeAcumulado = this.puntajeBaseNivelActual;
         this.tiempoTranscurridoMilisegundos = 0;
         this.tiempoInicioMilisegundos = System.currentTimeMillis();
         this.proyectiles.clear();
@@ -101,7 +111,7 @@ public class JuegoEngine {
             return;
         }
 
-        // 1. Verificar si se agotó el horario laboral reglamentario (Derrota por tiempo)
+        // 1. Verificar si se agotó el horario laboral reglamentario
         long tiempoActualMilisegundos = System.currentTimeMillis();
         this.tiempoTranscurridoMilisegundos = tiempoActualMilisegundos - this.tiempoInicioMilisegundos;
         long segundosTranscurridos = this.tiempoTranscurridoMilisegundos / 1000;
@@ -219,7 +229,8 @@ public class JuegoEngine {
     }
 
     /**
-     * Guarda el puntaje final del jugador en el ranking binario mediante GestorArchivos.
+     * Persiste el récord obtenido por el jugador en la tabla Top 10 del ranking,
+     * consolidando el tiempo total acumulado a lo largo de la partida.
      *
      * @param aliasJugador Nombre o identificador del empleado para el Top 10.
      * @return {@code true} si el puntaje se serializó con éxito; {@code false} en caso contrario.
@@ -229,7 +240,7 @@ public class JuegoEngine {
                 ? aliasJugador.trim()
                 : "Empleado";
 
-        long tiempoTotalEmpleadoSegundos = this.tiempoTranscurridoMilisegundos / 1000;
+        long tiempoTotalEmpleadoSegundos = (this.tiempoAcumuladoNivelesPreviosMs + this.tiempoTranscurridoMilisegundos) / 1000;
         Puntaje registro = new Puntaje(nombreFinal, this.puntajeAcumulado, tiempoTotalEmpleadoSegundos);
 
         try {
@@ -286,22 +297,29 @@ public class JuegoEngine {
 
                     char caracterCelda = mapa[fila][columna];
                     switch (caracterCelda) {
-                        case '#': this.muros.add(new Muro(posicion)); break;
+                        case '#':
+                            this.muros.add(new Muro(posicion));
+                            break;
                         case 'E':
                             Posicion posicionEmpleado = new Posicion(x1 + 4, y1 + 4, x1 + 28, y1 + 28);
                             this.jugador = new Empleado(posicionEmpleado, 2);
                             break;
                         case 'J':
-                            // Cadencia progresiva según el nivel (más exigente a mayor nivel)
+                            // Configura velocidad y cadencia progresiva del jefe según la dificultad del mapa
+                            int velocidadJefe = 1;
                             int cadenciaJefe;
-                            switch (numeroNivel) {
-                                case 1: cadenciaJefe = 2000; break; // 2.0s
-                                case 2: cadenciaJefe = 1800; break; // 1.8s
-                                case 3: cadenciaJefe = 1600; break; // 1.6s
-                                case 4: cadenciaJefe = 1400; break; // 1.4s
-                                default: cadenciaJefe = 1200; break; // 1.2s para nivel 5
+                            if (this.gestorArchivos.esNivelFinal(numeroNivel)) {
+                                velocidadJefe = 2;    // El jefe patrulla al doble de velocidad en el nivel final
+                                cadenciaJefe = 2;   // Dispara cada 0.95 segundos
+                            } else {
+                                switch (numeroNivel) {
+                                    case 1: cadenciaJefe = 2000; break; // 2.0s (Nivel 1: Primer Paso)
+                                    case 2: cadenciaJefe = 1700; break; // 1.7s (Nivel 2: Laberinto Corporativo)
+                                    case 3: cadenciaJefe = 1400; break; // 1.4s (Nivel 3: Ruta Dual)
+                                    default: cadenciaJefe = 1100; break; // 1.1s (Nivel 4: El Búnker Central)
+                                }
                             }
-                            this.enemigo = new Jefe(posicion, 1, "Jefe", cadenciaJefe);
+                            this.enemigo = new Jefe(posicion, velocidadJefe, "Jefe", cadenciaJefe);
                             break;
                         case 'S':
                             this.salida = new Salida(posicion);
@@ -330,6 +348,15 @@ public class JuegoEngine {
     }
 
     /**
+     * Indica si el nivel que se está jugando actualmente corresponde al nivel final.
+     *
+     * @return {@code true} si el jugador se encuentra en el nivel final; {@code false} en caso contrario.
+     */
+    public boolean esNivelFinalActual() {
+        return this.gestorArchivos.esNivelFinal(this.numeroNivelActual);
+    }
+
+    /**
      * Obtiene la cantidad total de niveles disponibles para jugar.
      *
      * @return Total de niveles encontrados por el gestor de archivos.
@@ -348,13 +375,14 @@ public class JuegoEngine {
     }
 
     /**
-     * Avanza al siguiente nivel del juego, conservando el puntaje acumulado
-     * pero restableciendo el tiempo reglamentario, proyectiles y cargando el nuevo mapa.
+     * Avanza al siguiente nivel del juego, conservando el puntaje acumulado y el tiempo total
+     * pero restableciendo el tiempo reglamentario del nivel, proyectiles y cargando el nuevo mapa.
      */
     public void pasarSiguienteNivel() {
         if (haySiguienteNivel()) {
             this.numeroNivelActual++;
-            this.puntajeAlInicioDelNivel = this.puntajeAcumulado;
+            this.puntajeBaseNivelActual = this.puntajeAcumulado;
+            this.tiempoAcumuladoNivelesPreviosMs += this.tiempoTranscurridoMilisegundos;
             this.tiempoTranscurridoMilisegundos = 0;
             this.tiempoInicioMilisegundos = System.currentTimeMillis();
             this.proyectiles.clear();
@@ -365,9 +393,11 @@ public class JuegoEngine {
     }
 
     /**
-     * Reinicia la partida completa desde el nivel 1 restableciendo el puntaje a cero.
+     * Reinicia la partida completa desde el nivel 1 restableciendo el puntaje y tiempo acumulado a cero.
      */
     public void reiniciarPartidaCompleta() {
+        this.puntajeBaseNivelActual = 0;
+        this.tiempoAcumuladoNivelesPreviosMs = 0;
         reiniciarNivel(1);
     }
 
