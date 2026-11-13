@@ -22,9 +22,9 @@ public enum EstadoJuego {
     VICTORIA("¡Felicitaciones! Has escapado de la oficina con éxito."),
 
     /**
-     * El empleado perdió toda su salud debido al impacto de proyectiles.
+     * El empleado perdió sus 3 corazones debido al impacto de proyectiles del jefe.
      */
-    DERROTA_VIDA("Game Over: Tu salud llegó a cero por exceso de tareas."),
+    DERROTA_VIDA("Game Over: Perdiste tus 3 corazones ante los ataques del jefe."),
 
     /**
      * El tiempo reglamentario de la jornada laboral expiró antes de alcanzar la salida.
