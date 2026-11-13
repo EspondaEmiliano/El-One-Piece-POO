@@ -115,24 +115,28 @@
 
 \indent El proyecto \textbf{ESCAPE CORPORATIVO: LA FUGA DEL EMPLEADO} consiste en el diseño e implementación de un videojuego 2D de acción y estrategia en tiempo real desarrollado íntegramente en Java. La premisa narrativa posiciona al jugador en el rol de un empleado exhausto que intenta escapar de un entorno de oficina opresivo antes de que venza su horario laboral reglamentario (60 segundos por nivel), mientras evade incansablemente a su Jefe, quien patrulla el sector superior e intenta asignarle horas extra arrojándole proyectiles cargados de tareas (palas).
 
-\indent Desde el punto de vista académico, este desarrollo constituye un caso de estudio práctico para la aplicación genuina e integral de los contenidos de la asignatura \textit{Paradigma Orientado a Objetos (POO)} (Unidades 1 a 6). La arquitectura se estructura bajo el patrón \textbf{MVC (Modelo-Vista-Controlador)}, incorporando abstracción mediante las jerarquías \code{EntidadMovil} y \code{EntidadEstatica}, herencia y polimorfismo para la gestión de actores y potenciadores (\code{Buffo}), e interfaces (\code{IColisionable}, \code{Buffo}, \code{Comparable}, \code{Comparator}, \code{Serializable}, \code{Runnable}) para el desacoplamiento de contratos. Adicionalmente, el sistema implementa principios \textbf{SOLID} y patrones \textbf{GRASP}, colecciones genéricas (\code{ArrayList}, \code{HashMap}, \code{LinkedHashSet}) recorridas con iteradores y bucles \textit{for-each}, una jerarquía de excepciones personalizadas (\textit{checked} y \textit{unchecked}), ejecución multihilo (\code{Thread} y \code{javax.swing.Timer}), persistencia de archivos binarios y de texto plano, y una interfaz gráfica \textit{arcade} construida con Java Swing/AWT.
+\indent Desde el punto de vista académico, este desarrollo constituye un caso de estudio práctico para la aplicación genuina e integral de los contenidos de la asignatura \textit{Paradigma Orientado a Objetos (POO)} (Unidades 1 a 6). La arquitectura se estructura bajo el patrón \textbf{MVC (Modelo-Vista-Controlador)}, incorporando abstracción mediante las jerarquías \code{EntidadMovil} y \code{EntidadEstatica}, herencia y polimorfismo para la gestión de actores y potenciadores (\code{Buffo}: \code{Cafe}, \code{Aguinaldo} y \code{Corazon}), e interfaces (\code{IColisionable}, \code{Buffo}, \code{Comparable}, \code{Comparator}, \code{Serializable}, \code{Runnable}) para el desacoplamiento de contratos. Adicionalmente, el sistema implementa principios \textbf{SOLID} y patrones \textbf{GRASP}, colecciones genéricas (\code{ArrayList}, \code{HashMap}, \code{LinkedHashSet}) recorridas con iteradores y bucles \textit{for-each}, una jerarquía de excepciones personalizadas (\textit{checked} y \textit{unchecked}), ejecución multihilo (\code{Thread} y \code{javax.swing.Timer}), persistencia de archivos binarios y de texto plano, y una interfaz gráfica \textit{arcade} construida con Java Swing/AWT que incluye un selector modal de niveles con desbloqueo progresivo.
 
 % ==============================================================================
 % 2. OBJETIVO DEL JUEGO
 % ==============================================================================
 \section{Objetivo del juego}
 
-\indent El objetivo central del jugador consiste en guiar al \code{Empleado} desplazándose en cuatro direcciones cardinales (izquierda, derecha, arriba, abajo) mediante las teclas \texttt{WASD} o flechas direccionales desde su punto de origen en la oficina hasta la \textbf{Salida Principal} de la corporación (\code{Salida}), atravesando una secuencia progresiva de 4 niveles laberínticos con muros infranqueables (\code{Muro}), recolectando potenciadores estratégicos y esquivando los proyectiles lanzados por el \code{Jefe}.
+\indent El objetivo central del jugador consiste en guiar al \code{Empleado} desplazándose en cuatro direcciones cardinales (izquierda, derecha, arriba, abajo) mediante las teclas \texttt{WASD} o flechas direccionales desde su punto de origen en la oficina hasta la \textbf{Salida Principal} de la corporación (\code{Salida}), atravesando una secuencia progresiva de 4 niveles laberínticos con dificultad incremental, muros infranqueables (\code{Muro}), recolectando potenciadores estratégicos (\code{Cafe}, \code{Aguinaldo} y \code{Corazon}) y esquivando los proyectiles lanzados por el \code{Jefe}.
 
 \subsection{Condiciones de victoria}
 \begin{itemize}[leftmargin=1.5cm]
     \item El jugador alcanza y superpone su caja de colisión (\code{Posicion}) con las coordenadas de la \textbf{Salida Principal} (\code{Salida.esAlcanzada()}) antes de que finalice la jornada laboral de 60 segundos (\code{EstadoJuego.VICTORIA}).
-    \item Al superar un nivel, el sistema calcula una bonificación de puntaje compuesta por una base de escape (\texttt{500 pts}), el tiempo sobrante ($\text{segundos restantes} \times 10$) y la salud remanente ($\text{HP} \times 5$), habilitando el avance al siguiente nivel hasta completar los 4 mapas del juego, mostrar la pantalla final (\code{PanelVictoria}) y registrar el récord consolidado en el Top 10.
+    \item Al superar un nivel, el sistema calcula una bonificación de puntaje (\code{calcularBonificacionVictoria()}) compuesta por una base de escape (\texttt{500 pts}), el tiempo sobrante ($\text{segundos restantes} \times 10$), las vidas conservadas ($\text{corazones restantes} \times 100$) y un bono adicional (\texttt{+250 pts}) si el empleado cruza la salida conservando su escudo activo (\code{tieneEscudo()}). Asimismo, desbloquea progresivamente el nivel superado en el selector de niveles y habilita el avance al siguiente mapa hasta completar los 4 niveles del juego, mostrar la pantalla final (\code{PanelVictoria}) y registrar el récord consolidado en el Top 10.
 \end{itemize}
 
 \subsection{Condiciones de derrota}
 \begin{itemize}[leftmargin=1.5cm]
-    \item \textbf{Agotamiento de salud (\code{EstadoJuego.DERROTA\_VIDA}):} Los proyectiles (\code{Proyectil}) lanzados por el Jefe impactan contra el Empleado reduciendo su salud en 20 puntos por colisión (\code{recibirDanio(20)}). Cuando la salud desciende a 0 (partiendo de \code{SALUD\_DEFAULT = 100}), la partida concluye en \textit{Game Over}.
+    \item \textbf{Agotamiento de corazones (\code{EstadoJuego.DERROTA\_VIDA}):} El empleado inicia la partida con una reserva global de \textbf{3 corazones} (\code{SALUD\_DEFAULT = 3}) que se conserva a lo largo de los 4 niveles. Cuando un proyectil (\code{Proyectil}) lanzado por el Jefe impacta contra el Empleado (\code{recibirImpacto()}):
+    \begin{itemize}[leftmargin=1.0cm]
+        \item Si el empleado posee un \textbf{Escudo Protector (\code{Aguinaldo})} activo, el escudo absorbe el impacto y se rompe (\code{Aguinaldo.romper()}), evitando la pérdida de corazones y manteniendo su posición en el mapa.
+        \item Si no posee escudo activo, el empleado pierde \texttt{1 corazón}. Si aún conserva corazones disponibles ($2$ o $1$), es devuelto inmediatamente a la coordenada de inicio del nivel (\code{volverAPosicionInicial()}) mientras el reloj de 60 segundos continúa corriendo. Cuando pierde su tercer y último corazón (\code{salud == 0}), la partida concluye en \textit{Game Over}.
+    \end{itemize}
     \item \textbf{Vencimiento del horario laboral (\code{EstadoJuego.DERROTA\_TIEMPO}):} El cronómetro de la jornada alcanza el tiempo límite reglamentario (\code{DURACION\_JORNADA\_SEGUNDOS = 60}) sin que el Empleado haya alcanzado la puerta de salida.
 \end{itemize}
 
@@ -145,7 +149,7 @@
 
 \subsection{El Empleado}
 
-\indent El jugador interactúa directamente con la clase \code{Empleado} (subclase de \code{EntidadMovil}), administrando su salud, su dirección vectorial y la lista de modificadores temporales (\code{List<Buffo>}) recolectados en el mapa.
+\indent El jugador interactúa directamente con la clase \code{Empleado} (subclase de \code{EntidadMovil}), administrando sus corazones de vida, su estado de escudo protector, su coordenada de origen en el nivel (\code{xInicial}, \code{yInicial}), su dirección vectorial y la lista de modificadores (\code{List<Buffo>}) recolectados en el mapa.
 
 \begin{table}[H]
 \centering
@@ -153,14 +157,14 @@
 \rowcolor{headerbg}
 \textbf{Entidad} & \textbf{Rol} & \textbf{Comportamiento} \\
 \hline
-\code{Empleado} & Personaje Principal (Avatar) & Movido por el jugador vía teclado en cuatro direcciones (\code{Direccion}). Evalúa colisiones preventivas contra la lista de \code{Muro} antes de consolidar su movimiento, gestiona su salud (\texttt{100 HP}) y actualiza en cada ciclo el tiempo de vida de sus \code{Buffo} activos mediante un \code{Iterator}. \\
+\code{Empleado} & Personaje Principal (Avatar) & Movido por el jugador vía teclado en cuatro direcciones (\code{Direccion}). Evalúa colisiones preventivas contra la lista de \code{Muro} antes de consolidar su movimiento, gestiona su reserva de \texttt{3 corazones} (\code{SALUD\_DEFAULT = 3}), su escudo protector (\code{tieneEscudo}), el retorno al punto de partida tras recibir un impacto sin escudo (\code{volverAPosicionInicial()}) y actualiza en cada ciclo el tiempo de vida de sus \code{Buffo} activos mediante un \code{Iterator}. \\
 \hline
 \end{tabularx}
 \end{table}
 
 \subsection{El Jefe y sus Proyectiles}
 
-\indent El \code{Jefe} actúa como el antagonista principal impulsado por un algoritmo de seguimiento autónomo en el pasillo superior, aumentando su cadencia de fuego a medida que el jugador avanza de nivel.
+\indent El \code{Jefe} actúa como el antagonista principal impulsado por un algoritmo de seguimiento autónomo en el pasillo superior, incrementando su cadencia de fuego a medida que el jugador avanza por los 4 niveles.
 
 \begin{table}[H]
 \centering
@@ -168,9 +172,9 @@
 \rowcolor{headerbg}
 \textbf{Entidad} & \textbf{Rol} & \textbf{Comportamiento} \\
 \hline
-\code{Jefe} & Antagonista / IA & Persigue horizontalmente al Empleado calculando la diferencia entre los centros geométricos de sus hitboxes (\code{seguirEmpleado()}). Dispara periódicamente según el nivel (\texttt{2000 ms} en Nivel 1 hasta \texttt{1100 ms} en Nivel 4). \\
+\code{Jefe} & Antagonista / IA & Persigue horizontalmente al Empleado a velocidad constante (\code{velocidad = 1}) calculando la diferencia entre los centros geométricos de sus hitboxes (\code{seguirEmpleado()}). Dispara periódicamente con cadencia incremental según el nivel (\texttt{2200 ms} en Nivel 1, \texttt{1850 ms} en Nivel 2, \texttt{1550 ms} en Nivel 3 y \texttt{1250 ms} en Nivel 4). \\
 \arrayrulecolor{bordergray}\hline
-\code{Proyectil} (Pala / Tarea) & Obstáculo Móvil Balístico & Subclase de \code{EntidadMovil} que implementa \code{IColisionable}. Es instanciado por el Jefe con dirección descendente (\code{Direccion.ABAJO}). Al impactar al Empleado, reproduce audio asíncrono, descuenta \texttt{20 HP}, dispara \code{ImpactoProyectilException} y se desactiva (\code{impacto()}). \\
+\code{Proyectil} (Pala / Tarea) & Obstáculo Móvil Balístico & Subclase de \code{EntidadMovil} que implementa \code{IColisionable}. Es instanciado por el Jefe con dirección descendente (\code{Direccion.ABAJO}) y velocidad \texttt{3}. Al impactar al Empleado, reproduce audio asíncrono, rompe el escudo activo o descuenta \texttt{1 corazón} devolviendo al jugador al inicio del nivel, dispara \code{ImpactoProyectilException} y se desactiva (\code{impacto()}). \\
 \arrayrulecolor{black}\hline
 \end{tabularx}
 \end{table}
@@ -185,13 +189,13 @@
 \rowcolor{headerbg}
 \textbf{Entidad} & \textbf{Rol} & \textbf{Comportamiento} \\
 \hline
-Mapa / Grid (\code{char[][]}) & Estructura de Nivel & Matriz bidimensional de caracteres cargada dinámicamente por \code{GestorArchivos} desde \texttt{assets/mapas/nivel\_N.txt} (\texttt{\#} Muro, \texttt{E} Empleado, \texttt{J} Jefe, \texttt{S} Salida, \texttt{C} Café, \texttt{A} Aguinaldo). \\
+Mapa / Grid (\code{char[][]}) & Estructura de Nivel & Matriz bidimensional de caracteres cargada dinámicamente por \code{GestorArchivos} desde \texttt{assets/mapas/nivel\_N.txt} (\texttt{\#} Muro, \texttt{E} Empleado, \texttt{J} Jefe, \texttt{S} Salida, \texttt{C} Café, \texttt{A} Aguinaldo, \texttt{V} Corazón). \\
 \arrayrulecolor{bordergray}\hline
 \code{Muro} & Obstáculo Rígido & Subclase de \code{EntidadEstatica} que implementa \code{IColisionable}. Bloquea el paso del Empleado impidiendo el solapamiento geométrico de sus cajas envolventes. \\
 \hline
 \code{Salida} & Punto de Control / Meta & Subclase de \code{EntidadEstatica} que implementa \code{IColisionable}. Define la coordenada de escape y evalúa la condición de victoria (\code{esAlcanzada()}). \\
 \hline
-\code{ZonaBuffo} & Punto de Obtención de Buffos & Subclase de \code{EntidadEstatica} que implementa \code{IColisionable} y compone una instancia de \code{Buffo} (\code{Cafe} o \code{Aguinaldo}). Al colisionar con el jugador, entrega el potenciador (\code{consumirBuffo()}) y se marca como recolectada. \\
+\code{ZonaBuffo} & Punto de Obtención de Buffos & Subclase de \code{EntidadEstatica} que implementa \code{IColisionable} y compone una instancia polimórfica de \code{Buffo} (\code{Cafe}, \code{Aguinaldo} o \code{Corazon}). Al colisionar con el jugador, entrega el potenciador (\code{consumirBuffo()}) y se marca como recolectada (con preservación inteligente en piso si el jugador tiene la vida llena al pisar un \code{Corazon}). \\
 \arrayrulecolor{black}\hline
 \end{tabularx}
 \end{table}
@@ -203,19 +207,27 @@ Mapa / Grid (\code{char[][]}) & Estructura de Nivel & Matriz bidimensional de ca
 
 \indent La lógica del juego se articula a través de tres reglas de negocio centrales traducidas a estructuras del lenguaje Java dentro del motor \code{JuegoEngine}:
 
-\subsection*{Regla 1 — Movimiento y Colisiones (Motor de Física 2D)}
-\indent En cada ciclo del bucle de juego (\texttt{60 FPS}, cada \texttt{16 ms}), la posición tentativa del \code{Empleado} en cuatro direcciones (\code{Direccion.ARRIBA}, \code{ABAJO}, \code{IZQUIERDA}, \code{DERECHA}) se calcula multiplicando el vector unitario $(\text{dx}, \text{dy})$ del enumerador por la velocidad actual. Antes de actualizar las coordenadas $(x_1, y_1, x_2, y_2)$ del objeto \code{Posicion}, se verifica la intersección de cajas envolventes (\textit{Axis-Aligned Bounding Boxes}) mediante el contrato \code{IColisionable.verificarColision()}. Si existe solapamiento con algún \code{Muro}, el desplazamiento se anula. Por su parte, los proyectiles viajan aéreamente en línea descendente y, al solaparse con el hitbox del Empleado, reducen su salud y notifican el impacto mediante \code{ImpactoProyectilException}.
+\subsection*{Regla 1 — Movimiento, Colisiones y Sistema de 3 Corazones (Motor de Física 2D)}
+\indent En cada ciclo del bucle de juego (\texttt{60 FPS}, cada \texttt{16 ms}), la posición tentativa del \code{Empleado} en cuatro direcciones (\code{Direccion.ARRIBA}, \code{ABAJO}, \code{IZQUIERDA}, \code{DERECHA}) se calcula multiplicando el vector unitario $(\text{dx}, \text{dy})$ del enumerador por la velocidad actual. Antes de actualizar las coordenadas $(x_1, y_1, x_2, y_2)$ del objeto \code{Posicion}, se verifica la intersección de cajas envolventes (\textit{Axis-Aligned Bounding Boxes}) mediante el contrato \code{IColisionable.verificarColision()}. Si existe solapamiento con algún \code{Muro}, el desplazamiento se anula. Por su parte, los proyectiles viajan aéreamente en línea descendente y, al solaparse con el hitbox del Empleado, notifican el impacto mediante \code{ImpactoProyectilException}: si el jugador posee escudo (\code{Aguinaldo}), éste absorbe el golpe y se rompe; de lo contrario, pierde 1 corazón y retrocede a la casilla inicial del mapa (\code{volverAPosicionInicial()}) limpiando los proyectiles en vuelo, o cae derrotado (\code{DERROTA\_VIDA}) al perder los 3 corazones.
 
 \subsection*{Regla 2 — Sistema de Buffos (Polimorfismo)}
 \indent Todos los potenciadores implementan la interfaz \code{Buffo}, la cual define el contrato polimórfico \code{aplicar(Empleado)}, \code{remover(Empleado)}, \code{actualizar(long)} y \code{estaExpirado()}. Al entrar en contacto con una \code{ZonaBuffo} activa:
 \begin{itemize}[leftmargin=1.5cm]
-    \item \textbf{\code{Cafe}:} Incrementa temporalmente la velocidad de desplazamiento del Empleado en \texttt{+3} unidades durante \texttt{5000 ms} (\texttt{5 segundos}) y suma \texttt{50 puntos}. Al expirar su temporizador interno, revierte automáticamente la velocidad a su valor original.
-    \item \textbf{\code{Aguinaldo}:} Efecto instantáneo que restaura \texttt{+25 HP} de salud (sin exceder el tope de \texttt{100 HP}) y otorga un bono directo de \texttt{+500 puntos}.
+    \item \textbf{\code{Cafe} (\texttt{'C'}):} Incrementa temporalmente la velocidad de desplazamiento del Empleado en \texttt{+3} unidades durante \texttt{5000 ms} (\texttt{5 segundos}) y suma \texttt{50 puntos}. Al expirar su temporizador interno, revierte automáticamente la velocidad a su valor original.
+    \item \textbf{\code{Aguinaldo} (\texttt{'A'} — Escudo Protector):} Otorga al Empleado un escudo protector activo (\code{setTieneEscudo(true)}), representado visualmente con un aura cian translúcida alrededor del personaje, capaz de absorber \texttt{1 impacto} de proyectil antes de romperse (\code{romper()}), además de otorgar un bono directo de \texttt{+500 puntos}.
+    \item \textbf{\code{Corazon} (\texttt{'V'} — Vida Extra):} Efecto instantáneo que restaura \texttt{+1 corazón} de vida (hasta el tope máximo de \texttt{3 corazones}) y suma \texttt{+100 puntos}. Si el empleado ya cuenta con sus 3 corazones llenos al pisar la casilla, el ítem no se consume en vano y permanece disponible en el piso para cuando sufra daño.
 \end{itemize}
 \indent Este diseño respeta rigurosamente el principio \textbf{Abierto/Cerrado (OCP)}: el motor y el empleado operan sobre la abstracción \code{Buffo} sin acoplarse a las clases concretas en el ciclo de actualización temporal.
 
-\subsection*{Regla 3 — Progresión y Persistencia}
-\indent El juego estructura su progresión a través de \textbf{4 niveles secuenciales} (\texttt{nivel\_1.txt} a \texttt{nivel\_4.txt}) administrados por \code{JuegoEngine}. Al superar cada mapa, se consolida el puntaje base y el tiempo empleado mientras se incrementa la dificultad reduciendo el intervalo de ataque del Jefe (\texttt{2000 ms}, \texttt{1700 ms}, \texttt{1400 ms} y \texttt{1100 ms}). Si el jugador reintenta un nivel intermedio con la tecla \texttt{R}, recupera el puntaje exacto con el que inició dicho nivel. La tabla histórica de los 10 mejores desempeños (\textit{Top 10 High Scores}) se serializa en disco en el archivo binario \texttt{data/ranking.dat} mediante \code{ObjectOutputStream} y \code{ObjectInputStream} dentro del servicio \code{GestorArchivos}.
+\subsection*{Regla 3 — Progresión Incremental, Selector de Niveles y Persistencia}
+\indent El juego estructura su progresión a través de \textbf{4 niveles secuenciales con diseño incremental} (\texttt{nivel\_1.txt} a \texttt{nivel\_4.txt}) administrados por \code{JuegoEngine}:
+\begin{itemize}[leftmargin=1.5cm]
+    \item \textbf{Nivel 1 (\textit{Primer Paso} — Dificultad Baja):} Corredores amplios de aprendizaje, alta disponibilidad de ayudas (\texttt{3 Cafés}, \texttt{1 Aguinaldo}, \texttt{2 Corazones}) y cadencia de disparo del Jefe de \texttt{2200 ms}.
+    \item \textbf{Nivel 2 (\textit{Laberinto Corporativo} — Dificultad Media):} Secciones escalonadas con aberturas alternadas, \texttt{2 Cafés}, \texttt{1 Aguinaldo}, \texttt{2 Corazones} y cadencia de disparo de \texttt{1850 ms}.
+    \item \textbf{Nivel 3 (\textit{Ruta Dual} — Dificultad Alta):} Bifurcaciones tácticas con refugios intermedios, \texttt{2 Cafés}, \texttt{1 Aguinaldo}, \texttt{1 Corazón} y cadencia de disparo de \texttt{1550 ms}.
+    \item \textbf{Nivel 4 (\textit{El Búnker Central} — Dificultad Extrema):} Cinco barreras horizontales con pasos estrechos en zig-zag bajo fuego intenso, \texttt{2 Cafés}, \texttt{1 Aguinaldo}, \texttt{1 Corazón} y cadencia de disparo de \texttt{1250 ms}.
+\end{itemize}
+\indent Al superar cada mapa, se consolida el puntaje base, los corazones restantes (\code{corazonesBaseNivelActual}) y el tiempo acumulado, desbloqueando progresivamente dicho nivel en el \textbf{Selector de Niveles Arcade} de \code{PanelInicio} (el cual inicia bloqueado y habilita tarjetas interactivas a medida que el jugador avanza). Si el jugador reintenta un nivel con la tecla \texttt{R}, restaura el puntaje y los corazones exactos con los que ingresó a ese piso. La tabla histórica de los 10 mejores desempeños (\textit{Top 10 High Scores}) se serializa en disco en el archivo binario \texttt{data/ranking.dat} mediante \code{ObjectOutputStream} y \code{ObjectInputStream} dentro del servicio \code{GestorArchivos}.
 
 % ==============================================================================
 % 5. MANEJO DE EXCEPCIONES Y EVENTOS
@@ -226,7 +238,7 @@ Mapa / Grid (\code{char[][]}) & Estructura de Nivel & Matriz bidimensional de ca
 
 \begin{itemize}[leftmargin=1.5cm]
     \item \code{NivelNoEncontradoException} (\textbf{Excepción \textit{checked} que extiende de \code{Exception}}): Declarada con \code{throws} en \code{GestorArchivos.cargarMapaNivel(int)} y lanzada con \code{throw} cuando el archivo de diseño de un nivel (\texttt{nivel\_N.txt}) no existe en el sistema de archivos, se encuentra vacío o sufre un fallo de lectura (\code{IOException}, utilizando constructores sobrecargados con encadenamiento de causa \code{Throwable}). Es capturada en \code{JuegoEngine.cargarNivel()}.
-    \item \code{ImpactoProyectilException} (\textbf{Excepción \textit{unchecked} que extiende de \code{RuntimeException}}): Disparada explícitamente en \code{JuegoEngine.actualizarProyectiles()} cuando un \code{Proyectil} colisiona contra la caja envolvente del \code{Empleado}, encapsulando el evento de daño, el disparo de sonido y la transición hacia \code{EstadoJuego.DERROTA\_VIDA} cuando la salud se agota.
+    \item \code{ImpactoProyectilException} (\textbf{Excepción \textit{unchecked} que extiende de \code{RuntimeException}}): Disparada explícitamente en \code{JuegoEngine.actualizarProyectiles()} cuando un \code{Proyectil} colisiona contra la caja envolvente del \code{Empleado}, encapsulando la evaluación de ruptura de escudo o pérdida de corazón, el retroceso a la posición inicial, el disparo de sonido y la transición hacia \code{EstadoJuego.DERROTA\_VIDA} cuando se pierden los 3 corazones.
     \item \textbf{Excepciones estándar y validación de invariantes:} Uso de \code{IllegalArgumentException} ante argumentos inválidos (daño negativo en \code{Empleado.recibirDanio()}, buffo nulo en \code{ZonaBuffo} o puntaje nulo en \code{GestorArchivos.guardarPuntaje()}), y manejo de \code{IOException}, \code{ClassNotFoundException}, \code{FontFormatException}, \code{UnsupportedAudioFileException}, \code{LineUnavailableException} e \code{InterruptedException} con bloques \code{finally} de liberación segura de flujos de audio en \code{GestorAudio.run()}.
 \end{itemize}
 
@@ -238,7 +250,7 @@ Mapa / Grid (\code{char[][]}) & Estructura de Nivel & Matriz bidimensional de ca
 \subsection{Lenguaje, plataforma y herramientas}
 \begin{itemize}[leftmargin=1.5cm]
     \item \textbf{Lenguaje:} Java SE (JDK 17 o superior), estructurado modularmente bajo los paquetes \code{controlador}, \code{modelo.datos}, \code{modelo.entidades}, \code{modelo.items}, \code{interfaces}, \code{excepciones}, \code{servicios} y \code{vista}.
-    \item \textbf{Biblioteca Gráfica:} Java Swing y AWT (\code{JFrame}, \code{JPanel}, \code{CardLayout}, \code{Graphics2D}, \code{JTable}, \code{JSlider}) con técnica nativa de doble búfer (\textit{Double Buffering}) para prevenir el parpadeo (\textit{flicker}), escalado dinámico proporcional y caché de recursos gráficos (\code{GestorRecursos}).
+    \item \textbf{Biblioteca Gráfica:} Java Swing y AWT (\code{JFrame}, \code{JPanel}, \code{JDialog}, \code{CardLayout}, \code{Graphics2D}, \code{JTable}, \code{JSlider}) con técnica nativa de doble búfer (\textit{Double Buffering}) para prevenir el parpadeo (\textit{flicker}), renderizado vectorial de corazones e indicadores en el HUD, escalado dinámico proporcional y caché de recursos gráficos (\code{GestorRecursos}).
     \item \textbf{Multihilo y Concurrencia:} Implementación de la interfaz \code{Runnable} en \code{GestorAudio} para ejecutar la música de fondo en un hilo demonio dedicado (\code{Thread} \texttt{"Hilo-Musica-Fondo"}), subprocesos asíncronos independientes (\texttt{"Hilo-SFX-Impacto"}) para efectos de sonido sin bloquear la física, sincronización en el \textit{Event Dispatch Thread} (\code{SwingUtilities.invokeLater}) y temporizador de bucle de juego (\code{javax.swing.Timer} a \texttt{16 ms} / \texttt{60 FPS}).
     \item \textbf{Persistencia:} Flujos binarios de objetos (\code{java.io.Serializable}, \code{ObjectOutputStream}, \code{ObjectInputStream}) para el ranking histórico en \texttt{data/ranking.dat} y flujos de caracteres UTF-8 (\code{BufferedReader}, \code{InputStreamReader}) para la lectura de matrices de niveles (\texttt{.txt}).
 \end{itemize}
@@ -258,9 +270,9 @@ Mapa / Grid (\code{char[][]}) & Estructura de Nivel & Matriz bidimensional de ca
 \endhead
 \textbf{Abstracción} & Creación de las clases abstractas \code{EntidadMovil} (atributos \code{posicion}, \code{velocidad}, \code{direccionActual} y método \code{mover()}) y \code{EntidadEstatica} (atributo de ubicación fija \code{posicion}). \\
 \arrayrulecolor{bordergray}\hline
-\textbf{Herencia y uso de \code{super()} / \code{this()}} & \code{Empleado}, \code{Jefe} y \code{Proyectil} extienden de \code{EntidadMovil}; \code{Muro}, \code{Salida} y \code{ZonaBuffo} extienden de \code{EntidadEstatica}, invocando a \code{super(...)}. Sobrecarga de constructores encadenados con \code{this(...)} en \code{Cafe}, \code{Aguinaldo}, \code{Puntaje}, \code{GestorArchivos} y \code{PanelJuego}. \\
+\textbf{Herencia y uso de \code{super()} / \code{this()}} & \code{Empleado}, \code{Jefe} y \code{Proyectil} extienden de \code{EntidadMovil}; \code{Muro}, \code{Salida} y \code{ZonaBuffo} extienden de \code{EntidadEstatica}, invocando a \code{super(...)}. Sobrecarga de constructores encadenados con \code{this(...)} en \code{Cafe}, \code{Aguinaldo}, \code{Corazon}, \code{Puntaje}, \code{GestorArchivos} y \code{PanelJuego}. \\
 \hline
-\textbf{Polimorfismo, Sobrecarga y Sobreescritura} & Tratamiento polimórfico de potenciadores mediante colecciones \code{List<Buffo>} y de colisiones vía \code{IColisionable}; sobreescritura (\code{@Override}) en subtipos y en \code{paintComponent(Graphics)}; sobrecarga de métodos en \code{Empleado.mover(List<Muro>)} vs. \code{EntidadMovil.mover()} y \code{GestorRecursos.getSpriteEmpleado()}. \\
+\textbf{Polimorfismo, Sobrecarga y Sobreescritura} & Tratamiento polimórfico de potenciadores (\code{Cafe}, \code{Aguinaldo}, \code{Corazon}) mediante colecciones \code{List<Buffo>} y de colisiones vía \code{IColisionable}; sobreescritura (\code{@Override}) en subtipos y en \code{paintComponent(Graphics)}; sobrecarga de métodos en \code{Empleado.mover(List<Muro>)} vs. \code{EntidadMovil.mover()} y \code{GestorRecursos.getSpriteEmpleado()}. \\
 \hline
 \textbf{Encapsulamiento y Modificadores} & Uso estricto de visibilidad \code{private} para el estado interno, \code{protected} en superclases abstractas, y exposición controlada mediante \textit{getters/setters} validados y vistas inmodificables (\code{Collections.unmodifiableList(buffosActivos)} en \code{Empleado}). \\
 \hline
@@ -268,7 +280,7 @@ Mapa / Grid (\code{char[][]}) & Estructura de Nivel & Matriz bidimensional de ca
 \hline
 \textbf{Miembros \code{static} y Tipos Enumerados} & Constantes de clase (\code{static final}) en \code{JuegoEngine} y \code{Empleado}; caché estática en \code{GestorRecursos} (patrón \textit{Flyweight}); instancia única en \code{GestorAudio} (patrón \textit{Singleton}); y enumerados ricos con atributos y comportamiento en \code{Direccion} y \code{EstadoJuego}. \\
 \hline
-\textbf{Tipos Primitivos, Wrappers, Arrays y Casteo} & Uso de primitivos (\code{int}, \code{long}, \code{float}, \code{boolean}, \code{char}), clases \textit{Wrapper} (\code{Boolean}, \code{Integer}, \code{Long}), matrices primitivas \code{char[][]} para el mapa, arreglos \code{Object[]} en \code{DefaultTableModel}, y casteo explícito con verificación \code{instanceof} en \code{JuegoEngine} (\code{Aguinaldo}), \code{PanelJuego} (\code{Graphics2D}) y \code{GestorAudio} (\code{FloatControl}). \\
+\textbf{Tipos Primitivos, Wrappers, Arrays y Casteo} & Uso de primitivos (\code{int}, \code{long}, \code{float}, \code{boolean}, \code{char}), clases \textit{Wrapper} (\code{Boolean}, \code{Integer}, \code{Long}), matrices primitivas \code{char[][]} para el mapa, arreglos \code{Object[]} en \code{DefaultTableModel}, y casteo explícito con verificación \code{instanceof} en \code{JuegoEngine} (\code{Aguinaldo}, \code{Corazon}), \code{Empleado} (\code{Aguinaldo}), \code{PanelJuego} (\code{Graphics2D}) y \code{GestorAudio} (\code{FloatControl}). \\
 \hline
 \textbf{Colecciones y Ordenamiento (Unidad 4)} & Uso de \code{List<T>} (\code{ArrayList}), \code{Map<String, Image>} (\code{HashMap}) y \code{Set<Integer>} (\code{LinkedHashSet}). Recorrido con cursores \code{Iterator} (remoción segura en caliente) y \textit{for-each}. Ordenamiento natural en \code{Puntaje} (\code{Comparable} por mayor puntaje) y personalizado en \code{ComparadorPorTiempo} (\code{Comparator} para modo \textit{Speedrun}). \\
 \hline
@@ -313,12 +325,12 @@ Mapa / Grid (\code{char[][]}) & Estructura de Nivel & Matriz bidimensional de ca
 \subsection{Descripción de las clases principales}
 \begin{itemize}[leftmargin=1.5cm]
     \item \code{EntidadMovil} \textbf{y} \code{EntidadEstatica} \textbf{(Clases Abstractas):} Cimientos de la jerarquía espacial del juego. Centralizan la composición con \code{Posicion} y, en el caso de las entidades móviles, la cinemática vectorial gobernada por \code{Direccion} y \code{velocidad}.
-    \item \code{Empleado} \textbf{(Clase Concreta):} Representa al avatar del jugador; administra su salud, evalúa colisiones contra muros antes de desplazarse y gestiona el ciclo de vida de su colección polimórfica de \code{Buffo} activos.
-    \item \code{Jefe} \textbf{y} \code{Proyectil} \textbf{(Clases Concretas):} El \code{Jefe} ejecuta la lógica de persecución horizontal y cadencia de tiro, instanciando objetos \code{Proyectil} que se desplazan verticalmente implementando \code{IColisionable}.
-    \item \code{ZonaBuffo}, \code{Cafe} \textbf{y} \code{Aguinaldo} \textbf{(Sistema de Ítems):} \code{ZonaBuffo} modela las casillas interactivas del laberinto que contienen una instancia de \code{Buffo} (\code{Cafe} o \code{Aguinaldo}), aplicando efectos temporales o instantáneos sobre el jugador.
-    \item \code{JuegoEngine} \textbf{(Controlador Principal):} Orquesta el \textit{Game Loop}, procesa las entradas del usuario provenientes de la vista, coordina las colisiones, administra la progresión entre los 4 niveles y delega la persistencia.
+    \item \code{Empleado} \textbf{(Clase Concreta):} Representa al avatar del jugador; administra sus 3 corazones de vida, su escudo activo, su retorno a la coordenada inicial tras impactos (\code{volverAPosicionInicial()}), evalúa colisiones contra muros antes de desplazarse y gestiona el ciclo de vida de su colección polimórfica de \code{Buffo} activos.
+    \item \code{Jefe} \textbf{y} \code{Proyectil} \textbf{(Clases Concretas):} El \code{Jefe} ejecuta la lógica de persecución horizontal y cadencia de tiro incremental por nivel, instanciando objetos \code{Proyectil} que se desplazan verticalmente implementando \code{IColisionable}.
+    \item \code{ZonaBuffo}, \code{Cafe}, \code{Aguinaldo} \textbf{y} \code{Corazon} \textbf{(Sistema de Ítems):} \code{ZonaBuffo} modela las casillas interactivas del laberinto que contienen una instancia polimórfica de \code{Buffo} (\code{Cafe} para velocidad temporal, \code{Aguinaldo} como escudo protector de 1 impacto y \code{Corazon} para restaurar $+1$ vida).
+    \item \code{JuegoEngine} \textbf{(Controlador Principal):} Orquesta el \textit{Game Loop}, procesa las entradas del usuario provenientes de la vista, coordina las colisiones, conserva los corazones entre niveles, administra el desbloqueo progresivo de los 4 mapas y delega la persistencia.
     \item \code{GestorArchivos}, \code{GestorAudio} \textbf{y} \code{GestorRecursos} \textbf{(Servicios y Soporte):} Resuelven respectivamente la serialización del ranking (\code{Puntaje}) y lectura de mapas \texttt{.txt}, la reproducción concurrente de música y SFX en hilos independientes (\code{Runnable}), y el almacenamiento en caché de sprites y fuentes tipográficas.
-    \item \code{PanelPrincipal}, \code{PanelInicio}, \code{PanelJuego}, \code{PanelRanking} \textbf{y} \code{PanelVictoria} \textbf{(Capa Vista):} Construyen la interfaz gráfica en Swing utilizando \code{CardLayout}, clases internas anónimas para listeners de eventos (\code{KeyAdapter}, \code{ComponentAdapter}, \code{ActionListener}) y renderizado 2D en tiempo real.
+    \item \code{PanelPrincipal}, \code{PanelInicio}, \code{PanelJuego}, \code{PanelRanking} \textbf{y} \code{PanelVictoria} \textbf{(Capa Vista):} Construyen la interfaz gráfica en Swing utilizando \code{CardLayout}, un diálogo modal personalizado (\code{JDialog}) en \code{PanelInicio} para el selector de niveles con tarjetas de dificultad, y renderizado 2D en tiempo real con HUD de corazones y estado de escudo en \code{PanelJuego}.
 \end{itemize}
 
 % ==============================================================================
@@ -338,7 +350,7 @@ Primera entrega & Documento de diseño de juego (GDD) y diagrama de clases UML p
 \arrayrulecolor{bordergray}\hline
 Segunda entrega & Modelo de dominio en Java: jerarquías de clases abstractas, herencia, enumerados, colecciones genéricas y manejo de excepciones. & Completado (26/10/2026) \\
 \hline
-Entrega final & Aplicación completa e integrada con interfaz gráfica Swing (\code{CardLayout}), progresión de 4 niveles, ranking con \code{Comparable}/\code{Comparator}, hilos de audio (\code{Runnable}), persistencia binaria y defensa oral. & Completado (16/11/2026) \\
+Entrega final & Aplicación completa e integrada con interfaz gráfica Swing (\code{CardLayout}), progresión de 4 niveles con selector desbloqueable, sistema de 3 corazones y escudo, ranking con \code{Comparable}/\code{Comparator}, hilos de audio (\code{Runnable}), persistencia binaria y defensa oral. & Completado (16/11/2026) \\
 \arrayrulecolor{black}\hline
 \end{tabularx}
 \end{table}
