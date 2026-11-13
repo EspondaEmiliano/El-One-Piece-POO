@@ -184,6 +184,67 @@ public class GestorArchivos {
         return filas;
     }
 
+    /**
+     * Determina la cantidad total de niveles disponibles escaneando los archivos en el disco.
+     *
+     * @return Cantidad de niveles existentes consecutivos a partir del nivel 1.
+     */
+    public int contarNivelesDisponibles() {
+        int contador = 0;
+        while (new File(this.carpetaNiveles + "nivel_" + (contador + 1) + ".txt").isFile()) {
+            contador++;
+        }
+        return contador > 0 ? contador : 1;
+    }
+
+    /**
+     * Retorna el título descriptivo asignado a un nivel específico.
+     *
+     * @param numeroNivel Identificador numérico del nivel.
+     * @return Título y denominación temática del nivel.
+     */
+    public String getNombreNivel(int numeroNivel) {
+        switch (numeroNivel) {
+            case 1:
+                return "Nivel 1: Primer Paso";
+            case 2:
+                return "Nivel 2: Laberinto Corporativo";
+            case 3:
+                return "Nivel 3: Ruta Dual";
+            case 4:
+                return "Nivel 4: El Búnker Central";
+            case 5:
+                return "Nivel 5: La Serpentina Táctica";
+            default:
+                return "Nivel " + numeroNivel;
+        }
+    }
+
+    /**
+     * Genera la lista de títulos de los niveles disponibles hasta el tope desbloqueado indicado.
+     *
+     * @param limiteNivelMaximo Nivel máximo incluido en el listado.
+     * @return Arreglo de cadenas con los nombres ordenados de los niveles habilitados.
+     */
+    public String[] getNombresNivelesDisponibles(int limiteNivelMaximo) {
+        int totalDisponibles = contarNivelesDisponibles();
+        int cantidadAMostrar = Math.max(1, Math.min(limiteNivelMaximo, totalDisponibles));
+        String[] nombres = new String[cantidadAMostrar];
+        for (int i = 0; i < cantidadAMostrar; i++) {
+            nombres[i] = getNombreNivel(i + 1);
+        }
+        return nombres;
+    }
+
+    /**
+     * Genera la lista de títulos de todos los niveles disponibles en disco.
+     *
+     * @return Arreglo de cadenas con los nombres ordenados de cada nivel.
+     */
+    public String[] getNombresNivelesDisponibles() {
+        return getNombresNivelesDisponibles(contarNivelesDisponibles());
+    }
+
     public String getRutaRanking() {
         return rutaRanking;
     }
