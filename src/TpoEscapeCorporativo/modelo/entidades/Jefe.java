@@ -7,17 +7,25 @@ import TpoEscapeCorporativo.modelo.datos.Posicion;
  * Representa al antagonista del juego que patrulla el pasillo superior,
  * sigue horizontalmente al empleado y dispara proyectiles periódicamente.
  */
-public class Jefe extends EntidadMovil{
+public class Jefe extends EntidadMovil {
+
+    /** Dimensiones y velocidad calibradas para el proyectil (pala). */
+    public static final int ANCHO_PALA = 16;
+    public static final int ALTO_PALA = 16;
+    public static final int VELOCIDAD_PALA = 3;
+
+    /** Duración en milisegundos de la animación de disparo. */
+    public static final int DURACION_ANIMACION_ATAQUE_MS = 400;
+
     private String nombre;
     private int intervalAtaque;
     private long ultimoAtaque;
     private Proyectil proyectilGenerado;
 
-    /** Duración en milisegundos de la animación de disparo. */
-    public static final int DURACION_ANIMACION_ATAQUE_MS = 400;
-
     /**
      * Inicializa al jefe con sus parámetros de patrulla y cadencia de fuego.
+     * Al instanciarse, inicia el cronómetro del último ataque para respetar el tiempo de recarga
+     * antes de disparar su primera pala.
      *
      * @param posicion Hitbox inicial en el pasillo superior.
      * @param velocidad Velocidad de seguimiento horizontal.
@@ -28,7 +36,8 @@ public class Jefe extends EntidadMovil{
         super(posicion, velocidad);
         this.nombre = nombre;
         this.intervalAtaque = intervalAtaque;
-        this.ultimoAtaque = 0;
+        // Reinicia la cadencia al spawnear o reiniciar el nivel
+        this.ultimoAtaque = System.currentTimeMillis();
     }
 
     /**
@@ -37,19 +46,15 @@ public class Jefe extends EntidadMovil{
      * @return {@code true} si puede disparar; {@code false} si está en recarga.
      */
     public boolean puedeAtacar() {
-        // Determina si el jefe ya puede realizar otro ataque
-
-        long tiempoActual = System.currentTimeMillis(); // Obtiene el tiempo actual en milisegundos
-
-        return tiempoActual - ultimoAtaque >= intervalAtaque; // Comprueba si transcurrió el intervalo establecido.
+        long tiempoActual = System.currentTimeMillis();
+        return (tiempoActual - ultimoAtaque) >= intervalAtaque;
     }
 
     /**
      * Registra el timestamp del instante en el que se ejecuta el ataque.
      */
     public void registrarAtaque() {
-        // Registra el momento en el que se realiza un ataque
-        ultimoAtaque = System.currentTimeMillis(); // Guarda el instante del ataque para calcular el próximo intervalo
+        this.ultimoAtaque = System.currentTimeMillis();
     }
 
     /**
@@ -58,9 +63,6 @@ public class Jefe extends EntidadMovil{
      * @param posicionEmpleado Hitbox actual del jugador a perseguir.
      */
     public void seguirEmpleado(Posicion posicionEmpleado) {
-        // Mueve horizontalmente al jefe para seguir al empleado
-
-        // Compara el centro horizontal del jefe con el del empleado
         int centroJefe = (posicion.getX1() + posicion.getX2()) / 2;
         int centroEmpleado = (posicionEmpleado.getX1() + posicionEmpleado.getX2()) / 2;
         int diferenciaX = centroEmpleado - centroJefe;
@@ -85,34 +87,26 @@ public class Jefe extends EntidadMovil{
             // Si ya está alineado con el empleado, se frena para disparar
             direccionActual = Direccion.NINGUNA;
         }
-
     }
 
     /**
-     * Instancia un proyectil en la base del jefe con dirección descendente.
+     * Instancia un proyectil calibrado (16x16 px a velocidad 3) en la base del jefe con dirección descendente.
      *
      * @param posicionObjetivo Coordenadas del objetivo al que se apunta.
      */
     public void atacar(Posicion posicionObjetivo) {
-        // Calcula el centro horizontal del jefe.
         int centroX = (posicion.getX1() + posicion.getX2()) / 2;
+        int radioX = ANCHO_PALA / 2;
 
-        // Crea un proyectil pequeño en la posición horizontal del jefe.
-        // Su posición vertical inicial coincide con la parte inferior del jefe.
         Posicion posicionProyectil = new Posicion(
-                centroX - 6,
+                centroX - radioX,
                 posicion.getY2(),
-                centroX + 6,
-                posicion.getY2() + 12
+                centroX + radioX,
+                posicion.getY2() + ALTO_PALA
         );
 
-        // Crea el proyectil con una velocidad de 7 unidades.
-        proyectilGenerado = new Proyectil(posicionProyectil, 4);
-
-        // Configura el movimiento vertical hacia abajo.
-        proyectilGenerado.setDireccionActual(
-                TpoEscapeCorporativo.modelo.datos.Direccion.ABAJO
-        );
+        proyectilGenerado = new Proyectil(posicionProyectil, VELOCIDAD_PALA);
+        proyectilGenerado.setDireccionActual(Direccion.ABAJO);
     }
 
     /**
@@ -133,5 +127,4 @@ public class Jefe extends EntidadMovil{
     public void limpiarProyectilGenerado() {
         proyectilGenerado = null;
     }
-
 }
