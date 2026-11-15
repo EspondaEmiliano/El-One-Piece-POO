@@ -3,3 +3,5 @@ out/
 bin/
 *.iml
 data/
+.agents/
+/skills-lock.json

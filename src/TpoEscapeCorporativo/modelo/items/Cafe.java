@@ -12,7 +12,7 @@ public class Cafe implements Buffo {
     private static final int DURACION_DEFAULT_MS = 5000;        // 5 segundos de duración
     private static final int INCREMENTO_VELOCIDAD_DEFAULT = 3;  // +3 a la velocidad
 
-    private final int icrementoVelocidad;
+    private final int incrementoVelocidad;
     private long tiempoRestanteMs;
     private boolean aplicado;
 
@@ -31,14 +31,14 @@ public class Cafe implements Buffo {
      */
     public Cafe(long duracionMs, int incrementoVelocidad) {
         this.tiempoRestanteMs = Math.max(0, duracionMs);
-        this.icrementoVelocidad = incrementoVelocidad;
+        this.incrementoVelocidad = incrementoVelocidad;
         this.aplicado = false;
     }
 
     @Override
     public void aplicar(Empleado empleado) {
         if (!aplicado && empleado != null) {
-            empleado.setVelocidad(empleado.getVelocidad() + this.icrementoVelocidad);
+            empleado.setVelocidad(empleado.getVelocidad() + this.incrementoVelocidad);
             this.aplicado = true;
         }
     }
@@ -46,7 +46,7 @@ public class Cafe implements Buffo {
     @Override
     public void remover(Empleado empleado) {
         if (aplicado && empleado != null) {
-            empleado.setVelocidad(Math.max(1, empleado.getVelocidad() - this.icrementoVelocidad));
+            empleado.setVelocidad(Math.max(1, empleado.getVelocidad() - this.incrementoVelocidad));
             this.aplicado = false;
         }
 
@@ -73,7 +73,7 @@ public class Cafe implements Buffo {
         return tiempoRestanteMs;
     }
 
-    public int  getIncrementoVelocidad() {
-        return icrementoVelocidad;
+    public int getIncrementoVelocidad() {
+        return incrementoVelocidad;
     }
 }
