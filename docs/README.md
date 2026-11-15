@@ -44,7 +44,7 @@ Guiar al **Empleado** desplazándose en cuatro direcciones cardinales (`WASD` o 
 #### Condiciones de Derrota
 - **Agotamiento de corazones (`EstadoJuego.DERROTA_VIDA`):** El empleado cuenta con **3 corazones** (`SALUD_DEFAULT = 3`) para toda la partida:
   - Si un proyectil impacta al empleado mientras tiene un **Escudo Protector (`Aguinaldo`)** activo, el escudo absorbe el golpe y se rompe (`romper()`), sin perder corazones ni retroceder.
-  - Si un proyectil impacta al empleado **sin escudo**, pierde **1 corazón**. Si aún le quedan corazones (`2` o `1`), el Jefe lo devuelve inmediatamente a la casilla de inicio del nivel (`volverAPosicionInicial()`) mientras el cronómetro sigue corriendo. Al perder el **3er corazón** (`salud == 0`), la partida termina en *Game Over*.
+  - Si un proyectil impacta al empleado **sin escudo**, pierde **1 corazón** y se dispara `ImpactoProyectilException`. Si aún le quedan corazones (`2` o `1`), el jugador es devuelto inmediatamente a la casilla de inicio del nivel (`volverAPosicionInicial()`) mientras el cronómetro sigue corriendo. Al perder el **3er corazón** (`salud == 0`), la partida termina en *Game Over*.
 - **Tiempo agotado (`EstadoJuego.DERROTA_TIEMPO`):** Finalizar los 60 segundos de la jornada laboral sin haber alcanzado la salida.
 
 ---
@@ -57,19 +57,19 @@ El diseño y la lógica de juego se articulan sobre tres reglas de negocio centr
    - El Empleado se desplaza en 4 direcciones cardinales (`ARRIBA`, `ABAJO`, `IZQUIERDA`, `DERECHA`) mediante controles de teclado a 60 FPS (`16 ms`).
    - En cada ciclo del *Game Loop*, la posición intentada es evaluada mediante la intersección de sus cajas envolventes (*Axis-Aligned Bounding Boxes* / `IColisionable.verificarColision()`).
    - Los **Muros** (`Muro`) son infranqueables y bloquean el paso del Empleado.
-   - Los **Proyectiles** (`Proyectil`) descienden verticalmente y, al impactar contra el Empleado, disparan `ImpactoProyectilException`, rompiendo el escudo activo o descontando `1` corazón y devolviendo al empleado al punto de partida (`volverAPosicionInicial()`).
+   - Los **Proyectiles** (`Proyectil`) viajan aéreamente en sentido descendente y, al impactar contra el Empleado, rompen el escudo activo o disparan `ImpactoProyectilException` descontando `1` corazón y devolviendo al empleado al punto de partida (`volverAPosicionInicial()`).
 
 2. **Sistema Polimórfico de Buffos (`Buffo`):**
    - Distribuidos por el mapa existen sectores especiales denominados **Zonas de Buffo** (`ZonaBuffo`).
-   - Todos los potenciadores implementan la interfaz `Buffo` (`aplicar`, `remover`, `actualizar`, `estaExpirado`), respetando rigurosamente el principio *Open/Closed* (OCP):
+   - Todos los potenciadores implementan la interfaz `Buffo` (`aplicar`, `remover`, `actualizar`, `estaExpirado`, `getNombre`), respetando rigurosamente el principio *Open/Closed* (OCP):
      - **Café (`Cafe` — `'C'`):** Incrementa la velocidad del Empleado en `+3` durante `5000 ms` (5 segundos) y otorga `+50 puntos`.
      - **Aguinaldo (`Aguinaldo` — `'A'`, Escudo Protector):** Otorga un escudo protector activo (`tieneEscudo = true`) renderizado con un halo cian translúcido que absorbe `1` impacto de pala antes de romperse (`romper()`), sumando `+500 puntos` al recolectarse.
      - **Corazón (`Corazon` — `'V'`, Vida Extra):** Ítem consumible instantáneo que recupera `+1 corazón` de vida (hasta el tope máximo de `3`) y suma `+100 puntos`. Si el jugador ya tiene sus `3/3` corazones al pasar por encima, el corazón no se desperdicia y permanece en el suelo.
 
 3. **Progresión Incremental de 4 Niveles, Selector Arcade y Persistencia:**
    - El juego cuenta con **4 mapas** (`assets/mapas/nivel_1.txt` a `nivel_4.txt`) con dificultad y cadencia de disparo del Jefe incrementales:
-     - **Nivel 1 (*Primer Paso* — Dificultad Baja):** Corredores amplios, `3 Cafés`, `1 Aguinaldo`, `2 Corazones` y cadencia del Jefe de `2200 ms` (2.20s).
-     - **Nivel 2 (*Laberinto Corporativo* — Dificultad Media):** Secciones escalonadas, `2 Cafés`, `1 Aguinaldo`, `2 Corazones` y cadencia de `1850 ms` (1.85s).
+     - **Nivel 1 (*Primer Paso* — Dificultad Baja):** Corredores amplios, `1 Café`, `1 Aguinaldo`, `1 Corazón` y cadencia del Jefe de `2200 ms` (2.20s).
+     - **Nivel 2 (*Laberinto Corporativo* — Dificultad Media):** Secciones escalonadas, `1 Café`, `1 Aguinaldo`, `1 Corazón` y cadencia de `1850 ms` (1.85s).
      - **Nivel 3 (*Ruta Dual* — Dificultad Alta):** Rutas laterales simétricas y refugios tácticos, `2 Cafés`, `1 Aguinaldo`, `1 Corazón` y cadencia de `1550 ms` (1.55s).
      - **Nivel 4 (*El Búnker Central* — Dificultad Extrema):** Cinco barreras horizontales en zig-zag bajo fuego intenso, `2 Cafés`, `1 Aguinaldo`, `1 Corazón` y cadencia de `1250 ms` (1.25s).
    - **Selector de Niveles con Desbloqueo Progresivo:** El botón `NIVELES` en `PanelInicio` comienza bloqueado y se habilita al superar niveles en la partida, desplegando un modal *arcade* con tarjetas interactivas para rejugar cualquier nivel desbloqueado.
@@ -100,7 +100,7 @@ src/TpoEscapeCorporativo/
 ├── controlador/
 │   └── JuegoEngine.java                   # Motor principal: orquesta el Game Loop, 4 niveles, colisiones y puntajes
 ├── excepciones/
-│   ├── ImpactoProyectilException.java     # Excepción unchecked lanzada al impactar un proyectil contra el Empleado
+│   ├── ImpactoProyectilException.java     # Excepción unchecked lanzada al impactar un proyectil sin escudo
 │   └── NivelNoEncontradoException.java    # Excepción checked ante ausencia o fallo de lectura del mapa (.txt)
 ├── interfaces/
 │   ├── Buffo.java                         # Contrato polimórfico para los potenciadores (Cafe, Aguinaldo, Corazon)
@@ -109,7 +109,7 @@ src/TpoEscapeCorporativo/
 │   ├── datos/
 │   │   ├── ComparadorPorTiempo.java       # Comparator<Puntaje> alternativo para ordenar ranking por menor tiempo
 │   │   ├── Direccion.java                 # Enum con vectores de dirección (ARRIBA, ABAJO, IZQUIERDA, DERECHA, NINGUNA)
-│   │   ├── EstadoJuego.java               # Enum rico con estados de partida (EN_CURSO, VICTORIA, DERROTA_VIDA, etc.)
+│   │   ├── EstadoJuego.java               # Enum rico con estados (JUGANDO, PAUSADO, VICTORIA, DERROTA_VIDA, DERROTA_TIEMPO)
 │   │   ├── Posicion.java                  # Caja envolvente (x1, y1, x2, y2) en el espacio 2D
 │   │   └── Puntaje.java                   # Modelo serializable y Comparable de puntuación y tiempo
 │   ├── entidades/
@@ -129,7 +129,7 @@ src/TpoEscapeCorporativo/
 │   ├── GestorArchivos.java                # Serialización de ranking (ranking.dat) y lectura de niveles (.txt)
 │   └── GestorAudio.java                   # Servicio Singleton/Runnable multihilo para música en bucle y SFX
 └── vista/
-    ├── GestorRecursos.java                # Caché Flyweight de fuentes arcade y sprites reescalados
+    ├── GestorRecursos.java                # Caché Flyweight de fuentes arcade y sprites
     ├── PanelInicio.java                   # Menú principal con Selector Modal Arcade de Niveles y control de audio
     ├── PanelJuego.java                    # Canvas 2D con Game Loop (60 FPS), HUD de corazones/escudo y controles
     ├── PanelPrincipal.java                # Contenedor JFrame con CardLayout (INICIO, JUEGO, RANKING, VICTORIA)
@@ -154,28 +154,30 @@ classDiagram
     %% Interfaces
     class IColisionable {
         <<interface>>
-        +verificarColision(Posicion otraPosicion) boolean
+        +verificarColision(Posicion otraPosicion) Boolean
     }
     class Buffo {
         <<interface>>
         +aplicar(Empleado empleado) void
         +remover(Empleado empleado) void
-        +actualizar(long deltaMs) void
+        +actualizar(long deltaTiempo) void
         +estaExpirado() boolean
+        +getNombre() String
     }
 
     %% Jerarquía de Entidades Base
     class EntidadMovil {
         <<abstract>>
         #Posicion posicion
-        #int velocidad
         #Direccion direccionActual
+        #int velocidad
         +mover() void
         +getPosicion() Posicion
-        +getVelocidad() int
-        +setVelocidad(int velocidad) void
+        +setPosicion(Posicion posicion) void
         +getDireccionActual() Direccion
         +setDireccionActual(Direccion direccionActual) void
+        +getVelocidad() int
+        +setVelocidad(int velocidad) void
     }
     class EntidadEstatica {
         <<abstract>>
@@ -187,50 +189,55 @@ classDiagram
     class Empleado {
         +static final int SALUD_DEFAULT = 3
         -int salud
-        -int xInicial
-        -int yInicial
+        -Posicion posicionInicial
         -boolean tieneEscudo
         -List~Buffo~ buffosActivos
+        -Direccion ultimaDireccion
         +mover(List~Muro~ muros) void
-        +recibirImpacto() boolean
         +volverAPosicionInicial() void
-        +curar(int cantidad) void
-        +recibirBuffo(Buffo buffo) void
-        +actualizarBuffos(long deltaMs) void
+        +recibirImpacto() boolean
+        +recibirDanio(int danio) void
+        +agregarBuffo(Buffo buffo) void
+        +removerBuffo(Buffo buffo) void
+        +actualizarBuffos(long deltaTiempo) void
+        +estaVivo() boolean
         +tieneEscudo() boolean
         +setTieneEscudo(boolean tieneEscudo) void
         +getSalud() int
-        +estaVivo() boolean
+        +setSalud(int salud) void
+        +getBuffosActivos() List~Buffo~
     }
     class Jefe {
-        -int tiempoEntreAtaques
-        -long ultimoAtaqueTiempo
+        -int intervalAtaque
+        -long ultimoAtaque
         -Proyectil proyectilGenerado
-        +seguirEmpleado(Posicion posicionEmpleado) void
         +puedeAtacar() boolean
-        +atacar(Posicion posicionEmpleado) void
         +registrarAtaque() void
+        +seguirEmpleado(Posicion posicionEmpleado) void
+        +atacar(Posicion posicionObjetivo) void
+        +estaAtacando() boolean
         +getProyectilGenerado() Proyectil
         +limpiarProyectilGenerado() void
     }
     class Proyectil {
-        -boolean estaActivo
-        +mover() void
+        -Boolean estaActivo
         +impacto() void
-        +getEstaActivo() boolean
+        +getEstaActivo() Boolean
+        +verificarColision(Posicion otraPosicion) Boolean
     }
 
     %% Implementaciones de Entidades Estáticas
     class Muro {
-        +verificarColision(Posicion otraPosicion) boolean
+        +verificarColision(Posicion otraPosicion) Boolean
     }
     class Salida {
+        +verificarColision(Posicion otraPosicion) Boolean
         +esAlcanzada(Posicion posicionJugador) Boolean
     }
     class ZonaBuffo {
         -Buffo buffo
         -boolean recolectado
-        +verificarColision(Posicion otraPosicion) boolean
+        +verificarColision(Posicion otraPosicion) Boolean
         +consumirBuffo() Buffo
         +isRecolectado() boolean
         +getBuffo() Buffo
@@ -238,33 +245,39 @@ classDiagram
 
     %% Implementaciones de Buffos
     class Cafe {
-        -long duracionMs
-        -long tiempoTranscurridoMs
-        -int bonoVelocidad
+        -int incrementoVelocidad
+        -long tiempoRestanteMs
+        -boolean aplicado
         +aplicar(Empleado empleado) void
         +remover(Empleado empleado) void
-        +actualizar(long deltaMs) void
+        +actualizar(long deltaTiempo) void
         +estaExpirado() boolean
+        +getNombre() String
+        +getTiempoRestanteMs() long
+        +getIncrementoVelocidad() int
     }
     class Aguinaldo {
-        -int puntosExtra
-        -boolean escudoActivo
+        -int puntosBonus
+        -boolean roto
         +aplicar(Empleado empleado) void
         +remover(Empleado empleado) void
-        +actualizar(long deltaMs) void
+        +actualizar(long deltaTiempo) void
         +estaExpirado() boolean
         +romper() void
-        +getPuntosExtra() int
+        +getNombre() String
+        +getPuntosBonus() int
     }
     class Corazon {
-        -int corazonesRecuperados
-        -int puntosExtra
-        -boolean expirado
+        -int vidasRecuperadas
+        -int puntosBonus
+        -boolean yaAplicado
         +aplicar(Empleado empleado) void
         +remover(Empleado empleado) void
-        +actualizar(long deltaMs) void
+        +actualizar(long deltaTiempo) void
         +estaExpirado() boolean
-        +getPuntosExtra() int
+        +getNombre() String
+        +getVidasRecuperadas() int
+        +getPuntosBonus() int
     }
 
     %% Clases de Soporte / Datos
@@ -286,17 +299,21 @@ classDiagram
     }
     class EstadoJuego {
         <<enumeration>>
-        EN_CURSO
+        JUGANDO
+        PAUSADO
         VICTORIA
         DERROTA_VIDA
         DERROTA_TIEMPO
-        ERROR_CARGA
+        +getMensajeDescriptivo() String
+        +esFinDePartida() boolean
     }
     class Puntaje {
         -String nombreJugador
         -int puntos
         -long tiempoSegundos
-        +compareTo(Puntaje otro) int
+        -LocalDateTime fechaRegistro
+        +compareTo(Puntaje nuevoPuntaje) int
+        +getTiempoFormateado() String
     }
     class ComparadorPorTiempo {
         +compare(Puntaje p1, Puntaje p2) int
@@ -310,26 +327,37 @@ classDiagram
         -Empleado jugador
         -Jefe enemigo
         -Salida salida
-        -EstadoJuego estadoJuego
-        -int nivelActual
+        -EstadoJuego estadoActual
+        -int numeroNivelActual
         -int nivelMaximoDesbloqueado
-        -boolean selectorNivelesHabilitado
+        -boolean selectorDesbloqueado
+        -int totalNiveles
+        +reiniciarNivel(int numeroNivel) void
+        +iniciarPartidaEnNivel(int numeroNivel) void
         +actualizar() void
         +procesarEntrada(Direccion nuevaDireccion) void
+        +alternarPausa() void
         +cargarNivel(int numeroNivel) void
-        +avanzarSiguienteNivel() boolean
-        +reiniciarDesdeNivel(int nivel) void
+        +haySiguienteNivel() boolean
+        +getTotalNiveles() int
+        +pasarSiguienteNivel() void
+        +reiniciarPartidaCompleta() void
+        +guardarPuntaje(String aliasJugador) boolean
     }
     class GestorArchivos {
-        +guardarPuntaje(Puntaje nuevoPuntaje) void
         +cargarMejoresPuntajes() List~Puntaje~
+        +guardarPuntaje(Puntaje nuevoPuntaje) void
         +cargarMapaNivel(int numeroNivel) char[][]
-        +obtenerNivelesDisponibles() Set~Integer~
+        +contarNivelesDisponibles() int
+        +getNombreNivel(int numeroNivel) String
+        +getNombresNivelesDisponibles(int limiteNivelMaximo) String[]
     }
 
     %% Relaciones de Implementación y Herencia
-    EntidadMovil ..|> IColisionable
-    EntidadEstatica ..|> IColisionable
+    Proyectil ..|> IColisionable
+    Muro ..|> IColisionable
+    Salida ..|> IColisionable
+    ZonaBuffo ..|> IColisionable
 
     Empleado --|> EntidadMovil
     Jefe --|> EntidadMovil
@@ -382,41 +410,45 @@ classDiagram
         -PanelRanking panelRanking
         -PanelVictoria panelVictoria
         +mostrarPanel(String nombre) void
+        +iniciarJuegoEnNivel(int numeroNivel) void
+        +getMotorEngine() JuegoEngine
     }
     class PanelInicio {
         -PanelPrincipal panelPrincipal
-        -JButton botonNiveles
-        +actualizarEstadoSelectorNiveles() void
-        -mostrarDialogoSelectorNiveles() void
-        -crearTarjetaNivel(JDialog dialogo, int nivel, boolean desbloqueado) JPanel
+        -JButton botonPlay
+        -JButton botonSeleccionarNivel
+        -JButton botonRanking
+        -JSlider sliderVolumen
+        ~actualizarEstadoSelector() void
+        -abrirDialogoSeleccionNivel() void
+        #paintComponent(Graphics g) void
     }
     class PanelJuego {
         +static final int ANCHO
         +static final int ALTO
         -JuegoEngine motor
         -Timer timer
-        +iniciarJuego() void
-        +iniciarJuegoEnNivel(int nivel) void
-        +pausarJuego() void
+        ~iniciarJuego() void
+        ~pausarJuego() void
         #paintComponent(Graphics g) void
         -dibujarMapa(Graphics g) void
         -dibujarBuffos(Graphics g) void
         -dibujarEntidades(Graphics g) void
         -dibujarHUD(Graphics g) void
-        -dibujarCorazon(Graphics2D g2d, int x, int y, int tam, boolean lleno) void
+        -dibujarCorazon(Graphics2D g2d, int x, int y, boolean activo) void
     }
     class PanelRanking {
-        -PanelPrincipal panelPrincipal
-        +actualizarTabla() void
+        -PanelPrincipal coordinadorNavegacion
+        -GestorArchivos servicioPersistencia
+        ~cargarYRefrescarDatos() void
     }
     class PanelVictoria {
         -PanelPrincipal panelPrincipal
-        +actualizarDatosVictoria() void
     }
     class GestorRecursos {
         +getFuenteArcade(float tamanio) Font
-        +getSpriteEmpleado(Direccion d, boolean enMovimiento) Image
-        +getSpriteJefe() Image
+        +getSpriteEmpleado(Direccion direccion) Image
+        +getSpriteJefe(Direccion direccion, boolean estaAtacando) Image
         +getSpriteProyectil() Image
         +getSpriteMuro() Image
         +getSpriteSalida() Image
@@ -426,10 +458,12 @@ classDiagram
     }
     class GestorAudio {
         <<Singleton / Runnable>>
-        +getInstancia() GestorAudio
-        +iniciarMusicaFondo() void
-        +reproducirEfectoImpacto() void
-        +setVolumen(float nivel) void
+        +getInstance() GestorAudio
+        +iniciarMusica() void
+        +pausarMusica() void
+        +detenerMusica() void
+        +reproducirImpactoPala() void
+        +setVolumen(float porcentaje) void
     }
 
     %% Relaciones de la Capa Vista
@@ -439,7 +473,11 @@ classDiagram
     PanelPrincipal o-- PanelVictoria : aloja
     PanelJuego ..> GestorRecursos : obtiene sprites y fuentes
     PanelInicio ..> GestorRecursos : obtiene fuentes
-    PanelInicio ..> GestorAudio : ajusta volumen y mute
+    PanelRanking ..> GestorRecursos : obtiene fuentes
+    PanelVictoria ..> GestorRecursos : obtiene fuentes
+    PanelInicio ..> GestorAudio : ajusta volumen
+    PanelJuego ..> GestorAudio : controla música
+    PanelPrincipal ..> GestorAudio : inicia música
 ```
 
 ---
@@ -461,8 +499,9 @@ sequenceDiagram
     participant P as Proyectil
 
     %% 1. Inicio de partida
-    Jugador->>PI: Clic en botón "JUGAR" o tarjeta de Nivel
-    PI->>PP: mostrarPanel("JUEGO")
+    Jugador->>PI: Clic en "INICIAR JUEGO" o tarjeta de Nivel
+    PI->>PP: iniciarJuegoEnNivel(numeroNivel)
+    PP->>JE: iniciarPartidaEnNivel(numeroNivel)
     PP->>PJ: iniciarJuego() y requestFocusInWindow()
     Note over PJ: Inicia Timer a 60 FPS (~16ms)
 
@@ -494,12 +533,12 @@ sequenceDiagram
                 else Sin Escudo (pierde 1 corazón)
                     alt Aún le quedan corazones (estaVivo())
                         JE->>E: volverAPosicionInicial()
-                        Note over JE: Limpia proyectiles activos y continúa el nivel
+                        Note over JE: Lanza y captura ImpactoProyectilException y limpia proyectiles
                     else Perdió los 3 corazones (salud == 0)
-                        Note over JE: EstadoJuego.DERROTA_VIDA (Game Over)
+                        Note over JE: Lanza ImpactoProyectilException (EstadoJuego.DERROTA_VIDA)
                     end
                 end
-            else Fuera de los límites del mapa
+            else Fuera de los límites del mapa (y1 > 400)
                 JE->>P: impacto()
             end
         end
@@ -521,7 +560,7 @@ El sistema modela fielmente las exigencias académicas de la materia mediante la
 | **Abstracción** | Jerarquías de `EntidadMovil` y `EntidadEstatica` que generalizan el posicionamiento euclidiano y las dimensiones en pantalla. | Evita código duplicado y proporciona una base extensible para cualquier nuevo elemento gráfico interactivo. |
 | **Herencia** | `Empleado`, `Jefe` y `Proyectil` heredan atributos cinemáticos de `EntidadMovil`; `Muro`, `Salida` y `ZonaBuffo` derivan de `EntidadEstatica`. | Modela coherentemente las relaciones de especialización (*es-un*) en el dominio. |
 | **Polimorfismo** | Uso unificado de la interfaz `Buffo` (`Cafe`, `Aguinaldo` y `Corazon`) e iteración polimórfica sobre colecciones `List<Buffo>` e `IColisionable`. | Permite incorporar nuevos potenciadores (como `Corazon`) sin modificar la estructura del motor central (**Principio Abierto/Cerrado - OCP**). |
-| **Encapsulamiento** | Atributos privados con métodos accesores validados y vistas inmodificables (`Collections.unmodifiableList`) en clases del dominio. | Protege la integridad del estado interno impidiendo mutaciones externas no autorizadas. |
+| **Encapsulamiento y Visibilidad** | Atributos `private`/`protected`, métodos de coordinación interna `default` (paquete `vista`), getters/setters validados y vistas inmodificables (`Collections.unmodifiableList`). | Protege la integridad del estado interno y delimita la API pública frente a la coordinación interna de paquete. |
 | **Interfaces** | Contratos funcionales `IColisionable` y `Buffo`, además de `Comparable<Puntaje>`, `Comparator<Puntaje>`, `Serializable` y `Runnable`. | Fomenta bajo acoplamiento y alta cohesión (**GRASP / SOLID**). |
 | **Manejo de Excepciones** | Distinción formal entre excepciones *checked* (`NivelNoEncontradoException` para I/O y carga de niveles) y *unchecked* (`ImpactoProyectilException` para colisiones balísticas). | Obliga a un tratamiento controlado y robusto de fallos de persistencia en disco, separando errores de infraestructura de la física en tiempo real. |
 
@@ -543,7 +582,7 @@ El sistema modela fielmente las exigencias académicas de la materia mediante la
 ## Alcance y Plan de Trabajo
 
 | Hito | Contenido Previsto | Estado |
-|---|---|:---:|
+|---|---|---|
 | **Primera Entrega** | Documento de Diseño de Juego (GDD) y Diagrama de Clases UML formal. | ✅ **Completado** (05/10/2026) |
 | **Segunda Entrega** | Implementación del modelo de dominio en Java: jerarquías, enums, colecciones y manejo de excepciones. | ✅ **Completado** (26/10/2026) |
 | **Entrega Final** | Aplicación completa con interfaz gráfica Swing integrada, 4 niveles incrementales con selector desbloqueable, sistema de 3 corazones y escudo, hilos de audio, persistencia de datos y defensa oral. | ✅ **Completado** (16/11/2026) |
