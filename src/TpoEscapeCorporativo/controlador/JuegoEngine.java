@@ -5,11 +5,8 @@ import TpoEscapeCorporativo.excepciones.NivelNoEncontradoException;
 import TpoEscapeCorporativo.interfaces.Buffo;
 import TpoEscapeCorporativo.modelo.datos.Direccion;
 import TpoEscapeCorporativo.modelo.datos.EstadoJuego;
-import TpoEscapeCorporativo.modelo.datos.Posicion;
 import TpoEscapeCorporativo.modelo.datos.Puntaje;
 import TpoEscapeCorporativo.modelo.entidades.*;
-import TpoEscapeCorporativo.modelo.items.Aguinaldo;
-import TpoEscapeCorporativo.modelo.items.Cafe;
 import TpoEscapeCorporativo.modelo.items.Corazon;
 import TpoEscapeCorporativo.modelo.items.ZonaBuffo;
 import TpoEscapeCorporativo.servicios.GestorArchivos;
@@ -20,16 +17,18 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Motor principal del juego: administra el ciclo de actualización de física,
- * la IA exterior del Jefe, la detección de impactos balísticos y zonas de buffos,
+ * Motor principal del juego (Controlador): administra el ciclo de actualización de física,
+ * la coordinación de la IA del Jefe, la detección de impactos balísticos y zonas de buffos,
  * el sistema de 3 corazones para toda la partida, el control de jornada laboral (tiempo)
- * y las transiciones de estado.
+ * y las transiciones de estado. Delega la carga/construcción de mapas a {@link CargadorNivel}.
  */
 public class JuegoEngine {
 
+    /** Duración reglamentaria de la jornada laboral por cada nivel en segundos. */
     public static final int DURACION_JORNADA_SEGUNDOS = 60;
-    public static final int PUNTOS_POR_BUFFO = 50;
+    /** Puntos base otorgados al alcanzar la puerta de salida en un nivel. */
     public static final int PUNTOS_BASE_ESCAPE = 500;
+    /** Cantidad total de niveles esperada por defecto. */
     public static final int TOTAL_NIVELES = 5;
 
     private List<Muro> muros;
@@ -43,7 +42,7 @@ public class JuegoEngine {
     private int numeroNivelActual;
     private int nivelMaximoDesbloqueado;
     private boolean selectorDesbloqueado;
-    private int tiempoLimiteSegundos;
+    private final int tiempoLimiteSegundos;
     private long tiempoInicioMilisegundos;
     private long tiempoTranscurridoMilisegundos;
     private long tiempoAcumuladoNivelesPreviosMs;
@@ -52,16 +51,18 @@ public class JuegoEngine {
     private int corazonesBaseNivelActual;
 
     private final GestorArchivos gestorArchivos;
+    private final CargadorNivel cargadorNivel;
     private final int totalNiveles;
 
     /**
-     * Inicializa el motor, prepara las listas de entidades y carga el nivel inicial con 3 corazones.
+     * Inicializa el motor, prepara las estructuras del nivel y comienza en el Nivel 1 con 3 corazones.
      */
     public JuegoEngine() {
         this.muros = new ArrayList<>();
         this.proyectiles = new ArrayList<>();
         this.zonaBuffos = new ArrayList<>();
         this.gestorArchivos = new GestorArchivos();
+        this.cargadorNivel = new CargadorNivel(this.gestorArchivos);
         this.totalNiveles = this.gestorArchivos.contarNivelesDisponibles();
 
         this.numeroNivelActual = 1;
@@ -115,52 +116,23 @@ public class JuegoEngine {
     }
 
     /**
-     * Ejecuta un frame de actualización de física, lógica y reglas de negocio.
-     * Si el juego no está en {@link EstadoJuego#JUGANDO}, se suspende la actualización.
+     * Ejecuta un ciclo de actualización de física, IA, colisiones y reglas de negocio.
+     * Si el juego no está en {@link EstadoJuego#JUGANDO}, suspende la actualización.
      */
     public void actualizar() {
         if (this.estadoActual != EstadoJuego.JUGANDO) {
             return;
         }
 
-        // 1. Verificar si se agotó el horario laboral reglamentario (Derrota por tiempo)
-        long tiempoActualMilisegundos = System.currentTimeMillis();
-        this.tiempoTranscurridoMilisegundos = tiempoActualMilisegundos - this.tiempoInicioMilisegundos;
-        long segundosTranscurridos = this.tiempoTranscurridoMilisegundos / 1000;
-
-        if (segundosTranscurridos >= this.tiempoLimiteSegundos) {
-            this.estadoActual = EstadoJuego.DERROTA_TIEMPO;
+        if (evaluarTiempoAgotado()) {
             return;
         }
 
-        // 2. Mover empleado y descontar tiempo de vida de buffos activos
         this.jugador.mover(this.muros);
         this.jugador.actualizarBuffos(16);
 
-        // 3. Evaluar recolección de potenciadores en el laberinto
-        for (ZonaBuffo zona : this.zonaBuffos) {
-            if (!zona.isRecolectado() && zona.verificarColision(this.jugador.getPosicion())) {
-                // Si es un Corazón y el jugador ya tiene los 3 corazones llenos, no lo consume aún
-                if (zona.getBuffo() instanceof Corazon && this.jugador.getSalud() >= Empleado.SALUD_DEFAULT) {
-                    continue;
-                }
+        evaluarRecoleccionBuffos();
 
-                Buffo buffoConsumido = zona.consumirBuffo();
-                this.jugador.agregarBuffo(buffoConsumido);
-
-                if (buffoConsumido instanceof Aguinaldo) {
-                    Aguinaldo aguinaldo = (Aguinaldo) buffoConsumido;
-                    this.puntajeAcumulado += aguinaldo.getPuntosBonus();
-                } else if (buffoConsumido instanceof Corazon) {
-                    Corazon corazon = (Corazon) buffoConsumido;
-                    this.puntajeAcumulado += corazon.getPuntosBonus();
-                } else {
-                    this.puntajeAcumulado += PUNTOS_POR_BUFFO;
-                }
-            }
-        }
-
-        // 4. Evaluar condición de victoria al pisar la salida de escape
         if (this.salida != null && this.salida.esAlcanzada(this.jugador.getPosicion())) {
             this.estadoActual = EstadoJuego.VICTORIA;
             calcularBonificacionVictoria();
@@ -168,11 +140,51 @@ public class JuegoEngine {
             return;
         }
 
-        // 5. Patrulla exterior del Jefe (seguimiento horizontal y disparo balístico)
+        actualizarJefe();
+        actualizarProyectiles();
+    }
+
+    /**
+     * Actualiza el cronómetro del nivel y verifica si finalizó el horario laboral.
+     */
+    private boolean evaluarTiempoAgotado() {
+        long tiempoActualMilisegundos = System.currentTimeMillis();
+        this.tiempoTranscurridoMilisegundos = tiempoActualMilisegundos - this.tiempoInicioMilisegundos;
+        long segundosTranscurridos = this.tiempoTranscurridoMilisegundos / 1000;
+
+        if (segundosTranscurridos >= this.tiempoLimiteSegundos) {
+            this.estadoActual = EstadoJuego.DERROTA_TIEMPO;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Evalúa la colisión del empleado con las zonas de buffo y aplica el efecto
+     * y los puntos bonus de forma polimórfica vía {@link Buffo}.
+     */
+    private void evaluarRecoleccionBuffos() {
+        for (ZonaBuffo zona : this.zonaBuffos) {
+            if (!zona.isRecolectado() && zona.verificarColision(this.jugador.getPosicion())) {
+                if (zona.getBuffo() instanceof Corazon && this.jugador.getSalud() >= Empleado.SALUD_DEFAULT) {
+                    continue;
+                }
+
+                Buffo buffoConsumido = zona.consumirBuffo();
+                this.jugador.agregarBuffo(buffoConsumido);
+                this.puntajeAcumulado += buffoConsumido.getPuntosBonus();
+            }
+        }
+    }
+
+    /**
+     * Coordina el seguimiento horizontal y la cadencia de disparo del Jefe.
+     */
+    private void actualizarJefe() {
         this.enemigo.seguirEmpleado(this.jugador.getPosicion());
 
         if (this.enemigo.puedeAtacar()) {
-            this.enemigo.atacar(this.jugador.getPosicion());
+            this.enemigo.atacar();
             List<Proyectil> nuevosProyectiles = this.enemigo.getProyectilesGenerados();
 
             if (!nuevosProyectiles.isEmpty()) {
@@ -181,9 +193,6 @@ public class JuegoEngine {
                 this.enemigo.limpiarProyectilGenerado();
             }
         }
-
-        // 6. Actualizar proyectiles y resolver impactos balísticos
-        actualizarProyectiles();
     }
 
     /**
@@ -203,13 +212,6 @@ public class JuegoEngine {
     /**
      * Desplaza los proyectiles arrojados balísticamente por el jefe
      * y procesa su impacto contra el empleado mediante {@link ImpactoProyectilException}.
-     *
-     * - Si el empleado tiene escudo (Aguinaldo), absorbe el impacto sin perder corazón ni retroceder.
-     * - Si no tiene escudo, pierde 1 corazón:
-     *   - Si aún le quedan corazones (> 0), el empleado y el jefe vuelven a sus posiciones iniciales,
-     *     se limpian las palas en vuelo y se regeneran en el mapa los buffos de Café y Aguinaldo
-     *     (los Corazones consumidos no reaparecen), manteniendo el reloj corriendo.
-     *   - Si pierde su 3.er corazón (0 corazones), la partida termina en {@link EstadoJuego#DERROTA_VIDA}.
      */
     private void actualizarProyectiles() {
         Iterator<Proyectil> iteradorProyectiles = this.proyectiles.iterator();
@@ -220,19 +222,16 @@ public class JuegoEngine {
             if (proyectilActual.getEstaActivo()) {
                 proyectilActual.mover();
 
-                // Colisión balística contra el empleado
                 if (proyectilActual.verificarColision(this.jugador.getPosicion())) {
                     proyectilActual.impacto();
 
                     try {
                         GestorAudio.reproducirImpactoPala();
-
                         boolean golpeAbsorbido = this.jugador.recibirImpacto();
 
                         if (golpeAbsorbido) {
                             System.out.println("[ESCUDO] ¡Pala absorbida por el Aguinaldo! El empleado continúa sin perder corazones.");
                         } else if (this.jugador.estaVivo()) {
-                            // Aún le quedan corazones: reubica al empleado y al jefe y regenera Café y Aguinaldo
                             this.jugador.volverAPosicionInicial();
                             if (this.enemigo != null) {
                                 this.enemigo.volverAPosicionInicial();
@@ -243,7 +242,6 @@ public class JuegoEngine {
                                     "El jefe devolvió al empleado al inicio. Corazones restantes: " + this.jugador.getSalud()
                             );
                         } else {
-                            // Perdió los 3 corazones: Game Over definitivo
                             this.estadoActual = EstadoJuego.DERROTA_VIDA;
                             throw new ImpactoProyectilException(
                                     "Impacto fatal de pala: el empleado perdió sus 3 corazones."
@@ -251,17 +249,15 @@ public class JuegoEngine {
                         }
                     } catch (ImpactoProyectilException excepcionImpacto) {
                         System.out.println("[ALERTA] " + excepcionImpacto.getMessage());
-                        return; // Corta la iteración tras limpiar proyectiles o finalizar la partida
+                        return;
                     }
                 }
 
-                // Salida de la pantalla por el límite inferior
-                if (proyectilActual.getPosicion().getY1() > 400) {
+                if (proyectilActual.getPosicion().getY1() > CargadorNivel.LIMITE_INFERIOR_ARENA_Y) {
                     proyectilActual.impacto();
                 }
             }
 
-            // Purga de proyectiles desactivados
             if (!proyectilActual.getEstaActivo()) {
                 iteradorProyectiles.remove();
             }
@@ -326,7 +322,7 @@ public class JuegoEngine {
     }
 
     /**
-     * Pausa o reanuda la partida.
+     * Alterna entre los estados {@link EstadoJuego#JUGANDO} y {@link EstadoJuego#PAUSADO}.
      */
     public void alternarPausa() {
         if (this.estadoActual == EstadoJuego.JUGANDO) {
@@ -337,71 +333,18 @@ public class JuegoEngine {
     }
 
     /**
-     * Carga y parsea la matriz de nivel desde el archivo de texto en disco.
-     * Soporta '#' (Muro), 'E' (Empleado), 'J' (Jefe), 'S' (Salida),
-     * 'C' (Café), 'A' (Aguinaldo/Escudo) y 'V'/'H' (Corazón/+1 Vida).
+     * Carga el nivel indicado delegando la lectura y construcción de entidades en {@link CargadorNivel}.
      *
      * @param numeroNivel Identificador del nivel a cargar.
      */
     public void cargarNivel(int numeroNivel) {
         try {
-            char[][] mapa = this.gestorArchivos.cargarMapaNivel(numeroNivel);
-            int tamanioCelda = 32;
-
-            this.muros.clear();
-            this.zonaBuffos.clear();
-
-            for (int fila = 0; fila < mapa.length; fila++) {
-                for (int columna = 0; columna < mapa[fila].length; columna++) {
-                    int x1 = columna * tamanioCelda + 12;
-                    int y1 = fila * tamanioCelda + 8;
-                    int x2 = x1 + tamanioCelda;
-                    int y2 = y1 + tamanioCelda;
-                    Posicion posicion = new Posicion(x1, y1, x2, y2);
-
-                    char caracterCelda = mapa[fila][columna];
-                    switch (caracterCelda) {
-                        case '#':
-                            this.muros.add(new Muro(posicion));
-                            break;
-                        case 'E':
-                            Posicion posicionEmpleado = new Posicion(x1 + 4, y1 + 4, x1 + 28, y1 + 28);
-                            this.jugador = new Empleado(posicionEmpleado, 2);
-                            break;
-                        case 'J':
-                            // Configura velocidad, cadencia y modalidad de ataque según la dificultad del nivel
-                            int velocidadJefe = 1;
-                            int cadenciaJefe;
-                            boolean ataqueTriple = false;
-                            if (numeroNivel == 5 || numeroNivel >= this.totalNiveles) {
-                                cadenciaJefe = 2000;
-                                ataqueTriple = true;
-                            } else {
-                                switch (numeroNivel) {
-                                    case 1: cadenciaJefe = 2000; break;
-                                    case 2: cadenciaJefe = 1700; break;
-                                    case 3: cadenciaJefe = 1550; break;
-                                    default: cadenciaJefe = 1250; break;
-                                }
-                            }
-                            this.enemigo = new Jefe(posicion, velocidadJefe, cadenciaJefe, ataqueTriple);
-                            break;
-                        case 'S':
-                            this.salida = new Salida(posicion);
-                            break;
-                        case 'C':
-                            this.zonaBuffos.add(new ZonaBuffo(posicion, new Cafe()));
-                            break;
-                        case 'A':
-                            this.zonaBuffos.add(new ZonaBuffo(posicion, new Aguinaldo()));
-                            break;
-                        case 'V':
-                        case 'H':
-                            this.zonaBuffos.add(new ZonaBuffo(posicion, new Corazon()));
-                            break;
-                    }
-                }
-            }
+            CargadorNivel.DatosNivel datos = this.cargadorNivel.cargar(numeroNivel, this.totalNiveles);
+            this.muros = datos.getMuros();
+            this.zonaBuffos = datos.getZonasBuffo();
+            this.jugador = datos.getJugador();
+            this.enemigo = datos.getEnemigo();
+            this.salida = datos.getSalida();
         } catch (NivelNoEncontradoException excepcionNivel) {
             System.err.println("Error al cargar nivel: " + excepcionNivel.getMessage());
         }
@@ -445,12 +388,13 @@ public class JuegoEngine {
     }
 
     /**
-     * Obtiene las etiquetas descriptivas de los niveles que el jugador ya ha desbloqueado.
+     * Obtiene la etiqueta descriptiva de dificultad asociada a un nivel.
      *
-     * @return Arreglo de títulos formateados de cada nivel desbloqueado.
+     * @param numeroNivel Identificador numérico del nivel.
+     * @return Etiqueta de dificultad del nivel.
      */
-    public String[] getOpcionesNivelesDesbloqueados() {
-        return this.gestorArchivos.getNombresNivelesDisponibles(this.nivelMaximoDesbloqueado);
+    public String getEtiquetaDificultadNivel(int numeroNivel) {
+        return this.cargadorNivel.getEtiquetaDificultad(numeroNivel);
     }
 
     /**
@@ -473,12 +417,10 @@ public class JuegoEngine {
 
     /**
      * Avanza al siguiente nivel del juego, conservando el puntaje acumulado, el tiempo total
-     * y los corazones que le quedan al jugador, pero restableciendo el cronómetro del nivel,
-     * proyectiles y cargando el nuevo mapa.
+     * y los corazones restantes, restableciendo el cronómetro del nivel y cargando el nuevo mapa.
      */
     public void pasarSiguienteNivel() {
         if (haySiguienteNivel()) {
-            // Conservamos los corazones restantes para el siguiente nivel
             if (this.jugador != null && this.jugador.getSalud() > 0) {
                 this.corazonesBaseNivelActual = this.jugador.getSalud();
             }
@@ -499,7 +441,7 @@ public class JuegoEngine {
     }
 
     /**
-     * Reinicia la partida completa desde el nivel 1 restableciendo el puntaje a cero y los 3 corazones.
+     * Reinicia la partida completa desde el Nivel 1 restableciendo el puntaje a cero y los 3 corazones.
      */
     public void reiniciarPartidaCompleta() {
         this.puntajeBaseNivelActual = 0;
@@ -522,30 +464,36 @@ public class JuegoEngine {
         }
     }
 
-    // --- Métodos de consulta y Getters ---
-
+    /** @return Estado actual del ciclo de vida de la partida. */
     public EstadoJuego getEstadoActual() { return estadoActual; }
 
+    /** @return Puntaje total acumulado por el jugador en la partida actual. */
     public int getPuntajeAcumulado() { return puntajeAcumulado; }
 
-    public int getTiempoLimiteSegundos() { return tiempoLimiteSegundos; }
-
+    /** @return Segundos restantes de la jornada laboral en el nivel actual. */
     public int getTiempoRestanteSegundos() {
         long segundosTranscurridos = this.tiempoTranscurridoMilisegundos / 1000;
         return (int) Math.max(0, this.tiempoLimiteSegundos - segundosTranscurridos);
     }
 
+    /** @return Instancia actual del empleado controlado por el jugador. */
     public Empleado getJugador() { return jugador; }
 
+    /** @return Instancia actual del jefe antagonista. */
     public Jefe getJefe() { return enemigo; }
 
+    /** @return Copia defensiva de los proyectiles presentes en el nivel. */
     public List<Proyectil> getProyectiles() { return new ArrayList<>(proyectiles); }
 
+    /** @return Copia defensiva de las zonas de buffo del nivel. */
     public List<ZonaBuffo> getZonasBuffo() { return new ArrayList<>(zonaBuffos); }
 
+    /** @return Copia defensiva de los muros del laberinto. */
     public List<Muro> getMuros() { return new ArrayList<>(muros); }
 
+    /** @return Puerta de salida del nivel actual. */
     public Salida getSalida() { return salida; }
 
+    /** @return Número del nivel que se está jugando actualmente. */
     public int getNumeroNivelActual() { return numeroNivelActual; }
 }

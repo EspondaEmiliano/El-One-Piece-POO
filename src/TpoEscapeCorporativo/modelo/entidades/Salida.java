@@ -5,7 +5,7 @@ import TpoEscapeCorporativo.modelo.datos.Posicion;
 
 /**
  * Representa la puerta de escape de la oficina. Al ser alcanzada
- * por el empleado, concluye la partida con el estado de Victoria.
+ * por el empleado, concluye el nivel con el estado de Victoria.
  */
 public class Salida extends EntidadEstatica implements IColisionable {
 
@@ -26,13 +26,7 @@ public class Salida extends EntidadEstatica implements IColisionable {
      */
     @Override
     public Boolean verificarColision(Posicion otraPosicion) {
-        if (otraPosicion == null) {
-            return false;
-        }
-        return posicion.getX1() <= otraPosicion.getX2()
-                && posicion.getX2() >= otraPosicion.getX1()
-                && posicion.getY1() <= otraPosicion.getY2()
-                && posicion.getY2() >= otraPosicion.getY1();
+        return this.posicion.seSuperpone(otraPosicion, true);
     }
 
     /**

@@ -15,20 +15,18 @@ public class Muro extends EntidadEstatica implements IColisionable {
      * @param posicion Coordenadas del bloque.
      */
     public Muro(Posicion posicion) {
-        super(posicion); // Herencia de la clase Super(EntidadEstatica)
+        super(posicion);
     }
 
     /**
-     * Comprueba si otra posición rectangular colisiona contra este muro.
+     * Comprueba si otra posición rectangular colisiona contra este muro
+     * evaluando intersección estricta (sin considerar roce de bordes).
      *
      * @param otraPosicion Hitbox a evaluar.
      * @return {@code true} si hay solapamiento geométrico; {@code false} en caso contrario.
      */
     @Override
     public Boolean verificarColision(Posicion otraPosicion) {
-        return posicion.getX1() < otraPosicion.getX2() &&
-               posicion.getX2() > otraPosicion.getX1() &&
-               posicion.getY1() < otraPosicion.getY2() &&
-               posicion.getY2() > otraPosicion.getY1();
+        return this.posicion.seSuperpone(otraPosicion, false);
     }
 }

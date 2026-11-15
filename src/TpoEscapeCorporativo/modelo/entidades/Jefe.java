@@ -20,16 +20,23 @@ public class Jefe extends EntidadMovil {
     /** Separación entre centros que deja un espacio libre de 36 px entre palas (superior a un muro de 32 px). */
     public static final int SEPARACION_PALAS = 52;
 
+    /** Límites horizontales de patrulla en el pasillo superior del mapa. */
+    private static final int LIMITE_PATRULLA_IZQ = 12;
+    private static final int LIMITE_PATRULLA_DER = 588;
+
     /** Límites horizontales del área interior jugable, excluyendo los muros laterales del mapa. */
     private static final int LIMITE_INTERIOR_IZQ = 44;
     private static final int LIMITE_INTERIOR_DER = 556;
 
+    /** Tolerancia en píxeles antes de frenar al alinearse con el empleado. */
+    private static final int UMBRAL_ALINEACION_PX = 3;
+
     /** Duración en milisegundos de la animación de disparo. */
     public static final int DURACION_ANIMACION_ATAQUE_MS = 400;
 
-    private int intervalAtaque;
+    private final int intervalAtaque;
     private long ultimoAtaque;
-    private boolean ataqueTriple;
+    private final boolean ataqueTriple;
     private final Posicion posicionInicial;
     private final List<Proyectil> proyectilesGenerados;
 
@@ -38,8 +45,8 @@ public class Jefe extends EntidadMovil {
      * Al instanciarse, inicia el cronómetro del último ataque para respetar el tiempo de recarga
      * antes de disparar su primera pala.
      *
-     * @param posicion Hitbox inicial en el pasillo superior.
-     * @param velocidad Velocidad de seguimiento horizontal.
+     * @param posicion       Hitbox inicial en el pasillo superior.
+     * @param velocidad      Velocidad de seguimiento horizontal.
      * @param intervalAtaque Cadencia de disparo en milisegundos.
      */
     public Jefe(Posicion posicion, int velocidad, int intervalAtaque) {
@@ -49,23 +56,17 @@ public class Jefe extends EntidadMovil {
     /**
      * Inicializa al jefe con su configuración de patrulla, cadencia y modalidad de disparo.
      *
-     * @param posicion Hitbox inicial en el pasillo superior.
-     * @param velocidad Velocidad de seguimiento horizontal.
+     * @param posicion       Hitbox inicial en el pasillo superior.
+     * @param velocidad      Velocidad de seguimiento horizontal.
      * @param intervalAtaque Cadencia de disparo en milisegundos.
-     * @param ataqueTriple {@code true} para disparar tres palas paralelas; {@code false} para disparo simple.
+     * @param ataqueTriple   {@code true} para disparar tres palas paralelas; {@code false} para disparo simple.
      */
     public Jefe(Posicion posicion, int velocidad, int intervalAtaque, boolean ataqueTriple) {
         super(posicion, velocidad);
         this.intervalAtaque = intervalAtaque;
         this.ataqueTriple = ataqueTriple;
-        this.posicionInicial = new Posicion(
-                posicion.getX1(),
-                posicion.getY1(),
-                posicion.getX2(),
-                posicion.getY2()
-        );
+        this.posicionInicial = new Posicion(posicion);
         this.proyectilesGenerados = new ArrayList<>();
-        // Reinicia la cadencia al spawnear o reiniciar el nivel
         this.ultimoAtaque = System.currentTimeMillis();
     }
 
@@ -92,28 +93,19 @@ public class Jefe extends EntidadMovil {
      * @param posicionEmpleado Hitbox actual del jugador a perseguir.
      */
     public void seguirEmpleado(Posicion posicionEmpleado) {
-        int centroJefe = (posicion.getX1() + posicion.getX2()) / 2;
-        int centroEmpleado = (posicionEmpleado.getX1() + posicionEmpleado.getX2()) / 2;
-        int diferenciaX = centroEmpleado - centroJefe;
+        int diferenciaX = posicionEmpleado.getCentroX() - this.posicion.getCentroX();
 
-        // Si la distancia horizontal es mayor a 3 px, se desplaza hacia el empleado
-        if (Math.abs(diferenciaX) > 3) {
-            if (diferenciaX > 0) {
-                direccionActual = Direccion.DERECHA;
-            } else {
-                direccionActual = Direccion.IZQUIERDA;
-            }
+        if (Math.abs(diferenciaX) > UMBRAL_ALINEACION_PX) {
+            direccionActual = (diferenciaX > 0) ? Direccion.DERECHA : Direccion.IZQUIERDA;
 
-            // Evita que el jefe se salga de los límites de la ventana (ancho 600)
-            if (posicion.getX1() <= 12 && direccionActual == Direccion.IZQUIERDA) {
+            if (posicion.getX1() <= LIMITE_PATRULLA_IZQ && direccionActual == Direccion.IZQUIERDA) {
                 direccionActual = Direccion.NINGUNA;
-            } else if (posicion.getX2() >= 588 && direccionActual == Direccion.DERECHA) {
+            } else if (posicion.getX2() >= LIMITE_PATRULLA_DER && direccionActual == Direccion.DERECHA) {
                 direccionActual = Direccion.NINGUNA;
             } else {
                 mover();
             }
         } else {
-            // Si ya está alineado con el empleado, se frena para disparar
             direccionActual = Direccion.NINGUNA;
         }
     }
@@ -123,10 +115,7 @@ public class Jefe extends EntidadMovil {
      * detiene su desplazamiento y reinicia el intervalo de ataque.
      */
     public void volverAPosicionInicial() {
-        this.posicion.setX1(this.posicionInicial.getX1());
-        this.posicion.setY1(this.posicionInicial.getY1());
-        this.posicion.setX2(this.posicionInicial.getX2());
-        this.posicion.setY2(this.posicionInicial.getY2());
+        this.posicion.copiarDesde(this.posicionInicial);
         this.direccionActual = Direccion.NINGUNA;
         this.ultimoAtaque = System.currentTimeMillis();
         limpiarProyectilGenerado();
@@ -135,12 +124,10 @@ public class Jefe extends EntidadMovil {
     /**
      * Genera la ráfaga de proyectiles descendentes en la base del jefe según su modalidad de ataque.
      * En ataque triple añade dos palas laterales separadas siempre que no invadan los bordes.
-     *
-     * @param posicionObjetivo Coordenadas del objetivo al que se apunta.
      */
-    public void atacar(Posicion posicionObjetivo) {
+    public void atacar() {
         this.proyectilesGenerados.clear();
-        int centroX = (posicion.getX1() + posicion.getX2()) / 2;
+        int centroX = this.posicion.getCentroX();
 
         agregarPalaSiEsValida(centroX, false);
 
@@ -154,7 +141,7 @@ public class Jefe extends EntidadMovil {
      * Crea un proyectil vertical hacia abajo centrado en la coordenada indicada y lo agrega
      * a la ráfaga pendiente, omitiéndolo si supera los límites interiores cuando corresponde validar bordes.
      *
-     * @param centroX Coordenada horizontal central del proyectil.
+     * @param centroX      Coordenada horizontal central del proyectil.
      * @param validarBorde {@code true} para descartar palas fuera de los muros laterales del mapa.
      */
     private void agregarPalaSiEsValida(int centroX, boolean validarBorde) {
@@ -181,7 +168,7 @@ public class Jefe extends EntidadMovil {
     /**
      * Consulta si el jefe se encuentra dentro de la ventana temporal de animación de ataque.
      *
-     * @return {@code true} si está atacando; {@code false} si está en reposo/patrulla.
+     * @return {@code true} si está atacando; {@code false} si está en reposo o patrulla.
      */
     public boolean estaAtacando() {
         return (System.currentTimeMillis() - ultimoAtaque) < DURACION_ANIMACION_ATAQUE_MS;
@@ -199,23 +186,5 @@ public class Jefe extends EntidadMovil {
     /** Limpia la lista de proyectiles generados una vez añadidos al motor. */
     public void limpiarProyectilGenerado() {
         proyectilesGenerados.clear();
-    }
-
-    /**
-     * Devuelve el intervalo de recarga entre disparos sucesivos en milisegundos.
-     *
-     * @return Cadencia de disparo en milisegundos.
-     */
-    public int getIntervaloAtaque() {
-        return intervalAtaque;
-    }
-
-    /**
-     * Indica si el jefe está configurado para disparar tres palas en paralelo.
-     *
-     * @return {@code true} si el ataque es triple; {@code false} si es disparo simple.
-     */
-    public boolean isAtaqueTriple() {
-        return ataqueTriple;
     }
 }

@@ -5,35 +5,50 @@ import TpoEscapeCorporativo.modelo.entidades.Empleado;
 
 /**
  * Representa un potenciador temporal de Café.
- * Incrementa la velocidad de movimiento del empleado durante un lapso de tiempo.
+ * Incrementa la velocidad de movimiento del empleado durante un lapso de tiempo
+ * y otorga puntos de bonificación al recolectarse.
  */
 public class Cafe implements Buffo {
 
-    private static final int DURACION_DEFAULT_MS = 5000;        // 5 segundos de duración
-    private static final int INCREMENTO_VELOCIDAD_DEFAULT = 3;  // +3 a la velocidad
+    private static final int DURACION_DEFAULT_MS = 5000;
+    private static final int INCREMENTO_VELOCIDAD_DEFAULT = 3;
+    private static final int PUNTOS_BONUS_DEFAULT = 50;
 
     private final long duracionInicialMs;
     private final int incrementoVelocidad;
+    private final int puntosBonus;
     private long tiempoRestanteMs;
     private boolean aplicado;
 
     /**
-     * Constructor por defecto con 5 segundos de duración y + 3 de velocidad.
+     * Constructor por defecto con 5 segundos de duración, +3 de velocidad y 50 puntos bonus.
      */
     public Cafe() {
-        this(DURACION_DEFAULT_MS, INCREMENTO_VELOCIDAD_DEFAULT);
+        this(DURACION_DEFAULT_MS, INCREMENTO_VELOCIDAD_DEFAULT, PUNTOS_BONUS_DEFAULT);
     }
 
     /**
-     * Constructor configurable.
+     * Constructor configurable de duración e incremento de velocidad.
      *
      * @param duracionMs          Tiempo que dura el efecto en milisegundos.
      * @param incrementoVelocidad Unidades de velocidad extra que recibe el empleado.
      */
     public Cafe(long duracionMs, int incrementoVelocidad) {
+        this(duracionMs, incrementoVelocidad, PUNTOS_BONUS_DEFAULT);
+    }
+
+    /**
+     * Constructor principal completo.
+     *
+     * @param duracionMs          Tiempo que dura el efecto en milisegundos.
+     * @param incrementoVelocidad Unidades de velocidad extra que recibe el empleado.
+     * @param puntosBonus         Puntos adicionales otorgados al recolectarlo.
+     */
+    public Cafe(long duracionMs, int incrementoVelocidad, int puntosBonus) {
         this.duracionInicialMs = Math.max(0, duracionMs);
         this.tiempoRestanteMs = this.duracionInicialMs;
         this.incrementoVelocidad = incrementoVelocidad;
+        this.puntosBonus = puntosBonus;
         this.aplicado = false;
     }
 
@@ -51,7 +66,6 @@ public class Cafe implements Buffo {
             empleado.setVelocidad(Math.max(1, empleado.getVelocidad() - this.incrementoVelocidad));
             this.aplicado = false;
         }
-
     }
 
     @Override
@@ -72,20 +86,17 @@ public class Cafe implements Buffo {
     }
 
     @Override
+    public int getPuntosBonus() {
+        return puntosBonus;
+    }
+
+    @Override
     public boolean esRegenerable() {
         return true;
     }
 
     @Override
     public Buffo crearCopia() {
-        return new Cafe(this.duracionInicialMs, this.incrementoVelocidad);
-    }
-
-    public long getTiempoRestanteMs() {
-        return tiempoRestanteMs;
-    }
-
-    public int getIncrementoVelocidad() {
-        return incrementoVelocidad;
+        return new Cafe(this.duracionInicialMs, this.incrementoVelocidad, this.puntosBonus);
     }
 }

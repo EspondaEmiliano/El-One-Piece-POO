@@ -13,7 +13,7 @@ public class Proyectil extends EntidadMovil implements IColisionable {
     /**
      * Construye un nuevo proyectil activo con posición y velocidad.
      *
-     * @param posicion Hitbox inicial.
+     * @param posicion  Hitbox inicial.
      * @param velocidad Rapidez de caída vertical.
      */
     public Proyectil(Posicion posicion, int velocidad) {
@@ -22,23 +22,29 @@ public class Proyectil extends EntidadMovil implements IColisionable {
     }
 
     /**
-     * Desactiva el proyectil tras colisionar con un muro o con el jugador.
+     * Desactiva el proyectil tras colisionar con el jugador o salir del tablero.
      */
     public void impacto() {
         this.estaActivo = false;
     }
 
-    /** @return {@code true} si el proyectil sigue en juego; {@code false} si fue destruido. */
+    /**
+     * Indica si el proyectil continúa activo en juego.
+     *
+     * @return {@code true} si el proyectil sigue en juego; {@code false} si fue desactivado.
+     */
     public Boolean getEstaActivo() {
-        // Indica si el proyectil continúa activo
         return estaActivo;
     }
 
+    /**
+     * Evalúa si el proyectil se superpone con la hitbox objetivo indicada.
+     *
+     * @param otraPosicion Hitbox de la entidad evaluada.
+     * @return {@code true} si hay contacto o superposición; {@code false} en caso contrario.
+     */
     @Override
     public Boolean verificarColision(Posicion otraPosicion) {
-        return posicion.getX1() <= otraPosicion.getX2()
-                && posicion.getX2() >= otraPosicion.getX1()
-                && posicion.getY1() <= otraPosicion.getY2()
-                && posicion.getY2() >= otraPosicion.getY1();
+        return this.posicion.seSuperpone(otraPosicion, true);
     }
 }

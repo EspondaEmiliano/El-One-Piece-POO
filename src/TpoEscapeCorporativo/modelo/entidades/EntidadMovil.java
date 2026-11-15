@@ -1,7 +1,7 @@
 package TpoEscapeCorporativo.modelo.entidades;
 
-import TpoEscapeCorporativo.modelo.datos.Posicion;
 import TpoEscapeCorporativo.modelo.datos.Direccion;
+import TpoEscapeCorporativo.modelo.datos.Posicion;
 
 /**
  * Clase base abstracta para todos los actores del juego capaces de desplazarse
@@ -18,7 +18,7 @@ public abstract class EntidadMovil {
     /**
      * Inicializa la entidad móvil con posición y velocidad.
      *
-     * @param posicion Ubicación inicial en el mapa.
+     * @param posicion  Ubicación inicial en el mapa.
      * @param velocidad Magnitud de desplazamiento por ciclo.
      */
     public EntidadMovil(Posicion posicion, int velocidad) {
@@ -33,17 +33,11 @@ public abstract class EntidadMovil {
     public void mover() {
         int despX = direccionActual.getDx() * velocidad;
         int despY = direccionActual.getDy() * velocidad;
-
-        posicion.setX1(posicion.getX1() + despX);
-        posicion.setY1(posicion.getY1() + despY);
-        posicion.setX2(posicion.getX2() + despX);
-        posicion.setY2(posicion.getY2() + despY);
+        this.posicion.trasladar(despX, despY);
     }
+
     /** @return Hitbox actual de la entidad. */
     public Posicion getPosicion() { return posicion; }
-
-    /** @param posicion Nueva ubicación de la entidad. */
-    public void setPosicion(Posicion posicion) { this.posicion = posicion; }
 
     /** @return Sentido actual de movimiento. */
     public Direccion getDireccionActual() { return direccionActual; }

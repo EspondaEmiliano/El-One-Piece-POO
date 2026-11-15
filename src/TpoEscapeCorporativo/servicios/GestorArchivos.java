@@ -66,10 +66,8 @@ public class GestorArchivos {
                 return listaPuntajes;
             }
         } catch (FileNotFoundException e) {
-            // Archivo inexistente en primera ejecución
             return new ArrayList<>();
         } catch (IOException | ClassNotFoundException e) {
-            // Archivo corrupto o versión incompatible: devolvemos lista vacía para no colapsar la app
             System.err.println("Advertencia: No se pudo leer el archivo de ranking: " + e.getMessage());
             return new ArrayList<>();
         }
@@ -77,10 +75,11 @@ public class GestorArchivos {
     }
 
     /**
-     * Agrega nuevo puntaje, ordena el ranking, lo trunca al TOP 10 y lo serializa en disco.
+     * Agrega un nuevo puntaje, ordena el ranking, lo trunca al TOP 10 y lo serializa en disco.
      *
-     * @param nuevoPuntaje Objeto Puntaje a registrar.
-     * @throws IOException Si ocurre un fallo crítico de escritura en el sistema de archivos.
+     * @param nuevoPuntaje Objeto {@link Puntaje} a registrar.
+     * @throws IOException              Si ocurre un fallo crítico de escritura en el sistema de archivos.
+     * @throws IllegalArgumentException Si {@code nuevoPuntaje} es nulo.
      */
     public void guardarPuntaje(Puntaje nuevoPuntaje) throws IOException {
         if (nuevoPuntaje == null) {
@@ -89,16 +88,12 @@ public class GestorArchivos {
 
         List<Puntaje> puntajes = cargarMejoresPuntajes();
         puntajes.add(nuevoPuntaje);
-
-        // Ordenamiento natural (implementado en Puntaje via Comparable)
         Collections.sort(puntajes);
 
-        // Conservar únicamente los mejores N registros
         if (puntajes.size() > MAX_TOP_PUNTAJES) {
             puntajes = new ArrayList<>(puntajes.subList(0, MAX_TOP_PUNTAJES));
         }
 
-        // Asegurar la existencia del directorio contenedor
         File archivo = new File(this.rutaRanking);
         File directorioPadre = archivo.getParentFile();
         if (directorioPadre != null && !directorioPadre.exists()) {
@@ -111,11 +106,11 @@ public class GestorArchivos {
     }
 
     /**
-     * Carga la matriz de diseño de un nivel desde un archivo .txt plano.
+     * Carga la matriz de diseño de un nivel desde un archivo {@code .txt} plano.
      *
-     * @param numeroNivel Identificador numérico del nivel (ej. 1 -> nivel_1.txt).
-     * @return Matriz de caracteres (char[][]) que representa la cuadrícula del nivel.
-     * @throws NivelNoEncontradoException Si el archivo no existe o no se puede leer.
+     * @param numeroNivel Identificador numérico del nivel (ej. 1 -> {@code nivel_1.txt}).
+     * @return Matriz de caracteres ({@code char[][]}) que representa la cuadrícula del nivel.
+     * @throws NivelNoEncontradoException Si el archivo no existe, está vacío o no se puede leer.
      */
     public char[][] cargarMapaNivel(int numeroNivel) throws NivelNoEncontradoException {
         String nombreArchivo = this.carpetaNiveles + "nivel_" + numeroNivel + ".txt";
@@ -141,7 +136,6 @@ public class GestorArchivos {
             throw new NivelNoEncontradoException("El archivo del nivel " + numeroNivel + " está vacío.");
         }
 
-        // Convertir la lista de cadenas en una matriz de caracteres char[][]
         int totalFilas = filas.size();
         int totalColumnas = 0;
         for (String fila : filas) {
@@ -153,7 +147,6 @@ public class GestorArchivos {
         for (int i = 0; i < totalFilas; i++) {
             String filaActual = filas.get(i);
             for (int j = 0; j < totalColumnas; j++) {
-                // Rellenar con espacio si alguna fila fuese más corta para evitar IndexOutOfBounds
                 mapa[i][j] = (j < filaActual.length()) ? filaActual.charAt(j) : ' ';
             }
         }
@@ -162,18 +155,17 @@ public class GestorArchivos {
     }
 
     /**
-     * Lee todas las filas válidas de un archivo de nivel en UTF-8.
+     * Lee todas las filas no vacías de un archivo de nivel en codificación UTF-8.
      *
      * @param archivo Archivo de texto del nivel.
-     * @return Lista de filas leídas.
-     * @throws IOException Si ocurre un error durante la lectura de I/O.
+     * @return Lista de líneas leídas.
+     * @throws IOException Si ocurre un error durante la lectura de E/S.
      */
     private List<String> leerFilasNivel(File archivo) throws IOException {
         List<String> filas = new ArrayList<>();
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(archivo), StandardCharsets.UTF_8))) {
             String linea;
-
             while ((linea = br.readLine()) != null) {
                 if (!linea.trim().isEmpty()) {
                     filas.add(linea);
@@ -185,9 +177,9 @@ public class GestorArchivos {
     }
 
     /**
-     * Determina la cantidad total de niveles disponibles escaneando los archivos en el disco.
+     * Determina la cantidad total de niveles disponibles escaneando los archivos en disco.
      *
-     * @return Cantidad de niveles existentes consecutivos a partir del nivel 1.
+     * @return Cantidad de niveles consecutivos existentes a partir del nivel 1.
      */
     public int contarNivelesDisponibles() {
         int contador = 0;
@@ -218,42 +210,5 @@ public class GestorArchivos {
             default:
                 return "Nivel " + numeroNivel;
         }
-    }
-
-    /**
-     * Genera la lista de títulos de los niveles disponibles hasta el tope desbloqueado indicado.
-     *
-     * @param limiteNivelMaximo Nivel máximo incluido en el listado.
-     * @return Arreglo de cadenas con los nombres ordenados de los niveles habilitados.
-     */
-    public String[] getNombresNivelesDisponibles(int limiteNivelMaximo) {
-        int totalDisponibles = contarNivelesDisponibles();
-        int cantidadAMostrar = Math.max(1, Math.min(limiteNivelMaximo, totalDisponibles));
-        String[] nombres = new String[cantidadAMostrar];
-        for (int i = 0; i < cantidadAMostrar; i++) {
-            nombres[i] = getNombreNivel(i + 1);
-        }
-        return nombres;
-    }
-
-    /**
-     * Genera la lista de títulos de todos los niveles disponibles en disco.
-     *
-     * @return Arreglo de cadenas con los nombres ordenados de cada nivel.
-     */
-    public String[] getNombresNivelesDisponibles() {
-        return getNombresNivelesDisponibles(contarNivelesDisponibles());
-    }
-
-    public String getRutaRanking() {
-        return rutaRanking;
-    }
-
-    public String getRutaRankingDefault() {
-        return RUTA_RANKING_DEFAULT;
-    }
-
-    public String getCarpetaNiveles() {
-        return carpetaNiveles;
     }
 }

@@ -17,6 +17,11 @@ public class PanelVictoria extends JPanel {
     private JButton botonRanking;
     private JButton botonMenu;
 
+    /**
+     * Construye la pantalla de victoria final vinculada al navegador principal.
+     *
+     * @param panelPrincipal Coordinador de vistas de la aplicación.
+     */
     public PanelVictoria(PanelPrincipal panelPrincipal) {
         this.panelPrincipal = panelPrincipal;
         inicializarPanel();
@@ -24,21 +29,18 @@ public class PanelVictoria extends JPanel {
 
     private void inicializarPanel() {
         setLayout(null);
-        setBackground(new Color(20, 30, 20)); // Verde oscuro arcade de victoria
+        setBackground(new Color(20, 30, 20));
 
-        // Título principal con fuente arcade
         cartelVictoria = new JLabel("¡LOGRASTE ESCAPAR!", SwingConstants.CENTER);
         cartelVictoria.setFont(GestorRecursos.getFuenteArcade(22f));
-        cartelVictoria.setForeground(new Color(50, 255, 100)); // Verde brillante
+        cartelVictoria.setForeground(new Color(50, 255, 100));
         add(cartelVictoria);
 
-        // Subtítulo descriptivo
         subtexto = new JLabel("HAS COMPLETADO TODOS LOS NIVELES Y TERMINADO TU JORNADA", SwingConstants.CENTER);
         subtexto.setFont(GestorRecursos.getFuenteArcade(9f));
         subtexto.setForeground(Color.WHITE);
         add(subtexto);
 
-        // Botón para ver el Ranking Top 10
         botonRanking = new JButton("VER RANKING TOP 10");
         botonRanking.setFont(GestorRecursos.getFuenteArcade(11f));
         botonRanking.setBackground(new Color(20, 80, 140));
@@ -49,7 +51,6 @@ public class PanelVictoria extends JPanel {
         botonRanking.addActionListener(e -> panelPrincipal.mostrarPanel("RANKING"));
         add(botonRanking);
 
-        // Botón para regresar al menú de inicio
         botonMenu = new JButton("VOLVER AL MENU");
         botonMenu.setFont(GestorRecursos.getFuenteArcade(11f));
         botonMenu.setBackground(new Color(30, 130, 60));

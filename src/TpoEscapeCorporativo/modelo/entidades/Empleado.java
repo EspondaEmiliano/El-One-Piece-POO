@@ -37,12 +37,7 @@ public class Empleado extends EntidadMovil {
     public Empleado(Posicion posicion, int velocidad) {
         super(posicion, velocidad);
         this.salud = SALUD_DEFAULT;
-        this.posicionInicial = new Posicion(
-                posicion.getX1(),
-                posicion.getY1(),
-                posicion.getX2(),
-                posicion.getY2()
-        );
+        this.posicionInicial = new Posicion(posicion);
         this.tieneEscudo = false;
         this.buffosActivos = new ArrayList<>();
     }
@@ -61,15 +56,9 @@ public class Empleado extends EntidadMovil {
         int desplazamientoX = direccionActual.getDx() * velocidad;
         int desplazamientoY = direccionActual.getDy() * velocidad;
 
-        // Hitbox tentativo al que intenta desplazarse
-        Posicion posTentativa = new Posicion(
-                posicion.getX1() + desplazamientoX,
-                posicion.getY1() + desplazamientoY,
-                posicion.getX2() + desplazamientoX,
-                posicion.getY2() + desplazamientoY
-        );
+        Posicion posTentativa = new Posicion(this.posicion);
+        posTentativa.trasladar(desplazamientoX, desplazamientoY);
 
-        // Verificar si colisiona contra algún muro del mapa
         boolean hayColision = false;
         if (muros != null) {
             for (Muro muro : muros) {
@@ -80,12 +69,8 @@ public class Empleado extends EntidadMovil {
             }
         }
 
-        // Si no colisiona, se aplican las nuevas coordenadas
         if (!hayColision) {
-            posicion.setX1(posTentativa.getX1());
-            posicion.setY1(posTentativa.getY1());
-            posicion.setX2(posTentativa.getX2());
-            posicion.setY2(posTentativa.getY2());
+            this.posicion.copiarDesde(posTentativa);
         }
     }
 
@@ -96,10 +81,7 @@ public class Empleado extends EntidadMovil {
      */
     public void volverAPosicionInicial() {
         limpiarBuffosActivos();
-        this.posicion.setX1(this.posicionInicial.getX1());
-        this.posicion.setY1(this.posicionInicial.getY1());
-        this.posicion.setX2(this.posicionInicial.getX2());
-        this.posicion.setY2(this.posicionInicial.getY2());
+        this.posicion.copiarDesde(this.posicionInicial);
         this.direccionActual = Direccion.NINGUNA;
         this.ultimaDireccion = Direccion.ABAJO;
     }
@@ -126,31 +108,17 @@ public class Empleado extends EntidadMovil {
     public boolean recibirImpacto() {
         if (this.tieneEscudo) {
             this.tieneEscudo = false;
-            // Quiebra y remueve el buffo de Aguinaldo de la lista de activos
             for (Buffo buffo : this.buffosActivos) {
                 if (buffo instanceof Aguinaldo) {
                     ((Aguinaldo) buffo).romper();
                 }
             }
             this.buffosActivos.removeIf(Buffo::estaExpirado);
-            return true; // Golpe absorbido con éxito por el escudo
+            return true;
         }
 
         this.salud = Math.max(0, this.salud - 1);
-        return false; // Pierde 1 corazón
-    }
-
-    /**
-     * Reduce la salud del empleado o delega al sistema de impacto por corazones y escudo.
-     * Conservado por compatibilidad.
-     *
-     * @param danio Puntos de daño recibidos.
-     */
-    public void recibirDanio(int danio) {
-        if (danio < 0) {
-            throw new IllegalArgumentException("El daño no puede ser negativo.");
-        }
-        recibirImpacto();
+        return false;
     }
 
     /**
@@ -168,15 +136,6 @@ public class Empleado extends EntidadMovil {
             buffo.aplicar(this);
             this.buffosActivos.add(buffo);
         }
-    }
-
-    /**
-     * Elimina un buffo de la lista de activos.
-     *
-     * @param buffo Potenciador a remover.
-     */
-    public void removerBuffo(Buffo buffo) {
-        this.buffosActivos.remove(buffo);
     }
 
     /**
@@ -200,11 +159,19 @@ public class Empleado extends EntidadMovil {
 
     /**
      * Indica si el empleado aún conserva al menos un corazón para continuar la partida.
+     *
+     * @return {@code true} si {@code salud > 0}; {@code false} si perdió sus 3 corazones.
      */
     public boolean estaVivo() {
         return this.salud > 0;
     }
 
+    /**
+     * Retorna la última orientación activa del empleado para seleccionar el sprite correcto
+     * aun cuando se encuentre detenido.
+     *
+     * @return Dirección visual actual del sprite del empleado.
+     */
     public Direccion getDireccionVisual() {
         if (direccionActual != Direccion.NINGUNA) {
             ultimaDireccion = direccionActual;
@@ -212,10 +179,10 @@ public class Empleado extends EntidadMovil {
         return ultimaDireccion;
     }
 
-    // --- Getters y Setters ---
-
     /**
      * Consulta si el empleado cuenta con un escudo protector activo.
+     *
+     * @return {@code true} si el escudo está activo; {@code false} en caso contrario.
      */
     public boolean tieneEscudo() {
         return tieneEscudo;
@@ -223,21 +190,35 @@ public class Empleado extends EntidadMovil {
 
     /**
      * Modifica el estado del escudo protector.
+     *
+     * @param tieneEscudo Nuevo estado del escudo.
      */
     public void setTieneEscudo(boolean tieneEscudo) {
         this.tieneEscudo = tieneEscudo;
     }
 
+    /**
+     * Obtiene la cantidad actual de corazones del empleado.
+     *
+     * @return Cantidad de corazones restantes entre 0 y {@link #SALUD_DEFAULT}.
+     */
     public int getSalud() {
         return salud;
     }
 
+    /**
+     * Ajusta la cantidad de corazones acotándola al rango válido {@code [0, SALUD_DEFAULT]}.
+     *
+     * @param salud Nueva cantidad de corazones.
+     */
     public void setSalud(int salud) {
         this.salud = Math.max(0, Math.min(SALUD_DEFAULT, salud));
     }
 
     /**
-     * Devuelve una vista de solo lectura de los buffos para proteger el encapsulamiento.
+     * Devuelve una vista de solo lectura de los buffos activos para proteger el encapsulamiento.
+     *
+     * @return Lista inmodificable de instancias de {@link Buffo} activas.
      */
     public List<Buffo> getBuffosActivos() {
         return Collections.unmodifiableList(buffosActivos);

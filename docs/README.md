@@ -55,25 +55,25 @@ El diseño y la lógica de juego se articulan sobre tres reglas de negocio centr
 
 1. **Movimiento, Colisiones y Sistema de 3 Corazones (Motor de Física 2D):**
    - El Empleado se desplaza en 4 direcciones cardinales (`ARRIBA`, `ABAJO`, `IZQUIERDA`, `DERECHA`) mediante controles de teclado a 60 FPS (`16 ms`).
-   - En cada ciclo del *Game Loop*, la posición intentada es evaluada mediante la intersección de sus cajas envolventes (*Axis-Aligned Bounding Boxes* / `IColisionable.verificarColision()`).
+   - En cada ciclo del *Game Loop*, la posición intentada es evaluada mediante la intersección de sus cajas envolventes (*Axis-Aligned Bounding Boxes* / `Posicion.seSuperpone()` invocada por `IColisionable.verificarColision()`).
    - Los **Muros** (`Muro`) son infranqueables y bloquean el paso del Empleado.
    - Los **Proyectiles** (`Proyectil`) viajan aéreamente en sentido descendente y, al impactar contra el Empleado, rompen el escudo activo o disparan `ImpactoProyectilException` descontando `1` corazón, devolviendo a ambos personajes a sus puntos de partida (`volverAPosicionInicial()`) y regenerando los `Cafe` y `Aguinaldo` del mapa (`regenerarBuffosMapa()`).
 
 2. **Sistema Polimórfico de Buffos (`Buffo`):**
    - Distribuidos por el mapa existen sectores especiales denominados **Zonas de Buffo** (`ZonaBuffo`).
-   - Todos los potenciadores implementan la interfaz `Buffo` (`aplicar`, `remover`, `actualizar`, `estaExpirado`, `getNombre`, `esRegenerable`, `crearCopia`), respetando rigurosamente el principio *Open/Closed* (OCP):
+   - Todos los potenciadores implementan la interfaz `Buffo` (`aplicar`, `remover`, `actualizar`, `estaExpirado`, `getNombre`, `getPuntosBonus`, `esRegenerable`, `crearCopia`), respetando rigurosamente el principio *Open/Closed* (OCP):
      - **Café (`Cafe` — `'C'`):** Incrementa la velocidad del Empleado en `+3` durante `5000 ms` (5 segundos) y otorga `+50 puntos`. Es regenerable (`esRegenerable() == true`) cuando el jugador vuelve al inicio tras perder un corazón.
      - **Aguinaldo (`Aguinaldo` — `'A'`, Escudo Protector):** Otorga un escudo protector activo (`tieneEscudo = true`) renderizado con un halo cian translúcido que absorbe `1` impacto de pala antes de romperse (`romper()`), sumando `+500 puntos` al recolectarse. Es regenerable (`esRegenerable() == true`) al reaparecer en el inicio del nivel.
      - **Corazón (`Corazon` — `'V'`, Vida Extra):** Ítem consumible instantáneo que recupera `+1 corazón` de vida (hasta el tope máximo de `3`) y suma `+100 puntos`. Si el jugador ya tiene sus `3/3` corazones al pasar por encima, el corazón no se desperdicia y permanece en el suelo. Una vez consumido, **no** se regenera (`esRegenerable() == false`).
 
 3. **Progresión Incremental de 5 Niveles, Selector Arcade y Persistencia:**
-   - El juego cuenta con **5 mapas** (`assets/mapas/nivel_1.txt` a `nivel_5.txt`) con dificultad y modalidad de disparo del Jefe incrementales:
+   - El juego cuenta con **5 mapas** (`assets/mapas/nivel_1.txt` a `nivel_5.txt`) cargados y parametrizados por `CargadorNivel` con dificultad y modalidad de disparo del Jefe incrementales:
      - **Nivel 1 (*Primer Paso* — Dificultad Baja):** Laberinto introductorio, `1 Café`, `1 Aguinaldo`, `1 Corazón` y cadencia del Jefe de `2000 ms` (2.00s).
      - **Nivel 2 (*Laberinto Corporativo* — Dificultad Media):** Corredores extensos de una celda, `1 Café`, `1 Aguinaldo`, `1 Corazón` y cadencia de `1700 ms` (1.70s).
      - **Nivel 3 (*Ruta Dual* — Dificultad Alta):** Pasillos paralelos con desvíos tácticos, `2 Cafés`, `2 Aguinaldos`, `1 Corazón` y cadencia de `1550 ms` (1.55s).
      - **Nivel 4 (*El Búnker Central* — Dificultad Extrema):** Laberinto vertical denso bajo fuego rápido, `2 Cafés`, `1 Aguinaldo`, `1 Corazón` y cadencia de `1250 ms` (1.25s).
      - **Nivel 5 (*Nivel Final* — Dificultad Jefe Final):** Recorrido envolvente hasta la meta central (`S`), `2 Aguinaldos` y cadencia de `2000 ms` con **ataque triple** simultáneo (hasta 3 palas paralelas).
-   - **Selector de Niveles con Desbloqueo Progresivo:** El botón `NIVELES` en `PanelInicio` comienza bloqueado y se habilita al superar niveles en la partida, desplegando un modal *arcade* con tarjetas interactivas para rejugar cualquier nivel desbloqueado.
+   - **Selector de Niveles con Desbloqueo Progresivo:** El botón `NIVELES` en `PanelInicio` comienza bloqueado y se habilita al superar niveles en la partida, desplegando `DialogoSeleccionNivel` con tarjetas interactivas para rejugar cualquier nivel desbloqueado.
    - **Persistencia Binaria:** La tabla histórica del Top 10 (*High Scores*) se serializa en `data/ranking.dat` mediante `GestorArchivos`, permitiendo ordenar tanto por puntaje máximo (`Comparable<Puntaje>`) como por menor tiempo en modo *Speedrun* (`ComparadorPorTiempo`).
 
 ---
@@ -93,13 +93,14 @@ El diseño y la lógica de juego se articulan sobre tres reglas de negocio centr
 
 ## Arquitectura del Proyecto y Estructura en Código
 
-El proyecto sigue una arquitectura desacoplada basada en el patrón **MVC (Modelo-Vista-Controlador)**. La implementación se encuentra estructurada en el paquete raíz [`src/TpoEscapeCorporativo`](../src/TpoEscapeCorporativo/):
+El proyecto sigue una arquitectura desacoplada basada en el patrón **MVC (Modelo-Vista-Controlador)** y el Principio de Responsabilidad Única (SRP). La implementación se encuentra estructurada en el paquete raíz [`src/TpoEscapeCorporativo`](../src/TpoEscapeCorporativo/):
 
 ```
 src/TpoEscapeCorporativo/
 ├── Main.java                              # Punto de entrada en el Event Dispatch Thread (SwingUtilities.invokeLater)
 ├── controlador/
-│   └── JuegoEngine.java                   # Motor principal: orquesta el Game Loop, 5 niveles, colisiones y puntajes
+│   ├── CargadorNivel.java                 # Construye las entidades de cada nivel (.txt) y parametriza la dificultad del Jefe
+│   └── JuegoEngine.java                   # Motor principal: orquesta el Game Loop, colisiones, progresión y puntajes
 ├── excepciones/
 │   ├── ImpactoProyectilException.java     # Excepción unchecked lanzada al impactar un proyectil sin escudo
 │   └── NivelNoEncontradoException.java    # Excepción checked ante ausencia o fallo de lectura del mapa (.txt)
@@ -111,8 +112,8 @@ src/TpoEscapeCorporativo/
 │   │   ├── ComparadorPorTiempo.java       # Comparator<Puntaje> alternativo para ordenar ranking por menor tiempo
 │   │   ├── Direccion.java                 # Enum con vectores de dirección (ARRIBA, ABAJO, IZQUIERDA, DERECHA, NINGUNA)
 │   │   ├── EstadoJuego.java               # Enum rico con estados (JUGANDO, PAUSADO, VICTORIA, DERROTA_VIDA, DERROTA_TIEMPO)
-│   │   ├── Posicion.java                  # Caja envolvente (x1, y1, x2, y2) en el espacio 2D
-│   │   └── Puntaje.java                   # Modelo serializable y Comparable de puntuación y tiempo
+│   │   ├── Posicion.java                  # Caja envolvente AABB (x1, y1, x2, y2), traslación y detección de solapamiento
+│   │   └── Puntaje.java                   # Modelo serializable y Comparable de puntuación, tiempo y fecha formateada
 │   ├── entidades/
 │   │   ├── EntidadEstatica.java           # Clase abstracta base para obstáculos y casillas fijas
 │   │   ├── EntidadMovil.java              # Clase abstracta base para actores con desplazamiento vectorial
@@ -130,12 +131,14 @@ src/TpoEscapeCorporativo/
 │   ├── GestorArchivos.java                # Serialización de ranking (ranking.dat) y lectura de niveles (.txt)
 │   └── GestorAudio.java                   # Servicio Singleton/Runnable multihilo para música en bucle y SFX
 └── vista/
+    ├── DialogoSeleccionNivel.java         # Modal arcade de tarjetas para seleccionar niveles desbloqueados
     ├── GestorRecursos.java                # Caché Flyweight de fuentes arcade y sprites
-    ├── PanelInicio.java                   # Menú principal con Selector Modal Arcade de Niveles y control de audio
-    ├── PanelJuego.java                    # Canvas 2D con Game Loop (60 FPS), HUD de corazones/escudo y controles
+    ├── PanelInicio.java                   # Menú principal con acceso a partida, selector de niveles, ranking y audio
+    ├── PanelJuego.java                    # Coordinador del Game Loop (60 FPS), controles de teclado y transiciones
     ├── PanelPrincipal.java                # Contenedor JFrame con CardLayout (INICIO, JUEGO, RANKING, VICTORIA)
     ├── PanelRanking.java                  # Tabla Top 10 con ordenamiento dual (Puntos / Speedrun)
-    └── PanelVictoria.java                 # Pantalla de celebración final al completar todos los niveles
+    ├── PanelVictoria.java                 # Pantalla de celebración final al completar todos los niveles
+    └── RenderizadorJuego.java             # Motor de renderizado 2D del tablero, entidades, HUD y overlays
 ```
 
 ---
@@ -143,8 +146,8 @@ src/TpoEscapeCorporativo/
 ## Diagramas de Arquitectura y Clases UML
 
 Para garantizar una separación rigurosa de responsabilidades acorde al patrón **MVC** y facilitar la lectura técnica, el modelado estático del sistema se organiza en dos diagramas complementarios:
-1. **Dominio y Motor:** Modela las jerarquías de herencia, entidades, interfaces polimórficas, persistencia y el motor central (`JuegoEngine`).
-2. **Interfaz de Usuario (Vista):** Modela las ventanas y paneles Swing, los gestores de recursos/audio y su comunicación con `JuegoEngine`.
+1. **Dominio y Motor:** Modela las jerarquías de herencia, entidades, interfaces polimórficas, persistencia, carga de niveles (`CargadorNivel`) y el motor central (`JuegoEngine`).
+2. **Interfaz de Usuario (Vista):** Modela las ventanas, paneles Swing, clases auxiliares de diálogo/renderizado (`DialogoSeleccionNivel`, `RenderizadorJuego`) y gestores de recursos/audio.
 
 ---
 
@@ -164,6 +167,7 @@ classDiagram
         +actualizar(long deltaTiempo) void
         +estaExpirado() boolean
         +getNombre() String
+        +getPuntosBonus() int
         +esRegenerable() boolean
         +crearCopia() Buffo
     }
@@ -176,7 +180,6 @@ classDiagram
         #int velocidad
         +mover() void
         +getPosicion() Posicion
-        +setPosicion(Posicion posicion) void
         +getDireccionActual() Direccion
         +setDireccionActual(Direccion direccionActual) void
         +getVelocidad() int
@@ -200,11 +203,10 @@ classDiagram
         +volverAPosicionInicial() void
         -limpiarBuffosActivos() void
         +recibirImpacto() boolean
-        +recibirDanio(int danio) void
         +agregarBuffo(Buffo buffo) void
-        +removerBuffo(Buffo buffo) void
         +actualizarBuffos(long deltaTiempo) void
         +estaVivo() boolean
+        +getDireccionVisual() Direccion
         +tieneEscudo() boolean
         +setTieneEscudo(boolean tieneEscudo) void
         +getSalud() int
@@ -221,13 +223,11 @@ classDiagram
         +registrarAtaque() void
         +seguirEmpleado(Posicion posicionEmpleado) void
         +volverAPosicionInicial() void
-        +atacar(Posicion posicionObjetivo) void
+        +atacar() void
         -agregarPalaSiEsValida(int centroX, boolean validarBorde) void
         +estaAtacando() boolean
         +getProyectilesGenerados() List~Proyectil~
         +limpiarProyectilGenerado() void
-        +getIntervaloAtaque() int
-        +isAtaqueTriple() boolean
     }
     class Proyectil {
         -Boolean estaActivo
@@ -258,6 +258,7 @@ classDiagram
     class Cafe {
         -long duracionInicialMs
         -int incrementoVelocidad
+        -int puntosBonus
         -long tiempoRestanteMs
         -boolean aplicado
         +aplicar(Empleado empleado) void
@@ -265,10 +266,9 @@ classDiagram
         +actualizar(long deltaTiempo) void
         +estaExpirado() boolean
         +getNombre() String
+        +getPuntosBonus() int
         +esRegenerable() boolean
         +crearCopia() Buffo
-        +getTiempoRestanteMs() long
-        +getIncrementoVelocidad() int
     }
     class Aguinaldo {
         -int puntosBonus
@@ -279,9 +279,9 @@ classDiagram
         +estaExpirado() boolean
         +romper() void
         +getNombre() String
+        +getPuntosBonus() int
         +esRegenerable() boolean
         +crearCopia() Buffo
-        +getPuntosBonus() int
     }
     class Corazon {
         -int vidasRecuperadas
@@ -292,10 +292,9 @@ classDiagram
         +actualizar(long deltaTiempo) void
         +estaExpirado() boolean
         +getNombre() String
+        +getPuntosBonus() int
         +esRegenerable() boolean
         +crearCopia() Buffo
-        +getVidasRecuperadas() int
-        +getPuntosBonus() int
     }
 
     %% Clases de Soporte / Datos
@@ -304,6 +303,10 @@ classDiagram
         -int y1
         -int x2
         -int y2
+        +copiarDesde(Posicion otra) void
+        +trasladar(int dx, int dy) void
+        +seSuperpone(Posicion otra, boolean incluirBordes) boolean
+        +getCentroX() int
     }
     class Direccion {
         <<enumeration>>
@@ -332,6 +335,7 @@ classDiagram
         -LocalDateTime fechaRegistro
         +compareTo(Puntaje nuevoPuntaje) int
         +getTiempoFormateado() String
+        +getFechaFormateada() String
     }
     class ComparadorPorTiempo {
         +compare(Puntaje p1, Puntaje p2) int
@@ -354,6 +358,9 @@ classDiagram
         +reiniciarNivel(int numeroNivel) void
         +iniciarPartidaEnNivel(int numeroNivel) void
         +actualizar() void
+        -evaluarTiempoAgotado() boolean
+        -evaluarRecoleccionBuffos() void
+        -actualizarJefe() void
         -regenerarBuffosMapa() void
         +procesarEntrada(Direccion nuevaDireccion) void
         +alternarPausa() void
@@ -361,10 +368,28 @@ classDiagram
         +haySiguienteNivel() boolean
         +esNivelFinalActual() boolean
         +getTotalNiveles() int
+        +getNombreNivel(int numeroNivel) String
+        +getEtiquetaDificultadNivel(int numeroNivel) String
         +pasarSiguienteNivel() void
         +reiniciarPartidaCompleta() void
         +reintentarTrasDerrota() void
         +guardarPuntaje(String aliasJugador) boolean
+    }
+    class CargadorNivel {
+        +static final int TAMANIO_CELDA = 32
+        +static final int LIMITE_INFERIOR_ARENA_Y = 400
+        -GestorArchivos gestorArchivos
+        +cargar(int numeroNivel, int totalNiveles) DatosNivel
+        -crearJefeParaNivel(Posicion pos, int nivel, int total) Jefe
+        +getEtiquetaDificultad(int numeroNivel) String
+    }
+    class DatosNivel {
+        <<static nested class>>
+        -List~Muro~ muros
+        -List~ZonaBuffo~ zonasBuffo
+        -Empleado jugador
+        -Jefe enemigo
+        -Salida salida
     }
     class GestorArchivos {
         +cargarMejoresPuntajes() List~Puntaje~
@@ -372,7 +397,6 @@ classDiagram
         +cargarMapaNivel(int numeroNivel) char[][]
         +contarNivelesDisponibles() int
         +getNombreNivel(int numeroNivel) String
-        +getNombresNivelesDisponibles(int limiteNivelMaximo) String[]
     }
 
     %% Relaciones de Implementación y Herencia
@@ -401,13 +425,16 @@ classDiagram
     JuegoEngine --> EstadoJuego
 
     %% Orquestación Modelo-Controlador
+    JuegoEngine --> CargadorNivel : carga mapas
+    CargadorNivel *-- DatosNivel : construye
+    CargadorNivel --> GestorArchivos : lee matriz
     JuegoEngine --> Empleado : gestiona
     JuegoEngine --> Jefe : gestiona
     JuegoEngine --> Salida : gestiona
     JuegoEngine o-- Muro : contiene
     JuegoEngine o-- Proyectil : contiene
     JuegoEngine o-- ZonaBuffo : contiene
-    JuegoEngine --> GestorArchivos : persiste y carga niveles
+    JuegoEngine --> GestorArchivos : persiste ranking
 
     %% Persistencia y Ordenamiento
     Puntaje ..|> Comparable
@@ -442,24 +469,32 @@ classDiagram
         -JButton botonRanking
         -JSlider sliderVolumen
         ~actualizarEstadoSelector() void
-        -abrirDialogoSeleccionNivel() void
-        -obtenerEtiquetaDificultad(int numeroNivel) String
         #paintComponent(Graphics g) void
+    }
+    class DialogoSeleccionNivel {
+        ~mostrar(Component padre, PanelPrincipal panelPrincipal) void
     }
     class PanelJuego {
         +static final int ANCHO
         +static final int ALTO
         -JuegoEngine motor
+        -RenderizadorJuego renderizador
         -Timer timer
         ~prepararNuevaPartida() void
         ~iniciarJuego() void
         ~pausarJuego() void
+        -procesarTeclaFinDePartida(int codigoTecla) boolean
+        -alternarPausaDesdeTeclado() void
         #paintComponent(Graphics g) void
-        -dibujarMapa(Graphics g) void
-        -dibujarBuffos(Graphics g) void
-        -dibujarEntidades(Graphics g) void
-        -dibujarHUD(Graphics g) void
+    }
+    class RenderizadorJuego {
+        ~renderizar(Graphics g, int ancho, int alto, JuegoEngine motor, ImageObserver obs) void
+        -dibujarMapa(Graphics g, JuegoEngine motor, ImageObserver obs) void
+        -dibujarBuffos(Graphics g, JuegoEngine motor, ImageObserver obs) void
+        -dibujarEntidades(Graphics g, JuegoEngine motor, ImageObserver obs) void
+        -dibujarHUD(Graphics g, JuegoEngine motor) void
         -dibujarCorazon(Graphics2D g2d, int x, int y, boolean activo) void
+        -dibujarOverlayEstado(Graphics g, JuegoEngine motor) void
     }
     class PanelRanking {
         -PanelPrincipal coordinadorNavegacion
@@ -495,8 +530,11 @@ classDiagram
     PanelPrincipal o-- PanelJuego : aloja
     PanelPrincipal o-- PanelRanking : aloja
     PanelPrincipal o-- PanelVictoria : aloja
-    PanelJuego ..> GestorRecursos : obtiene sprites y fuentes
+    PanelInicio ..> DialogoSeleccionNivel : despliega
+    PanelJuego *-- RenderizadorJuego : delega renderizado
+    RenderizadorJuego ..> GestorRecursos : obtiene sprites y fuentes
     PanelInicio ..> GestorRecursos : obtiene fuentes
+    DialogoSeleccionNivel ..> GestorRecursos : obtiene fuentes
     PanelRanking ..> GestorRecursos : obtiene fuentes
     PanelVictoria ..> GestorRecursos : obtiene fuentes
     PanelInicio ..> GestorAudio : ajusta volumen
@@ -543,7 +581,7 @@ sequenceDiagram
         JE->>J: seguirEmpleado(posicionEmpleado)
         JE->>J: puedeAtacar()
         alt El Jefe puede atacar
-            JE->>J: atacar(posicionEmpleado)
+            JE->>J: atacar()
             J-->>JE: List<Proyectil> (1 o 3 palas según nivel)
             JE->>J: registrarAtaque()
         end
@@ -574,8 +612,8 @@ sequenceDiagram
         end
 
         %% 3. Redibujado en pantalla
-        PJ->>PJ: repaint()
-        PJ->>PJ: dibujarMapa(), dibujarBuffos(), dibujarEntidades(), dibujarHUD()
+        PJ->>PJ: repaint() -> RenderizadorJuego.renderizar()
+        Note over PJ: Dibuja mapa, buffos, entidades, HUD y overlays
     end
 ```
 
@@ -589,9 +627,9 @@ El sistema modela fielmente las exigencias académicas de la materia mediante la
 |---|---|---|
 | **Abstracción** | Jerarquías de `EntidadMovil` y `EntidadEstatica` que generalizan el posicionamiento euclidiano y las dimensiones en pantalla. | Evita código duplicado y proporciona una base extensible para cualquier nuevo elemento gráfico interactivo. |
 | **Herencia** | `Empleado`, `Jefe` y `Proyectil` heredan atributos cinemáticos de `EntidadMovil`; `Muro`, `Salida` y `ZonaBuffo` derivan de `EntidadEstatica`. | Modela coherentemente las relaciones de especialización (*es-un*) en el dominio. |
-| **Polimorfismo** | Uso unificado de la interfaz `Buffo` (`Cafe`, `Aguinaldo` y `Corazon`) e iteración polimórfica sobre colecciones `List<Buffo>` e `IColisionable`, incluyendo la regla de regeneración (`esRegenerable()` / `crearCopia()`). | Permite incorporar nuevos potenciadores y políticas de reaparición sin acoplar el motor central a subclases concretas (**Principio Abierto/Cerrado - OCP**). |
-| **Encapsulamiento y Visibilidad** | Atributos `private`/`protected`, métodos de coordinación interna `default` (paquete `vista`), getters/setters validados y vistas inmodificables (`Collections.unmodifiableList`). | Protege la integridad del estado interno y delimita la API pública frente a la coordinación interna de paquete. |
-| **Interfaces** | Contratos funcionales `IColisionable` y `Buffo`, además de `Comparable<Puntaje>`, `Comparator<Puntaje>`, `Serializable` y `Runnable`. | Fomenta bajo acoplamiento y alta cohesión (**GRASP / SOLID**). |
+| **Polimorfismo** | Uso unificado de la interfaz `Buffo` (`Cafe`, `Aguinaldo` y `Corazon`) e iteración polimórfica sobre colecciones `List<Buffo>` e `IColisionable`, incluyendo `getPuntosBonus()`, `esRegenerable()` y `crearCopia()`. | Permite incorporar nuevos potenciadores, puntajes y políticas de reaparición sin acoplar el motor central a subclases concretas (**Principio Abierto/Cerrado - OCP**). |
+| **Encapsulamiento y Visibilidad** | Atributos `private`/`protected`, métodos y clases auxiliares de coordinación interna `default` (`DialogoSeleccionNivel`, `RenderizadorJuego`), getters/setters validados y vistas inmodificables (`Collections.unmodifiableList`). | Protege la integridad del estado interno y delimita la API pública frente a la coordinación interna de paquete. |
+| **Responsabilidad Única (SRP) y GRASP** | Separación explícita de `JuegoEngine` (simulación), `CargadorNivel` (construcción de mapas), `GestorArchivos` (persistencia), `GestorAudio` (audio multihilo), `PanelJuego`/`RenderizadorJuego` (loop/dibujado) y `Posicion.seSuperpone()` (Experto en Información AABB). | Evita clases monolíticas, elimina lógica duplicada de colisiones y reduce el acoplamiento entre capas. |
 | **Manejo de Excepciones** | Distinción formal entre excepciones *checked* (`NivelNoEncontradoException` para I/O y carga de niveles) y *unchecked* (`ImpactoProyectilException` para colisiones balísticas). | Obliga a un tratamiento controlado y robusto de fallos de persistencia en disco, separando errores de infraestructura de la física en tiempo real. |
 
 ---
@@ -599,7 +637,7 @@ El sistema modela fielmente las exigencias académicas de la materia mediante la
 ## Concurrencia y Aspectos Técnicos
 
 - **Bucle Principal Multihilo (Game Loop):**  
-  Implementado mediante un temporizador asíncrono Swing (`javax.swing.Timer` a 60 FPS / ~16ms) en `PanelJuego`, que desacopla la lógica de actualización en `JuegoEngine.actualizar()` del repintado gráfico periódico.
+  Implementado mediante un temporizador asíncrono Swing (`javax.swing.Timer` a 60 FPS / ~16ms) en `PanelJuego`, que desacopla la lógica de actualización en `JuegoEngine.actualizar()` del repintado gráfico periódico delegado en `RenderizadorJuego`.
 - **Audio Concurrente (`Runnable` / `Thread`):**  
   `GestorAudio` ejecuta la música de fondo en bucle dentro de un hilo demonio dedicado (`"Hilo-Musica-Fondo"`) y dispara efectos de sonido de impacto en hilos asíncronos independientes (`"Hilo-SFX-Impacto"`).
 - **Prevención de Parpadeo (Double Buffering):**  
@@ -615,7 +653,7 @@ El sistema modela fielmente las exigencias académicas de la materia mediante la
 |---|---|---|
 | **Primera Entrega** | Documento de Diseño de Juego (GDD) y Diagrama de Clases UML formal. | ✅ **Completado** (05/10/2026) |
 | **Segunda Entrega** | Implementación del modelo de dominio en Java: jerarquías, enums, colecciones y manejo de excepciones. | ✅ **Completado** (26/10/2026) |
-| **Entrega Final** | Aplicación completa con interfaz gráfica Swing integrada, 5 niveles incrementales con ataque triple en el Nivel Final y selector desbloqueable, sistema de 3 corazones, escudo y regeneración selectiva de buffos, hilos de audio, persistencia de datos y defensa oral. | ✅ **Completado** (16/11/2026) |
+| **Entrega Final** | Aplicación completa con interfaz gráfica Swing integrada, 5 niveles incrementales con ataque triple en el Nivel Final y selector desbloqueable, sistema de 3 corazones, escudo y regeneración selectiva de buffos, refactorización SRP/OCP/DRY, hilos de audio, persistencia de datos y defensa oral. | ✅ **Completado** (16/11/2026) |
 
 ---
 

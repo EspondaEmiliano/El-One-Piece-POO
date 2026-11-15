@@ -25,23 +25,30 @@ public interface Buffo {
     /**
      * Actualiza el tiempo restante del buffo en cada ciclo (frame) del Game Loop.
      *
-     * @param deltaTiempo Milisegundos trascurridos (por ej. 16 ms a 60 FPS).
+     * @param deltaTiempo Milisegundos transcurridos (por ej. 16 ms a 60 FPS).
      */
     void actualizar(long deltaTiempo);
 
     /**
      * Indica si el efecto potenciador ha finalizado su duración.
      *
-     * @return true si ya expiró y debe ser removido; false si sigue activo.
+     * @return {@code true} si ya expiró y debe ser removido; {@code false} si sigue activo.
      */
     boolean estaExpirado();
 
     /**
      * Retorna el nombre identificatorio del potenciador (útil para la UI y la vista).
      *
-     * @return Nombre del buffo (ej. "Cafe", "Aguinaldo").
+     * @return Nombre del buffo (ej. "Cafe", "Escudo (Aguinaldo)").
      */
     String getNombre();
+
+    /**
+     * Retorna los puntos de bonificación que otorga al ser recolectado en el mapa.
+     *
+     * @return Cantidad de puntos sumados al marcador de la partida.
+     */
+    int getPuntosBonus();
 
     /**
      * Indica si el potenciador debe reaparecer en el mapa cuando el empleado

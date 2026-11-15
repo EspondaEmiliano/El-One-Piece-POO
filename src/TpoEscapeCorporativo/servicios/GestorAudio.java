@@ -6,22 +6,17 @@ import java.io.IOException;
 
 /**
  * Servicio encargado de la reproducción de audio del juego.
- * Gestiona la música de fondo en un hilo separado de ejecución (Runnable)
+ * Gestiona la música de fondo en un hilo separado de ejecución ({@link Runnable})
  * y los efectos de sonido (SFX) mediante subprocesos asíncronos para no bloquear la interfaz.
  */
 public class GestorAudio implements Runnable {
 
-    // Rutas relativas a los archivos de audio
     private static final String RUTA_MUSICA_FONDO = "assets/sonidos/musica_fondo.wav";
     private static final String RUTA_SFX_IMPACTO = "assets/sonidos/impacto_pala.wav";
 
-    // Instancia única (Patrón Singleton para control centralizado de audio)
     private static GestorAudio gestorAudio;
 
-    // Volumen de 0.0 (silencio) a 1.0 (máximo). Por defecto 70%
     private float volumenActual = 0.70f;
-
-    // Control del hilo de música
     private Thread hiloMusica;
     private volatile boolean enEjecucion;
     private Clip clipMusica;
@@ -30,6 +25,11 @@ public class GestorAudio implements Runnable {
         this.enEjecucion = false;
     }
 
+    /**
+     * Obtiene la instancia única del servicio de audio (patrón Singleton).
+     *
+     * @return Instancia global de {@link GestorAudio}.
+     */
     public static synchronized GestorAudio getInstance() {
         if (gestorAudio == null) {
             gestorAudio = new GestorAudio();
@@ -44,14 +44,14 @@ public class GestorAudio implements Runnable {
     public synchronized void iniciarMusica() {
         if (hiloMusica != null && hiloMusica.isAlive()) {
             if (clipMusica != null && !clipMusica.isRunning()) {
-                clipMusica.loop(Clip.LOOP_CONTINUOUSLY); // Reanuda en bucle infinito
+                clipMusica.loop(Clip.LOOP_CONTINUOUSLY);
             }
             return;
         }
 
         enEjecucion = true;
         hiloMusica = new Thread(this, "Hilo-Musica-Fondo");
-        hiloMusica.setDaemon(true); // Se cierra automáticamente al cerrar la JVM
+        hiloMusica.setDaemon(true);
         hiloMusica.start();
     }
 
@@ -82,7 +82,7 @@ public class GestorAudio implements Runnable {
 
     /**
      * Ciclo de vida del hilo de música.
-     * Incorpora manejo de excepciones con try-catch-finally.
+     * Incorpora manejo de excepciones con bloques {@code try-catch-finally}.
      */
     @Override
     public void run() {
@@ -101,7 +101,6 @@ public class GestorAudio implements Runnable {
             aplicarVolumen();
             clipMusica.loop(Clip.LOOP_CONTINUOUSLY);
 
-            // Mantiene el hilo activo mientras la música se reproduzca
             while (enEjecucion && !Thread.currentThread().isInterrupted()) {
                 Thread.sleep(500);
             }
@@ -112,7 +111,6 @@ public class GestorAudio implements Runnable {
         } catch (LineUnavailableException e) {
             System.err.println("Error: Línea de audio no disponible: " + e.getMessage());
         } catch (InterruptedException e) {
-            // Interrupción controlada al detener la música
             Thread.currentThread().interrupt();
         } finally {
             if (audioStream != null) {
@@ -128,14 +126,13 @@ public class GestorAudio implements Runnable {
     /**
      * Reproduce el sonido de impacto en un hilo rápido asíncrono para evitar
      * que la lógica física del juego se congele durante la lectura del archivo.
-     * Aplica el volumen actual establecido en el gestor.
+     * Aplica el volumen maestro actual establecido en el gestor.
      */
     public static void reproducirImpactoPala() {
         GestorAudio gestor = getInstance();
         new Thread(() -> {
             File archivoSfx = new File(RUTA_SFX_IMPACTO);
             if (!archivoSfx.exists()) {
-                // Si aún no copiaron el audio, suena un pitido por defecto del sistema
                 java.awt.Toolkit.getDefaultToolkit().beep();
                 return;
             }
@@ -145,10 +142,9 @@ public class GestorAudio implements Runnable {
                 streamSfx = AudioSystem.getAudioInputStream(archivoSfx);
                 Clip clipSfx = AudioSystem.getClip();
                 clipSfx.open(streamSfx);
-                gestor.aplicarVolumenAClip(clipSfx); // Respeta el volumen maestro
+                gestor.aplicarVolumenAClip(clipSfx);
                 clipSfx.start();
 
-                // Liberar el clip una vez que finalice la reproducción
                 clipSfx.addLineListener(evento -> {
                     if (evento.getType() == LineEvent.Type.STOP) {
                         clipSfx.close();
@@ -171,7 +167,7 @@ public class GestorAudio implements Runnable {
     /**
      * Modifica el volumen maestro del juego (música y efectos).
      *
-     * @param porcentaje Valor entre 0.0f (mute) y 1.0f (máximo).
+     * @param porcentaje Valor entre {@code 0.0f} (silencio) y {@code 1.0f} (máximo).
      */
     public synchronized void setVolumen(float porcentaje) {
         this.volumenActual = Math.max(0.0f, Math.min(1.0f, porcentaje));
@@ -179,7 +175,7 @@ public class GestorAudio implements Runnable {
     }
 
     /**
-     * Aplica el volumen actual sobre cualquier Clip mediante FloatControl en decibeles.
+     * Aplica el volumen actual sobre cualquier {@link Clip} mediante {@link FloatControl} en decibeles.
      *
      * @param clip Clip de audio (música o SFX) al que se le ajustará la ganancia.
      */
@@ -188,10 +184,8 @@ public class GestorAudio implements Runnable {
             try {
                 FloatControl controlGanancia = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
                 if (volumenActual <= 0.001f) {
-                    // Silencio total
                     controlGanancia.setValue(controlGanancia.getMinimum());
                 } else {
-                    // Conversión logarítmica de escala lineal a decibeles
                     float dB = (float) (Math.log10(volumenActual) * 20.0);
                     dB = Math.max(controlGanancia.getMinimum(), Math.min(dB, controlGanancia.getMaximum()));
                     controlGanancia.setValue(dB);
@@ -207,12 +201,5 @@ public class GestorAudio implements Runnable {
      */
     private void aplicarVolumen() {
         aplicarVolumenAClip(clipMusica);
-    }
-
-    /**
-     * @return El porcentaje de volumen actual entre 0.0f y 1.0f.
-     */
-    public float getVolumenActual() {
-        return volumenActual;
     }
 }

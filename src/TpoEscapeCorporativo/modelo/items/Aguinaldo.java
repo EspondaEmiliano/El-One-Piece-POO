@@ -6,11 +6,11 @@ import TpoEscapeCorporativo.modelo.entidades.Empleado;
 /**
  * Representa el potenciador de Aguinaldo.
  * Actúa como un escudo protector que permite al empleado absorber un (1)
- * impacto de proyectil sin ser derrotado, además de otorgar puntos de bonificación.
+ * impacto de proyectil sin perder corazones, además de otorgar puntos de bonificación.
  */
 public class Aguinaldo implements Buffo {
 
-    private static final int PUNTOS_BONUS_DEFAULT = 500; // +500 puntos
+    private static final int PUNTOS_BONUS_DEFAULT = 500;
 
     private final int puntosBonus;
     private boolean roto;
@@ -30,16 +30,6 @@ public class Aguinaldo implements Buffo {
     public Aguinaldo(int puntosBonus) {
         this.puntosBonus = puntosBonus;
         this.roto = false;
-    }
-
-    /**
-     * Constructor de compatibilidad (mantiene firma previa para pruebas o instanciaciones legadas).
-     *
-     * @param saludRecuperada Obsoleto: conservado por compatibilidad.
-     * @param puntosBonus     Puntos que suma al recolectarlo.
-     */
-    public Aguinaldo(int saludRecuperada, int puntosBonus) {
-        this(puntosBonus);
     }
 
     @Override
@@ -80,6 +70,11 @@ public class Aguinaldo implements Buffo {
     }
 
     @Override
+    public int getPuntosBonus() {
+        return puntosBonus;
+    }
+
+    @Override
     public boolean esRegenerable() {
         return true;
     }
@@ -87,17 +82,5 @@ public class Aguinaldo implements Buffo {
     @Override
     public Buffo crearCopia() {
         return new Aguinaldo(this.puntosBonus);
-    }
-
-    public int getPuntosBonus() {
-        return puntosBonus;
-    }
-
-    /**
-     * Conservado por compatibilidad de firma con versiones anteriores.
-     */
-    @Deprecated
-    public int getSaludRecuperada() {
-        return 0;
     }
 }
