@@ -224,9 +224,9 @@ public class PanelRanking extends JPanel {
 
     /**
      * Lee la lista de mejores puntajes desde el archivo binario y puebla la tabla.
-     * Debe invocarse cada vez que se navega hacia este panel.
+     * Visibilidad de paquete (default): invocada por {@link PanelPrincipal} al navegar al ranking.
      */
-    public void cargarYRefrescarDatos() {
+    void cargarYRefrescarDatos() {
         modeloDatosTabla.setRowCount(0); // Limpia filas anteriores
 
         List<Puntaje> listaMejoresPuntajes = servicioPersistencia.cargarMejoresPuntajes();

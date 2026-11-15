@@ -17,7 +17,6 @@ public class Jefe extends EntidadMovil {
     /** Duración en milisegundos de la animación de disparo. */
     public static final int DURACION_ANIMACION_ATAQUE_MS = 400;
 
-    private String nombre;
     private int intervalAtaque;
     private long ultimoAtaque;
     private Proyectil proyectilGenerado;
@@ -29,12 +28,10 @@ public class Jefe extends EntidadMovil {
      *
      * @param posicion Hitbox inicial en el pasillo superior.
      * @param velocidad Velocidad de seguimiento horizontal.
-     * @param nombre Nombre descriptivo del jefe.
      * @param intervalAtaque Cadencia de disparo en milisegundos.
      */
-    public Jefe(Posicion posicion, int velocidad, String nombre, int intervalAtaque) {
+    public Jefe(Posicion posicion, int velocidad, int intervalAtaque) {
         super(posicion, velocidad);
-        this.nombre = nombre;
         this.intervalAtaque = intervalAtaque;
         // Reinicia la cadencia al spawnear o reiniciar el nivel
         this.ultimoAtaque = System.currentTimeMillis();

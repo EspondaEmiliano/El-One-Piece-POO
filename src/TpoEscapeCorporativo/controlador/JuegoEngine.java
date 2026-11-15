@@ -52,6 +52,7 @@ public class JuegoEngine {
     private int corazonesBaseNivelActual;
 
     private final GestorArchivos gestorArchivos;
+    private final int totalNiveles;
 
     /**
      * Inicializa el motor, prepara las listas de entidades y carga el nivel inicial con 3 corazones.
@@ -61,6 +62,7 @@ public class JuegoEngine {
         this.proyectiles = new ArrayList<>();
         this.zonaBuffos = new ArrayList<>();
         this.gestorArchivos = new GestorArchivos();
+        this.totalNiveles = this.gestorArchivos.contarNivelesDisponibles();
 
         this.numeroNivelActual = 1;
         this.nivelMaximoDesbloqueado = 1;
@@ -360,7 +362,7 @@ public class JuegoEngine {
                                 case 3: cadenciaJefe = 1550; break; // 1.55s (Nivel 3: Ruta Dual - Alta)
                                 default: cadenciaJefe = 1250; break; // 1.25s (Nivel 4: El Búnker Central - Extrema)
                             }
-                            this.enemigo = new Jefe(posicion, 1, "Jefe", cadenciaJefe);
+                            this.enemigo = new Jefe(posicion, 1, cadenciaJefe);
                             break;
                         case 'S':
                             this.salida = new Salida(posicion);
@@ -395,10 +397,10 @@ public class JuegoEngine {
     /**
      * Obtiene la cantidad total de niveles disponibles para jugar.
      *
-     * @return Total de niveles encontrados por el gestor de archivos.
+     * @return Total de niveles detectados en disco al inicializar el motor.
      */
     public int getTotalNiveles() {
-        return this.gestorArchivos.contarNivelesDisponibles();
+        return this.totalNiveles;
     }
 
     /**

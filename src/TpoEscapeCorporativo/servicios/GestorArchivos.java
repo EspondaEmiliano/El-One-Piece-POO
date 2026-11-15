@@ -250,7 +250,7 @@ public class GestorArchivos {
     }
 
     public String getRutaRankingDefault() {
-        return rutaRanking;
+        return RUTA_RANKING_DEFAULT;
     }
 
     public String getCarpetaNiveles() {

@@ -112,7 +112,11 @@ public class PanelJuego extends JPanel {
         });
     }
 
-    public void iniciarJuego() {
+    /**
+     * Inicia el bucle de juego y la música de fondo.
+     * Visibilidad de paquete (default) para coordinación interna con {@link PanelPrincipal}.
+     */
+    void iniciarJuego() {
         this.requestFocusInWindow();
         if (!timer.isRunning()) {
             timer.start();
@@ -120,7 +124,11 @@ public class PanelJuego extends JPanel {
         }
     }
 
-    public void pausarJuego() {
+    /**
+     * Pausa el bucle de juego y la música de fondo.
+     * Visibilidad de paquete (default) para coordinación interna con {@link PanelPrincipal}.
+     */
+    void pausarJuego() {
         if (timer.isRunning()) {
             timer.stop();
             GestorAudio.getInstance().pausarMusica();
@@ -381,18 +389,6 @@ public class PanelJuego extends JPanel {
                 dibujarTextoCentrado(g, "[R] - REINTENTAR / [M] - VOLVER AL MENU", ALTO / 2 + 60);
             }
         }
-    }
-
-    // Comprueba si una tecla corresponde a una dirección de movimiento.
-    private boolean esTeclaMovimiento(int codigoTecla) {
-        return codigoTecla == KeyEvent.VK_UP ||
-                codigoTecla == KeyEvent.VK_W ||
-                codigoTecla == KeyEvent.VK_DOWN ||
-                codigoTecla == KeyEvent.VK_S ||
-                codigoTecla == KeyEvent.VK_LEFT ||
-                codigoTecla == KeyEvent.VK_A ||
-                codigoTecla == KeyEvent.VK_RIGHT ||
-                codigoTecla == KeyEvent.VK_D;
     }
 
     // Convierte una tecla del teclado en una dirección de movimiento.

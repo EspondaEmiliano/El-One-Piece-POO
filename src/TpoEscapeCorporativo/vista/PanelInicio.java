@@ -154,9 +154,10 @@ public class PanelInicio extends JPanel {
 
     /**
      * Actualiza el estado visual e interactivo del botón selector de niveles.
+     * Visibilidad de paquete (default): invocado por {@link PanelPrincipal} al mostrar el menú.
      * Solo se habilita cuando el jugador ha superado al menos un nivel de la partida.
      */
-    public void actualizarEstadoSelector() {
+    void actualizarEstadoSelector() {
         JuegoEngine motor = (this.panelPrincipal != null) ? this.panelPrincipal.getMotorEngine() : null;
         boolean habilitado = (motor != null && motor.isSelectorDesbloqueado());
         int totalNiveles = (motor != null) ? motor.getTotalNiveles() : 4;

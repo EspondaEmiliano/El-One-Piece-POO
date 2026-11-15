@@ -5,7 +5,7 @@ import TpoEscapeCorporativo.modelo.datos.Posicion;
 
 /**
  * Bloque sólido estático e impenetrable del laberinto que bloquea
- * el avance del jugador y destruye proyectiles.
+ * el avance del jugador.
  */
 public class Muro extends EntidadEstatica implements IColisionable {
 
