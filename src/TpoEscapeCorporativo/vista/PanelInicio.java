@@ -160,7 +160,7 @@ public class PanelInicio extends JPanel {
     void actualizarEstadoSelector() {
         JuegoEngine motor = (this.panelPrincipal != null) ? this.panelPrincipal.getMotorEngine() : null;
         boolean habilitado = (motor != null && motor.isSelectorDesbloqueado());
-        int totalNiveles = (motor != null) ? motor.getTotalNiveles() : 4;
+        int totalNiveles = (motor != null) ? motor.getTotalNiveles() : JuegoEngine.TOTAL_NIVELES;
         int desbloqueados = (motor != null) ? motor.getNivelMaximoDesbloqueado() : 1;
 
         botonSeleccionarNivel.setEnabled(habilitado);
@@ -195,7 +195,7 @@ public class PanelInicio extends JPanel {
         Window ventanaPadre = SwingUtilities.getWindowAncestor(this);
         JDialog dialogo = new JDialog(ventanaPadre, "SELECCIONAR NIVEL", Dialog.ModalityType.APPLICATION_MODAL);
         dialogo.setUndecorated(true);
-        dialogo.setSize(560, 420);
+        dialogo.setSize(580, 480);
         dialogo.setLocationRelativeTo(this);
 
         JPanel contenedor = new JPanel(new BorderLayout(0, 14));
@@ -226,8 +226,8 @@ public class PanelInicio extends JPanel {
         panelCabecera.add(lblSubtitulo);
         contenedor.add(panelCabecera, BorderLayout.NORTH);
 
-        // Grilla central con las tarjetas de los 4 niveles
-        JPanel panelNiveles = new JPanel(new GridLayout(totalNiveles, 1, 0, 10));
+        // Grilla central con las tarjetas de los niveles
+        JPanel panelNiveles = new JPanel(new GridLayout(totalNiveles, 1, 0, 8));
         panelNiveles.setOpaque(false);
 
         for (int nivel = 1; nivel <= totalNiveles; nivel++) {
@@ -334,13 +334,18 @@ public class PanelInicio extends JPanel {
 
     /**
      * Retorna una etiqueta concisa de dificultad para presentar en cada tarjeta del selector.
+     *
+     * @param numeroNivel Identificador numérico del nivel.
+     * @return Etiqueta arcade descriptiva de la dificultad.
      */
     private String obtenerEtiquetaDificultad(int numeroNivel) {
         switch (numeroNivel) {
             case 1: return "DIF: BAJA";
             case 2: return "DIF: MEDIA";
             case 3: return "DIF: ALTA";
-            default: return "DIF: EXTREMA";
+            case 4: return "DIF: EXTREMA";
+            case 5: return "DIF: JEFE FINAL";
+            default: return "DIF: DESAFIO";
         }
     }
 

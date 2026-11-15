@@ -33,7 +33,7 @@ public class PanelVictoria extends JPanel {
         add(cartelVictoria);
 
         // Subtítulo descriptivo
-        subtexto = new JLabel("HAS COMPLETADO LOS 4 NIVELES Y TERMINADO TU JORNADA", SwingConstants.CENTER);
+        subtexto = new JLabel("HAS COMPLETADO TODOS LOS NIVELES Y TERMINADO TU JORNADA", SwingConstants.CENTER);
         subtexto.setFont(GestorRecursos.getFuenteArcade(9f));
         subtexto.setForeground(Color.WHITE);
         add(subtexto);

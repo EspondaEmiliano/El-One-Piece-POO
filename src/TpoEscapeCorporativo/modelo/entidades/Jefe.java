@@ -3,6 +3,9 @@ package TpoEscapeCorporativo.modelo.entidades;
 import TpoEscapeCorporativo.modelo.datos.Direccion;
 import TpoEscapeCorporativo.modelo.datos.Posicion;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Representa al antagonista del juego que patrulla el pasillo superior,
  * sigue horizontalmente al empleado y dispara proyectiles periódicamente.
@@ -14,15 +17,24 @@ public class Jefe extends EntidadMovil {
     public static final int ALTO_PALA = 16;
     public static final int VELOCIDAD_PALA = 3;
 
+    /** Separación entre centros que deja un espacio libre de 36 px entre palas (superior a un muro de 32 px). */
+    public static final int SEPARACION_PALAS = 52;
+
+    /** Límites horizontales del área interior jugable, excluyendo los muros laterales del mapa. */
+    private static final int LIMITE_INTERIOR_IZQ = 44;
+    private static final int LIMITE_INTERIOR_DER = 556;
+
     /** Duración en milisegundos de la animación de disparo. */
     public static final int DURACION_ANIMACION_ATAQUE_MS = 400;
 
     private int intervalAtaque;
     private long ultimoAtaque;
-    private Proyectil proyectilGenerado;
+    private boolean ataqueTriple;
+    private final Posicion posicionInicial;
+    private final List<Proyectil> proyectilesGenerados;
 
     /**
-     * Inicializa al jefe con sus parámetros de patrulla y cadencia de fuego.
+     * Inicializa al jefe con ataque simple por defecto y sus parámetros de patrulla.
      * Al instanciarse, inicia el cronómetro del último ataque para respetar el tiempo de recarga
      * antes de disparar su primera pala.
      *
@@ -31,8 +43,28 @@ public class Jefe extends EntidadMovil {
      * @param intervalAtaque Cadencia de disparo en milisegundos.
      */
     public Jefe(Posicion posicion, int velocidad, int intervalAtaque) {
+        this(posicion, velocidad, intervalAtaque, false);
+    }
+
+    /**
+     * Inicializa al jefe con su configuración de patrulla, cadencia y modalidad de disparo.
+     *
+     * @param posicion Hitbox inicial en el pasillo superior.
+     * @param velocidad Velocidad de seguimiento horizontal.
+     * @param intervalAtaque Cadencia de disparo en milisegundos.
+     * @param ataqueTriple {@code true} para disparar tres palas paralelas; {@code false} para disparo simple.
+     */
+    public Jefe(Posicion posicion, int velocidad, int intervalAtaque, boolean ataqueTriple) {
         super(posicion, velocidad);
         this.intervalAtaque = intervalAtaque;
+        this.ataqueTriple = ataqueTriple;
+        this.posicionInicial = new Posicion(
+                posicion.getX1(),
+                posicion.getY1(),
+                posicion.getX2(),
+                posicion.getY2()
+        );
+        this.proyectilesGenerados = new ArrayList<>();
         // Reinicia la cadencia al spawnear o reiniciar el nivel
         this.ultimoAtaque = System.currentTimeMillis();
     }
@@ -87,23 +119,63 @@ public class Jefe extends EntidadMovil {
     }
 
     /**
-     * Instancia un proyectil calibrado (16x16 px a velocidad 3) en la base del jefe con dirección descendente.
+     * Restablece al jefe a su posición original de patrulla en el mapa,
+     * detiene su desplazamiento y reinicia el intervalo de ataque.
+     */
+    public void volverAPosicionInicial() {
+        this.posicion.setX1(this.posicionInicial.getX1());
+        this.posicion.setY1(this.posicionInicial.getY1());
+        this.posicion.setX2(this.posicionInicial.getX2());
+        this.posicion.setY2(this.posicionInicial.getY2());
+        this.direccionActual = Direccion.NINGUNA;
+        this.ultimoAtaque = System.currentTimeMillis();
+        limpiarProyectilGenerado();
+    }
+
+    /**
+     * Genera la ráfaga de proyectiles descendentes en la base del jefe según su modalidad de ataque.
+     * En ataque triple añade dos palas laterales separadas siempre que no invadan los bordes.
      *
      * @param posicionObjetivo Coordenadas del objetivo al que se apunta.
      */
     public void atacar(Posicion posicionObjetivo) {
+        this.proyectilesGenerados.clear();
         int centroX = (posicion.getX1() + posicion.getX2()) / 2;
+
+        agregarPalaSiEsValida(centroX, false);
+
+        if (this.ataqueTriple) {
+            agregarPalaSiEsValida(centroX - SEPARACION_PALAS, true);
+            agregarPalaSiEsValida(centroX + SEPARACION_PALAS, true);
+        }
+    }
+
+    /**
+     * Crea un proyectil vertical hacia abajo centrado en la coordenada indicada y lo agrega
+     * a la ráfaga pendiente, omitiéndolo si supera los límites interiores cuando corresponde validar bordes.
+     *
+     * @param centroX Coordenada horizontal central del proyectil.
+     * @param validarBorde {@code true} para descartar palas fuera de los muros laterales del mapa.
+     */
+    private void agregarPalaSiEsValida(int centroX, boolean validarBorde) {
         int radioX = ANCHO_PALA / 2;
+        int x1 = centroX - radioX;
+        int x2 = centroX + radioX;
+
+        if (validarBorde && (x1 < LIMITE_INTERIOR_IZQ || x2 > LIMITE_INTERIOR_DER)) {
+            return;
+        }
 
         Posicion posicionProyectil = new Posicion(
-                centroX - radioX,
+                x1,
                 posicion.getY2(),
-                centroX + radioX,
+                x2,
                 posicion.getY2() + ALTO_PALA
         );
 
-        proyectilGenerado = new Proyectil(posicionProyectil, VELOCIDAD_PALA);
-        proyectilGenerado.setDireccionActual(Direccion.ABAJO);
+        Proyectil pala = new Proyectil(posicionProyectil, VELOCIDAD_PALA);
+        pala.setDireccionActual(Direccion.ABAJO);
+        this.proyectilesGenerados.add(pala);
     }
 
     /**
@@ -115,13 +187,35 @@ public class Jefe extends EntidadMovil {
         return (System.currentTimeMillis() - ultimoAtaque) < DURACION_ANIMACION_ATAQUE_MS;
     }
 
-    /** @return El último proyectil instanciado listo para ser incorporado al juego. */
-    public Proyectil getProyectilGenerado() {
-        return proyectilGenerado;
+    /**
+     * Devuelve la lista de proyectiles generados por el último ataque del jefe.
+     *
+     * @return Copia de la lista de proyectiles pendientes de incorporar al motor.
+     */
+    public List<Proyectil> getProyectilesGenerados() {
+        return new ArrayList<>(proyectilesGenerados);
     }
 
-    /** Limpia la referencia del proyectil una vez añadido a la lista del motor. */
+    /** Limpia la lista de proyectiles generados una vez añadidos al motor. */
     public void limpiarProyectilGenerado() {
-        proyectilGenerado = null;
+        proyectilesGenerados.clear();
+    }
+
+    /**
+     * Devuelve el intervalo de recarga entre disparos sucesivos en milisegundos.
+     *
+     * @return Cadencia de disparo en milisegundos.
+     */
+    public int getIntervaloAtaque() {
+        return intervalAtaque;
+    }
+
+    /**
+     * Indica si el jefe está configurado para disparar tres palas en paralelo.
+     *
+     * @return {@code true} si el ataque es triple; {@code false} si es disparo simple.
+     */
+    public boolean isAtaqueTriple() {
+        return ataqueTriple;
     }
 }

@@ -109,6 +109,9 @@ public class PanelPrincipal {
      * @param numeroNivel Identificador del nivel en el que iniciará la partida.
      */
     public void iniciarJuegoEnNivel(int numeroNivel) {
+        if (panelJuego != null) {
+            panelJuego.prepararNuevaPartida();
+        }
         motorEngine.iniciarPartidaEnNivel(numeroNivel);
         mostrarPanel("JUEGO");
     }
