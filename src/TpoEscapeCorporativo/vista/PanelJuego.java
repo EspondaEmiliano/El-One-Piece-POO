@@ -63,6 +63,16 @@ public class PanelJuego extends JPanel {
         this(motor, null);
     }
 
+    /**
+     * Restablece las banderas de sesión y el estado de teclas antes de comenzar una nueva partida.
+     * Visibilidad de paquete (default) para coordinación interna con {@link PanelPrincipal}.
+     */
+    void prepararNuevaPartida() {
+        this.puntajeRegistrado = false;
+        this.aliasJugadorActual = null;
+        this.teclasPresionadas.clear();
+    }
+
     private void configurarGameLoop() {
         this.timer = new Timer(16, e -> {
             motor.actualizar();
@@ -297,8 +307,13 @@ public class PanelJuego extends JPanel {
         }
 
         g.setFont(GestorRecursos.getFuenteArcade(10f));
-        g.setColor(new Color(0, 220, 255));
-        g.drawString("NIVEL: " + motor.getNumeroNivelActual() + "/" + motor.getTotalNiveles(), 450, 43);
+        if (motor.esNivelFinalActual()) {
+            g.setColor(new Color(255, 215, 0));
+            g.drawString("NIVEL: FINAL", 450, 43);
+        } else {
+            g.setColor(new Color(0, 220, 255));
+            g.drawString("NIVEL: " + motor.getNumeroNivelActual() + "/" + motor.getTotalNiveles(), 450, 43);
+        }
     }
 
     /**
@@ -352,7 +367,7 @@ public class PanelJuego extends JPanel {
 
             g.setFont(GestorRecursos.getFuenteArcade(9f));
             g.setColor(Color.WHITE);
-            dibujarTextoCentrado(g, "Presiona 'P' para continuar", ALTO / 2 + 15);
+            dibujarTextoCentrado(g, "Presiona 'P' o 'ESC' para continuar", ALTO / 2 + 15);
         } else if (estado.esFinDePartida()) {
             g.setColor(new Color(0, 0, 0, 200));
             g.fillRect(0, 0, ANCHO, ALTO);
@@ -360,7 +375,16 @@ public class PanelJuego extends JPanel {
             boolean esVictoria = (estado == EstadoJuego.VICTORIA);
             g.setFont(GestorRecursos.getFuenteArcade(18f));
             g.setColor(esVictoria ? Color.GREEN : Color.RED);
-            dibujarTextoCentrado(g, esVictoria ? "¡NIVEL " + motor.getNumeroNivelActual() + " COMPLETADO!" : "GAME OVER", ALTO / 2 - 50);
+            String tituloEstado;
+            if (!esVictoria) {
+                tituloEstado = "GAME OVER";
+            } else if (motor.esNivelFinalActual()) {
+                tituloEstado = "¡NIVEL FINAL COMPLETADO!";
+                g.setFont(GestorRecursos.getFuenteArcade(16f));
+            } else {
+                tituloEstado = "¡NIVEL " + motor.getNumeroNivelActual() + " COMPLETADO!";
+            }
+            dibujarTextoCentrado(g, tituloEstado, ALTO / 2 - 50);
 
             g.setFont(GestorRecursos.getFuenteArcade(8f));
             g.setColor(Color.WHITE);
@@ -382,7 +406,7 @@ public class PanelJuego extends JPanel {
                     g.setColor(new Color(255, 215, 0));
                     dibujarTextoCentrado(g, "¡FELICITACIONES! HAS COMPLETADO TODOS LOS NIVELES", ALTO / 2 + 50);
                     g.setColor(Color.CYAN);
-                    dibujarTextoCentrado(g, "[ENTER] - PANTALLA DE VICTORIA / [M] - MENU", ALTO / 2 + 75);
+                    dibujarTextoCentrado(g, "[ENTER] - CONTINUAR / [M] - VOLVER AL MENU", ALTO / 2 + 75);
                 }
             } else {
                 g.setColor(Color.YELLOW);
@@ -484,7 +508,9 @@ public class PanelJuego extends JPanel {
                                     "Registrar Récord",
                                     JOptionPane.PLAIN_MESSAGE
                             );
-                            motor.guardarPuntaje(alias);
+                            if (alias != null) {
+                                motor.guardarPuntaje(alias);
+                            }
                         }
                         motor.reiniciarPartidaCompleta();
                         teclasPresionadas.clear();

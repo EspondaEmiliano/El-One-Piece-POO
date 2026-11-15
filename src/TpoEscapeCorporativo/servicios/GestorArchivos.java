@@ -214,7 +214,7 @@ public class GestorArchivos {
             case 4:
                 return "Nivel 4: El Búnker Central";
             case 5:
-                return "Nivel 5: La Serpentina Táctica";
+                return "Nivel 5: Nivel Final";
             default:
                 return "Nivel " + numeroNivel;
         }

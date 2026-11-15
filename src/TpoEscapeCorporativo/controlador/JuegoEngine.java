@@ -30,7 +30,7 @@ public class JuegoEngine {
     public static final int DURACION_JORNADA_SEGUNDOS = 60;
     public static final int PUNTOS_POR_BUFFO = 50;
     public static final int PUNTOS_BASE_ESCAPE = 500;
-    public static final int TOTAL_NIVELES = 4;
+    public static final int TOTAL_NIVELES = 5;
 
     private List<Muro> muros;
     private List<Proyectil> proyectiles;
@@ -173,10 +173,10 @@ public class JuegoEngine {
 
         if (this.enemigo.puedeAtacar()) {
             this.enemigo.atacar(this.jugador.getPosicion());
-            Proyectil nuevoProyectil = this.enemigo.getProyectilGenerado();
+            List<Proyectil> nuevosProyectiles = this.enemigo.getProyectilesGenerados();
 
-            if (nuevoProyectil != null) {
-                this.proyectiles.add(nuevoProyectil);
+            if (!nuevosProyectiles.isEmpty()) {
+                this.proyectiles.addAll(nuevosProyectiles);
                 this.enemigo.registrarAtaque();
                 this.enemigo.limpiarProyectilGenerado();
             }
@@ -206,8 +206,8 @@ public class JuegoEngine {
      *
      * - Si el empleado tiene escudo (Aguinaldo), absorbe el impacto sin perder corazón ni retroceder.
      * - Si no tiene escudo, pierde 1 corazón:
-     *   - Si aún le quedan corazones (> 0), vuelve a su casilla inicial y se limpian las palas en vuelo,
-     *     manteniendo el reloj corriendo y los buffos del mapa.
+     *   - Si aún le quedan corazones (> 0), el empleado y el jefe vuelven a sus posiciones iniciales
+     *     y se limpian las palas en vuelo, manteniendo el reloj corriendo y los buffos del mapa.
      *   - Si pierde su 3.er corazón (0 corazones), la partida termina en {@link EstadoJuego#DERROTA_VIDA}.
      */
     private void actualizarProyectiles() {
@@ -231,12 +231,12 @@ public class JuegoEngine {
                         if (golpeAbsorbido) {
                             System.out.println("[ESCUDO] ¡Pala absorbida por el Aguinaldo! El empleado continúa sin perder corazones.");
                         } else if (this.jugador.estaVivo()) {
-                            // Aún le quedan corazones: vuelve a la casilla inicial y limpia palas en el aire
+                            // Aún le quedan corazones: reubica al empleado y al jefe en sus posiciones iniciales
                             this.jugador.volverAPosicionInicial();
-                            this.proyectiles.clear();
                             if (this.enemigo != null) {
-                                this.enemigo.registrarAtaque();
+                                this.enemigo.volverAPosicionInicial();
                             }
+                            this.proyectiles.clear();
                             throw new ImpactoProyectilException(
                                     "El jefe devolvió al empleado al inicio. Corazones restantes: " + this.jugador.getSalud()
                             );
@@ -279,7 +279,8 @@ public class JuegoEngine {
     }
 
     /**
-     * Persiste el récord obtenido por el jugador en la tabla Top 10 del ranking.
+     * Persiste el récord obtenido por el jugador en la tabla Top 10 del ranking,
+     * consolidando el tiempo total acumulado a lo largo de la partida.
      *
      * @param aliasJugador Nombre o identificador del empleado para el Top 10.
      * @return {@code true} si el puntaje se serializó con éxito; {@code false} en caso contrario.
@@ -326,7 +327,7 @@ public class JuegoEngine {
     /**
      * Carga y parsea la matriz de nivel desde el archivo de texto en disco.
      * Soporta '#' (Muro), 'E' (Empleado), 'J' (Jefe), 'S' (Salida),
-     * 'C' (Café), 'A' (Aguinaldo/Escudo) y 'V' (Corazón/+1 Vida).
+     * 'C' (Café), 'A' (Aguinaldo/Escudo) y 'V'/'H' (Corazón/+1 Vida).
      *
      * @param numeroNivel Identificador del nivel a cargar.
      */
@@ -348,21 +349,30 @@ public class JuegoEngine {
 
                     char caracterCelda = mapa[fila][columna];
                     switch (caracterCelda) {
-                        case '#': this.muros.add(new Muro(posicion)); break;
+                        case '#':
+                            this.muros.add(new Muro(posicion));
+                            break;
                         case 'E':
                             Posicion posicionEmpleado = new Posicion(x1 + 4, y1 + 4, x1 + 28, y1 + 28);
                             this.jugador = new Empleado(posicionEmpleado, 2);
                             break;
                         case 'J':
-                            // Cadencia de disparo incremental según la dificultad del nivel
+                            // Configura velocidad, cadencia y modalidad de ataque según la dificultad del nivel
+                            int velocidadJefe = 1;
                             int cadenciaJefe;
-                            switch (numeroNivel) {
-                                case 1: cadenciaJefe = 2200; break; // 2.2s (Nivel 1: Primer Paso - Baja)
-                                case 2: cadenciaJefe = 1850; break; // 1.85s (Nivel 2: Laberinto Corporativo - Media)
-                                case 3: cadenciaJefe = 1550; break; // 1.55s (Nivel 3: Ruta Dual - Alta)
-                                default: cadenciaJefe = 1250; break; // 1.25s (Nivel 4: El Búnker Central - Extrema)
+                            boolean ataqueTriple = false;
+                            if (numeroNivel == 5 || numeroNivel >= this.totalNiveles) {
+                                cadenciaJefe = 2000;
+                                ataqueTriple = true;
+                            } else {
+                                switch (numeroNivel) {
+                                    case 1: cadenciaJefe = 2000; break;
+                                    case 2: cadenciaJefe = 1700; break;
+                                    case 3: cadenciaJefe = 1550; break;
+                                    default: cadenciaJefe = 1250; break;
+                                }
                             }
-                            this.enemigo = new Jefe(posicion, 1, cadenciaJefe);
+                            this.enemigo = new Jefe(posicion, velocidadJefe, cadenciaJefe, ataqueTriple);
                             break;
                         case 'S':
                             this.salida = new Salida(posicion);
@@ -395,6 +405,15 @@ public class JuegoEngine {
     }
 
     /**
+     * Indica si el nivel que se está jugando actualmente corresponde al nivel final.
+     *
+     * @return {@code true} si el jugador se encuentra en el nivel final; {@code false} en caso contrario.
+     */
+    public boolean esNivelFinalActual() {
+        return this.numeroNivelActual == getTotalNiveles();
+    }
+
+    /**
      * Obtiene la cantidad total de niveles disponibles para jugar.
      *
      * @return Total de niveles detectados en disco al inicializar el motor.
@@ -405,6 +424,9 @@ public class JuegoEngine {
 
     /**
      * Obtiene el título descriptivo de un nivel específico.
+     *
+     * @param numeroNivel Identificador numérico del nivel.
+     * @return Denominación temática del nivel.
      */
     public String getNombreNivel(int numeroNivel) {
         return this.gestorArchivos.getNombreNivel(numeroNivel);
@@ -421,6 +443,8 @@ public class JuegoEngine {
 
     /**
      * Indica si el selector de niveles se encuentra habilitado (requiere haber superado al menos un nivel).
+     *
+     * @return {@code true} si se desbloqueó el acceso al selector; {@code false} en caso contrario.
      */
     public boolean isSelectorDesbloqueado() {
         return selectorDesbloqueado;
@@ -428,6 +452,8 @@ public class JuegoEngine {
 
     /**
      * Retorna el nivel más alto desbloqueado hasta el momento por el jugador.
+     *
+     * @return Número del nivel máximo habilitado.
      */
     public int getNivelMaximoDesbloqueado() {
         return nivelMaximoDesbloqueado;
