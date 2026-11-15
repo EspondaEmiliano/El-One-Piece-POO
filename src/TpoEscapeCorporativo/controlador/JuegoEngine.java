@@ -231,12 +231,12 @@ public class JuegoEngine {
                         if (golpeAbsorbido) {
                             System.out.println("[ESCUDO] ¡Pala absorbida por el Aguinaldo! El empleado continúa sin perder corazones.");
                         } else if (this.jugador.estaVivo()) {
-                            // Aún le quedan corazones: vuelve a la casilla inicial y limpia palas en el aire
+                            // Aún le quedan corazones: reubica al empleado y al jefe en sus posiciones iniciales
                             this.jugador.volverAPosicionInicial();
-                            this.proyectiles.clear();
                             if (this.enemigo != null) {
-                                this.enemigo.registrarAtaque();
+                                this.enemigo.volverAPosicionInicial();
                             }
+                            this.proyectiles.clear();
                             throw new ImpactoProyectilException(
                                     "El jefe devolvió al empleado al inicio. Corazones restantes: " + this.jugador.getSalud()
                             );

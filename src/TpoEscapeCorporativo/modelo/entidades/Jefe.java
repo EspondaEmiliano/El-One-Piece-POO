@@ -30,6 +30,7 @@ public class Jefe extends EntidadMovil {
     private int intervalAtaque;
     private long ultimoAtaque;
     private boolean ataqueTriple;
+    private final Posicion posicionInicial;
     private final List<Proyectil> proyectilesGenerados;
 
     /**
@@ -55,6 +56,12 @@ public class Jefe extends EntidadMovil {
         super(posicion, velocidad);
         this.intervalAtaque = intervalAtaque;
         this.ataqueTriple = ataqueTriple;
+        this.posicionInicial = new Posicion(
+                posicion.getX1(),
+                posicion.getY1(),
+                posicion.getX2(),
+                posicion.getY2()
+        );
         this.proyectilesGenerados = new ArrayList<>();
         this.ultimoAtaque = System.currentTimeMillis();
     }
@@ -119,6 +126,20 @@ public class Jefe extends EntidadMovil {
             // Si ya está alineado con el empleado, se detiene para disparar
             direccionActual = Direccion.NINGUNA;
         }
+    }
+
+    /**
+     * Restablece al jefe a su posición original de patrulla en el mapa,
+     * detiene su desplazamiento y reinicia el intervalo de ataque.
+     */
+    public void volverAPosicionInicial() {
+        this.posicion.setX1(this.posicionInicial.getX1());
+        this.posicion.setY1(this.posicionInicial.getY1());
+        this.posicion.setX2(this.posicionInicial.getX2());
+        this.posicion.setY2(this.posicionInicial.getY2());
+        this.direccionActual = Direccion.NINGUNA;
+        this.ultimoAtaque = System.currentTimeMillis();
+        limpiarProyectilGenerado();
     }
 
     /**
