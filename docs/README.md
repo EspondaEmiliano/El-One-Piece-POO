@@ -44,8 +44,8 @@ Guiar al **Empleado** desplazándose en cuatro direcciones cardinales (`WASD` o 
 #### Condiciones de Derrota
 - **Agotamiento de corazones (`EstadoJuego.DERROTA_VIDA`):** El empleado cuenta con **3 corazones** (`SALUD_DEFAULT = 3`) para toda la partida:
   - Si un proyectil impacta al empleado mientras tiene un **Escudo Protector (`Aguinaldo`)** activo, el escudo absorbe el golpe y se rompe (`romper()`), sin perder corazones ni retroceder.
-  - Si un proyectil impacta al empleado **sin escudo**, pierde **1 corazón** y se dispara `ImpactoProyectilException`. Si aún le quedan corazones (`2` o `1`), tanto el jugador como el Jefe vuelven inmediatamente a sus posiciones iniciales del nivel (`volverAPosicionInicial()`), se limpian los buffos temporales activos del empleado y **se regeneran en el mapa únicamente los buffos de `Cafe` y `Aguinaldo`** ya recolectados (`regenerarSiCorresponde()`), manteniendo los `Corazon` consumidos sin reaparecer y el cronómetro corriendo. Al perder el **3er corazón** (`salud == 0`), la partida termina en *Game Over*.
-- **Tiempo agotado (`EstadoJuego.DERROTA_TIEMPO`):** Finalizar los 60 segundos de la jornada laboral sin haber alcanzado la salida.
+  - Si un proyectil impacta al empleado **sin escudo**, pierde **1 corazón** y se dispara `ImpactoProyectilException`. Si aún le quedan corazones (`2` o `1`), tanto el jugador como el Jefe vuelven inmediatamente a sus posiciones iniciales del nivel (`volverAPosicionInicial()`), se limpian los buffos temporales activos del empleado y **se regeneran en el mapa únicamente los buffos de `Cafe` y `Aguinaldo`** ya recolectados (`regenerarSiCorresponde()`), manteniendo los `Corazon` consumidos sin reaparecer y el cronómetro corriendo. Al perder el **3er corazón** (`salud == 0`), la partida termina en *Game Over* y al presionar `R` (`reintentarTrasDerrota()`) el jugador reinicia desde el **Nivel 1** con `3` corazones y `0` puntos (manteniendo desbloqueados los niveles del selector).
+- **Tiempo agotado (`EstadoJuego.DERROTA_TIEMPO`):** Finalizar los 60 segundos de la jornada laboral sin haber alcanzado la salida (al presionar `R` permite reintentar el nivel actual).
 
 ---
 
@@ -363,6 +363,7 @@ classDiagram
         +getTotalNiveles() int
         +pasarSiguienteNivel() void
         +reiniciarPartidaCompleta() void
+        +reintentarTrasDerrota() void
         +guardarPuntaje(String aliasJugador) boolean
     }
     class GestorArchivos {

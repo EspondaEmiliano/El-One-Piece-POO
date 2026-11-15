@@ -408,9 +408,12 @@ public class PanelJuego extends JPanel {
                     g.setColor(Color.CYAN);
                     dibujarTextoCentrado(g, "[ENTER] - CONTINUAR / [M] - VOLVER AL MENU", ALTO / 2 + 75);
                 }
+            } else if (estado == EstadoJuego.DERROTA_VIDA) {
+                g.setColor(Color.YELLOW);
+                dibujarTextoCentrado(g, "[R] - REINICIAR (NIVEL 1) / [M] - VOLVER AL MENU", ALTO / 2 + 60);
             } else {
                 g.setColor(Color.YELLOW);
-                dibujarTextoCentrado(g, "[R] - REINTENTAR / [M] - VOLVER AL MENU", ALTO / 2 + 60);
+                dibujarTextoCentrado(g, "[R] - REINTENTAR NIVEL / [M] - VOLVER AL MENU", ALTO / 2 + 60);
             }
         }
     }
@@ -489,10 +492,13 @@ public class PanelJuego extends JPanel {
                         return;
                     }
 
-                    // R permite reintentar: si perdió los 3 corazones reinicia la partida o el nivel con sus corazones base.
+                    // R permite reintentar: si perdió los 3 corazones reinicia desde el Nivel 1; si fue por tiempo, reintenta el nivel actual.
                     if (codigoTecla == KeyEvent.VK_R) {
+                        if (motor.getEstadoActual() == EstadoJuego.DERROTA_VIDA) {
+                            aliasJugadorActual = null;
+                        }
                         puntajeRegistrado = false;
-                        motor.reiniciarNivel(motor.getNumeroNivelActual());
+                        motor.reintentarTrasDerrota();
                         teclasPresionadas.clear();
                         iniciarJuego();
                         return;

@@ -24,7 +24,7 @@ public enum EstadoJuego {
     /**
      * El empleado perdió sus 3 corazones debido al impacto de proyectiles del jefe.
      */
-    DERROTA_VIDA("Game Over: Perdiste tus 3 corazones ante los ataques del jefe."),
+    DERROTA_VIDA("Game Over: Perdiste tus 3 corazones. Reinicias desde el Nivel 1."),
 
     /**
      * El tiempo reglamentario de la jornada laboral expiró antes de alcanzar la salida.

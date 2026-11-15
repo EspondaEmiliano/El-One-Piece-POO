@@ -508,6 +508,20 @@ public class JuegoEngine {
         reiniciarNivel(1);
     }
 
+    /**
+     * Gestiona el reintento tras finalizar una partida:
+     * si el empleado perdió sus 3 corazones ({@link EstadoJuego#DERROTA_VIDA}),
+     * reinicia la partida completa desde el Nivel 1 conservando el progreso del selector;
+     * en caso contrario (p. ej. {@link EstadoJuego#DERROTA_TIEMPO}), reintenta el nivel actual.
+     */
+    public void reintentarTrasDerrota() {
+        if (this.estadoActual == EstadoJuego.DERROTA_VIDA) {
+            reiniciarPartidaCompleta();
+        } else {
+            reiniciarNivel(this.numeroNivelActual);
+        }
+    }
+
     // --- Métodos de consulta y Getters ---
 
     public EstadoJuego getEstadoActual() { return estadoActual; }
