@@ -7,6 +7,12 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **Profesor:** Pablo Hernandez
 * **Año / Cuatrimestre:** 2026 - 2° Cuatrimestre
 
+## Trabajo Práctico Obligatorio (TPO)
+* **Proyecto:** *Escape Corporativo: La Fuga del Empleado* — Videojuego 2D de acción y estrategia desarrollado en Java Swing/AWT bajo arquitectura MVC, con 5 niveles incrementales, ataque triple en el Nivel Final, sistema de 3 corazones, escudo protector, regeneración selectiva de potenciadores (`Cafe` y `Aguinaldo`), ranking Top 10 persistente y audio multihilo.
+* **Punto de entrada:** [`src/TpoEscapeCorporativo/Main.java`](src/TpoEscapeCorporativo/Main.java)
+* **Documentación técnica y UML:** [`docs/README.md`](docs/README.md)
+* **Memoria técnica final (PDF - APA 7):** [`docs/documentacion_juego.pdf`](docs/documentacion_juego.pdf)
+
 ---
 
 ## Integrantes
@@ -69,3 +75,4 @@ Repositorio del equipo **"El One Piece"** correspondiente a las prácticas, ejer
 * **26-10-26** - Implementación del sistema de potenciadores (interfaz Buffo, Cafe, Aguinaldo y ZonaBuffo), colisiones del empleado con muros, calibración de patrullaje exterior y disparo del Jefe, diseño y carga dinámica de mapas desde archivo (nivel_1.txt), controles por teclado (WASD/flechas), renderizado completo de mapa y HUD en PanelJuego, reestructuración modular de la vista con PanelPrincipal (CardLayout) y PanelInicio, e integración del sistema de combate y colisiones de proyectiles con muros y jugador.
 * **02-11-26** - Implementación de pantalla Top 10 (PanelRanking) con persistencia y tabla arcade retro, progresión multinivel completa con matriz para nivel 2 (nivel_2.txt), controles interactivos de transición de victoria y derrota (ENTER/R/M), optimización balística en proyectiles aéreos del Jefe, e integración del sistema de audio concurrente con hilos independientes (GestorAudio), música en bucle continuo y control dinámico de volumen con slider arcade.
 * **09-11-26** - Implementación del sistema de 3 corazones de vida con retorno a la posición inicial tras impactos y nuevo ítem consumible Corazon ('V' en mapas), rediseño de Aguinaldo como escudo protector activo de 1 impacto con aura visual en el personaje, rediseño de los 4 niveles con dificultad y cadencia incrementales (nivel_1.txt a nivel_4.txt), selector modal arcade de niveles con desbloqueo progresivo en PanelInicio, y actualización integral de la documentación técnica y diagramas UML.
+* **15-11-26** - Ampliación y balanceo integral a 5 niveles (`nivel_1.txt` a `nivel_5.txt`) con ataque triple paralelo del Jefe en el Nivel Final, reinicio de posición del Jefe y limpieza de buffos temporales al perder un corazón, preservación inteligente de `Corazon` con vida llena y regeneración selectiva de `Cafe` y `Aguinaldo` al volver al inicio, refactorización de visibilidad de paquete en vista, sprite dedicado 32x32 para `Corazon`, y actualización de los diagramas UML, documentación técnica (`docs/README.md`) y memoria en LaTeX/PDF (`docs/documentacion_juego.pdf`) en formato APA 7 vertical con encabezado institucional.
