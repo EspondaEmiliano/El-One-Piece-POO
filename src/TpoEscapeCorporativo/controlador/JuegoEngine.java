@@ -206,8 +206,9 @@ public class JuegoEngine {
      *
      * - Si el empleado tiene escudo (Aguinaldo), absorbe el impacto sin perder corazón ni retroceder.
      * - Si no tiene escudo, pierde 1 corazón:
-     *   - Si aún le quedan corazones (> 0), el empleado y el jefe vuelven a sus posiciones iniciales
-     *     y se limpian las palas en vuelo, manteniendo el reloj corriendo y los buffos del mapa.
+     *   - Si aún le quedan corazones (> 0), el empleado y el jefe vuelven a sus posiciones iniciales,
+     *     se limpian las palas en vuelo y se regeneran en el mapa los buffos de Café y Aguinaldo
+     *     (los Corazones consumidos no reaparecen), manteniendo el reloj corriendo.
      *   - Si pierde su 3.er corazón (0 corazones), la partida termina en {@link EstadoJuego#DERROTA_VIDA}.
      */
     private void actualizarProyectiles() {
@@ -231,12 +232,13 @@ public class JuegoEngine {
                         if (golpeAbsorbido) {
                             System.out.println("[ESCUDO] ¡Pala absorbida por el Aguinaldo! El empleado continúa sin perder corazones.");
                         } else if (this.jugador.estaVivo()) {
-                            // Aún le quedan corazones: reubica al empleado y al jefe en sus posiciones iniciales
+                            // Aún le quedan corazones: reubica al empleado y al jefe y regenera Café y Aguinaldo
                             this.jugador.volverAPosicionInicial();
                             if (this.enemigo != null) {
                                 this.enemigo.volverAPosicionInicial();
                             }
                             this.proyectiles.clear();
+                            regenerarBuffosMapa();
                             throw new ImpactoProyectilException(
                                     "El jefe devolvió al empleado al inicio. Corazones restantes: " + this.jugador.getSalud()
                             );
@@ -263,6 +265,16 @@ public class JuegoEngine {
             if (!proyectilActual.getEstaActivo()) {
                 iteradorProyectiles.remove();
             }
+        }
+    }
+
+    /**
+     * Regenera en el mapa únicamente los potenciadores de Café y Aguinaldo ya recolectados
+     * cuando el empleado vuelve al inicio tras perder un corazón. Los corazones no reaparecen.
+     */
+    private void regenerarBuffosMapa() {
+        for (ZonaBuffo zona : this.zonaBuffos) {
+            zona.regenerarSiCorresponde();
         }
     }
 

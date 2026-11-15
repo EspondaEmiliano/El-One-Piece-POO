@@ -11,7 +11,7 @@ import TpoEscapeCorporativo.modelo.entidades.EntidadEstatica;
  */
 public class ZonaBuffo extends EntidadEstatica implements IColisionable {
 
-    private final Buffo buffo;
+    private Buffo buffo;
     private boolean recolectado;
 
     /**
@@ -56,6 +56,17 @@ public class ZonaBuffo extends EntidadEstatica implements IColisionable {
     public Buffo consumirBuffo() {
         this.recolectado = true;
         return this.buffo;
+    }
+
+    /**
+     * Regenera el ítem en el mapa si ya había sido recolectado y su potenciador
+     * admite reaparición (Café o Aguinaldo). Los corazones permanecen consumidos.
+     */
+    public void regenerarSiCorresponde() {
+        if (this.recolectado && this.buffo.esRegenerable()) {
+            this.buffo = this.buffo.crearCopia();
+            this.recolectado = false;
+        }
     }
 
     // --- Getters ---

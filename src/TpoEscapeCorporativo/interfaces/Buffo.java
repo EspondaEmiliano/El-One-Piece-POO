@@ -42,4 +42,20 @@ public interface Buffo {
      * @return Nombre del buffo (ej. "Cafe", "Aguinaldo").
      */
     String getNombre();
+
+    /**
+     * Indica si el potenciador debe reaparecer en el mapa cuando el empleado
+     * pierde un corazón y regresa a la posición inicial del nivel.
+     *
+     * @return {@code true} si el ítem se regenera al reaparecer (ej. Café, Aguinaldo);
+     *         {@code false} si es de recolección única por nivel (ej. Corazón).
+     */
+    boolean esRegenerable();
+
+    /**
+     * Crea una nueva instancia limpia del potenciador conservando su configuración inicial.
+     *
+     * @return Nueva instancia lista para ser colocada en el mapa sin estado residual.
+     */
+    Buffo crearCopia();
 }

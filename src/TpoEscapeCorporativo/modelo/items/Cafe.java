@@ -12,6 +12,7 @@ public class Cafe implements Buffo {
     private static final int DURACION_DEFAULT_MS = 5000;        // 5 segundos de duración
     private static final int INCREMENTO_VELOCIDAD_DEFAULT = 3;  // +3 a la velocidad
 
+    private final long duracionInicialMs;
     private final int incrementoVelocidad;
     private long tiempoRestanteMs;
     private boolean aplicado;
@@ -30,7 +31,8 @@ public class Cafe implements Buffo {
      * @param incrementoVelocidad Unidades de velocidad extra que recibe el empleado.
      */
     public Cafe(long duracionMs, int incrementoVelocidad) {
-        this.tiempoRestanteMs = Math.max(0, duracionMs);
+        this.duracionInicialMs = Math.max(0, duracionMs);
+        this.tiempoRestanteMs = this.duracionInicialMs;
         this.incrementoVelocidad = incrementoVelocidad;
         this.aplicado = false;
     }
@@ -67,6 +69,16 @@ public class Cafe implements Buffo {
     @Override
     public String getNombre() {
         return "Cafe";
+    }
+
+    @Override
+    public boolean esRegenerable() {
+        return true;
+    }
+
+    @Override
+    public Buffo crearCopia() {
+        return new Cafe(this.duracionInicialMs, this.incrementoVelocidad);
     }
 
     public long getTiempoRestanteMs() {

@@ -79,6 +79,16 @@ public class Aguinaldo implements Buffo {
         return "Escudo (Aguinaldo)";
     }
 
+    @Override
+    public boolean esRegenerable() {
+        return true;
+    }
+
+    @Override
+    public Buffo crearCopia() {
+        return new Aguinaldo(this.puntosBonus);
+    }
+
     public int getPuntosBonus() {
         return puntosBonus;
     }

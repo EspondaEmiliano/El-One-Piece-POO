@@ -90,16 +90,29 @@ public class Empleado extends EntidadMovil {
     }
 
     /**
-     * Devuelve al empleado a la casilla de inicio del nivel y detiene su desplazamiento.
+     * Devuelve al empleado a la casilla de inicio del nivel, detiene su desplazamiento
+     * y revierte los buffos temporales activos para reaparecer en estado limpio.
      * Se invoca cuando el jefe lo impacta sin escudo pero aún conserva corazones.
      */
     public void volverAPosicionInicial() {
+        limpiarBuffosActivos();
         this.posicion.setX1(this.posicionInicial.getX1());
         this.posicion.setY1(this.posicionInicial.getY1());
         this.posicion.setX2(this.posicionInicial.getX2());
         this.posicion.setY2(this.posicionInicial.getY2());
         this.direccionActual = Direccion.NINGUNA;
         this.ultimaDireccion = Direccion.ABAJO;
+    }
+
+    /**
+     * Revierte los efectos y limpia todos los buffos activos del empleado al volver al inicio.
+     */
+    private void limpiarBuffosActivos() {
+        for (Buffo buffo : this.buffosActivos) {
+            buffo.remover(this);
+        }
+        this.buffosActivos.clear();
+        this.tieneEscudo = false;
     }
 
     /**

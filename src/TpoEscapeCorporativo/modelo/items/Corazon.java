@@ -65,6 +65,16 @@ public class Corazon implements Buffo {
         return "Corazon (+1 Vida)";
     }
 
+    @Override
+    public boolean esRegenerable() {
+        return false;
+    }
+
+    @Override
+    public Buffo crearCopia() {
+        return new Corazon(this.vidasRecuperadas, this.puntosBonus);
+    }
+
     public int getVidasRecuperadas() {
         return vidasRecuperadas;
     }

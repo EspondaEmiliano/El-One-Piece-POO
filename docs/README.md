@@ -44,7 +44,7 @@ Guiar al **Empleado** desplazándose en cuatro direcciones cardinales (`WASD` o 
 #### Condiciones de Derrota
 - **Agotamiento de corazones (`EstadoJuego.DERROTA_VIDA`):** El empleado cuenta con **3 corazones** (`SALUD_DEFAULT = 3`) para toda la partida:
   - Si un proyectil impacta al empleado mientras tiene un **Escudo Protector (`Aguinaldo`)** activo, el escudo absorbe el golpe y se rompe (`romper()`), sin perder corazones ni retroceder.
-  - Si un proyectil impacta al empleado **sin escudo**, pierde **1 corazón** y se dispara `ImpactoProyectilException`. Si aún le quedan corazones (`2` o `1`), tanto el jugador como el Jefe vuelven inmediatamente a sus posiciones iniciales del nivel (`volverAPosicionInicial()`) mientras el cronómetro sigue corriendo. Al perder el **3er corazón** (`salud == 0`), la partida termina en *Game Over*.
+  - Si un proyectil impacta al empleado **sin escudo**, pierde **1 corazón** y se dispara `ImpactoProyectilException`. Si aún le quedan corazones (`2` o `1`), tanto el jugador como el Jefe vuelven inmediatamente a sus posiciones iniciales del nivel (`volverAPosicionInicial()`), se limpian los buffos temporales activos del empleado y **se regeneran en el mapa únicamente los buffos de `Cafe` y `Aguinaldo`** ya recolectados (`regenerarSiCorresponde()`), manteniendo los `Corazon` consumidos sin reaparecer y el cronómetro corriendo. Al perder el **3er corazón** (`salud == 0`), la partida termina en *Game Over*.
 - **Tiempo agotado (`EstadoJuego.DERROTA_TIEMPO`):** Finalizar los 60 segundos de la jornada laboral sin haber alcanzado la salida.
 
 ---
@@ -57,14 +57,14 @@ El diseño y la lógica de juego se articulan sobre tres reglas de negocio centr
    - El Empleado se desplaza en 4 direcciones cardinales (`ARRIBA`, `ABAJO`, `IZQUIERDA`, `DERECHA`) mediante controles de teclado a 60 FPS (`16 ms`).
    - En cada ciclo del *Game Loop*, la posición intentada es evaluada mediante la intersección de sus cajas envolventes (*Axis-Aligned Bounding Boxes* / `IColisionable.verificarColision()`).
    - Los **Muros** (`Muro`) son infranqueables y bloquean el paso del Empleado.
-   - Los **Proyectiles** (`Proyectil`) viajan aéreamente en sentido descendente y, al impactar contra el Empleado, rompen el escudo activo o disparan `ImpactoProyectilException` descontando `1` corazón y devolviendo tanto al empleado como al jefe a sus puntos de partida (`volverAPosicionInicial()`).
+   - Los **Proyectiles** (`Proyectil`) viajan aéreamente en sentido descendente y, al impactar contra el Empleado, rompen el escudo activo o disparan `ImpactoProyectilException` descontando `1` corazón, devolviendo a ambos personajes a sus puntos de partida (`volverAPosicionInicial()`) y regenerando los `Cafe` y `Aguinaldo` del mapa (`regenerarBuffosMapa()`).
 
 2. **Sistema Polimórfico de Buffos (`Buffo`):**
    - Distribuidos por el mapa existen sectores especiales denominados **Zonas de Buffo** (`ZonaBuffo`).
-   - Todos los potenciadores implementan la interfaz `Buffo` (`aplicar`, `remover`, `actualizar`, `estaExpirado`, `getNombre`), respetando rigurosamente el principio *Open/Closed* (OCP):
-     - **Café (`Cafe` — `'C'`):** Incrementa la velocidad del Empleado en `+3` durante `5000 ms` (5 segundos) y otorga `+50 puntos`.
-     - **Aguinaldo (`Aguinaldo` — `'A'`, Escudo Protector):** Otorga un escudo protector activo (`tieneEscudo = true`) renderizado con un halo cian translúcido que absorbe `1` impacto de pala antes de romperse (`romper()`), sumando `+500 puntos` al recolectarse.
-     - **Corazón (`Corazon` — `'V'`, Vida Extra):** Ítem consumible instantáneo que recupera `+1 corazón` de vida (hasta el tope máximo de `3`) y suma `+100 puntos`. Si el jugador ya tiene sus `3/3` corazones al pasar por encima, el corazón no se desperdicia y permanece en el suelo.
+   - Todos los potenciadores implementan la interfaz `Buffo` (`aplicar`, `remover`, `actualizar`, `estaExpirado`, `getNombre`, `esRegenerable`, `crearCopia`), respetando rigurosamente el principio *Open/Closed* (OCP):
+     - **Café (`Cafe` — `'C'`):** Incrementa la velocidad del Empleado en `+3` durante `5000 ms` (5 segundos) y otorga `+50 puntos`. Es regenerable (`esRegenerable() == true`) cuando el jugador vuelve al inicio tras perder un corazón.
+     - **Aguinaldo (`Aguinaldo` — `'A'`, Escudo Protector):** Otorga un escudo protector activo (`tieneEscudo = true`) renderizado con un halo cian translúcido que absorbe `1` impacto de pala antes de romperse (`romper()`), sumando `+500 puntos` al recolectarse. Es regenerable (`esRegenerable() == true`) al reaparecer en el inicio del nivel.
+     - **Corazón (`Corazon` — `'V'`, Vida Extra):** Ítem consumible instantáneo que recupera `+1 corazón` de vida (hasta el tope máximo de `3`) y suma `+100 puntos`. Si el jugador ya tiene sus `3/3` corazones al pasar por encima, el corazón no se desperdicia y permanece en el suelo. Una vez consumido, **no** se regenera (`esRegenerable() == false`).
 
 3. **Progresión Incremental de 5 Niveles, Selector Arcade y Persistencia:**
    - El juego cuenta con **5 mapas** (`assets/mapas/nivel_1.txt` a `nivel_5.txt`) con dificultad y modalidad de disparo del Jefe incrementales:
@@ -82,12 +82,12 @@ El diseño y la lógica de juego se articulan sobre tres reglas de negocio centr
 
 | Entidad | Rol | Comportamiento en la Simulación |
 |---|---|---|
-| **`Empleado`** | Personaje Principal (Avatar) | Desplazado por el jugador vía teclado en cuatro direcciones. Administra sus `3 corazones`, su escudo activo (`tieneEscudo`), su retorno al inicio al recibir daño (`volverAPosicionInicial()`) y su lista de `Buffo` activos. |
+| **`Empleado`** | Personaje Principal (Avatar) | Desplazado por el jugador vía teclado en cuatro direcciones. Administra sus `3 corazones`, su escudo activo (`tieneEscudo`), su retorno al inicio limpiando buffos temporales activos (`volverAPosicionInicial()`) y su lista de `Buffo` activos. |
 | **`Jefe`** | Antagonista / IA | Persigue horizontalmente al Empleado a velocidad `1` en el corredor superior, se reubica en su posición inicial al perder un corazón el jugador (`volverAPosicionInicial()`) y arroja proyectiles (simples en niveles 1–4 con cadencia `2000 ms` a `1250 ms`, y **ataque triple** en el Nivel 5 a `2000 ms`). |
 | **`Proyectil`** | Obstáculo Móvil (Pala / Tarea) | Objeto balístico lanzado por el Jefe con dirección descendente (`velocidad = 3`). Al impactar al Empleado, rompe su escudo o descuenta `1 corazón` devolviendo a ambos personajes al inicio. |
 | **`Muro`** | Obstáculo Rígido Estático | Estructura rígida e infranqueable (`'#'`) que bloquea el desplazamiento del Empleado. |
 | **`Salida`** | Punto de Control / Meta | Marca la coordenada de escape (`'S'`) y dispara la condición de victoria al ser alcanzada. |
-| **`ZonaBuffo`** | Sector de Bonificación | Casilla interactiva que aloja polimórficamente un `Cafe` (`'C'`), un `Aguinaldo` (`'A'`) o un `Corazon` (`'V'`). |
+| **`ZonaBuffo`** | Sector de Bonificación | Casilla interactiva que aloja polimórficamente un `Cafe` (`'C'`), un `Aguinaldo` (`'A'`) o un `Corazon` (`'V'`) y permite regenerar selectivamente los ítems regenerables (`regenerarSiCorresponde()`). |
 
 ---
 
@@ -125,7 +125,7 @@ src/TpoEscapeCorporativo/
 │       ├── Aguinaldo.java                 # Buffo de escudo protector que absorbe 1 impacto (+500 pts)
 │       ├── Cafe.java                      # Buffo temporal de velocidad (+3 vel por 5s, +50 pts)
 │       ├── Corazon.java                   # Buffo consumible que restaura +1 corazón de vida (+100 pts)
-│       └── ZonaBuffo.java                 # Entidad estática contenedora de un Buffo en el mapa
+│       └── ZonaBuffo.java                 # Entidad estática contenedora de un Buffo con regeneración selectiva
 ├── servicios/
 │   ├── GestorArchivos.java                # Serialización de ranking (ranking.dat) y lectura de niveles (.txt)
 │   └── GestorAudio.java                   # Servicio Singleton/Runnable multihilo para música en bucle y SFX
@@ -164,6 +164,8 @@ classDiagram
         +actualizar(long deltaTiempo) void
         +estaExpirado() boolean
         +getNombre() String
+        +esRegenerable() boolean
+        +crearCopia() Buffo
     }
 
     %% Jerarquía de Entidades Base
@@ -196,6 +198,7 @@ classDiagram
         -Direccion ultimaDireccion
         +mover(List~Muro~ muros) void
         +volverAPosicionInicial() void
+        -limpiarBuffosActivos() void
         +recibirImpacto() boolean
         +recibirDanio(int danio) void
         +agregarBuffo(Buffo buffo) void
@@ -246,12 +249,14 @@ classDiagram
         -boolean recolectado
         +verificarColision(Posicion otraPosicion) Boolean
         +consumirBuffo() Buffo
+        +regenerarSiCorresponde() void
         +isRecolectado() boolean
         +getBuffo() Buffo
     }
 
     %% Implementaciones de Buffos
     class Cafe {
+        -long duracionInicialMs
         -int incrementoVelocidad
         -long tiempoRestanteMs
         -boolean aplicado
@@ -260,6 +265,8 @@ classDiagram
         +actualizar(long deltaTiempo) void
         +estaExpirado() boolean
         +getNombre() String
+        +esRegenerable() boolean
+        +crearCopia() Buffo
         +getTiempoRestanteMs() long
         +getIncrementoVelocidad() int
     }
@@ -272,6 +279,8 @@ classDiagram
         +estaExpirado() boolean
         +romper() void
         +getNombre() String
+        +esRegenerable() boolean
+        +crearCopia() Buffo
         +getPuntosBonus() int
     }
     class Corazon {
@@ -283,6 +292,8 @@ classDiagram
         +actualizar(long deltaTiempo) void
         +estaExpirado() boolean
         +getNombre() String
+        +esRegenerable() boolean
+        +crearCopia() Buffo
         +getVidasRecuperadas() int
         +getPuntosBonus() int
     }
@@ -343,6 +354,7 @@ classDiagram
         +reiniciarNivel(int numeroNivel) void
         +iniciarPartidaEnNivel(int numeroNivel) void
         +actualizar() void
+        -regenerarBuffosMapa() void
         +procesarEntrada(Direccion nuevaDireccion) void
         +alternarPausa() void
         +cargarNivel(int numeroNivel) void
@@ -506,6 +518,7 @@ sequenceDiagram
     participant PJ as PanelJuego
     participant JE as JuegoEngine
     participant E as Empleado
+    participant ZB as ZonaBuffo
     participant J as Jefe
     participant P as Proyectil
 
@@ -545,7 +558,10 @@ sequenceDiagram
                 else Sin Escudo (pierde 1 corazón)
                     alt Aún le quedan corazones (estaVivo())
                         JE->>E: volverAPosicionInicial()
+                        Note over E: Limpia buffos temporales activos
                         JE->>J: volverAPosicionInicial()
+                        JE->>ZB: regenerarSiCorresponde()
+                        Note over ZB: Regenera Café y Aguinaldo (no Corazón)
                         Note over JE: Lanza y captura ImpactoProyectilException y limpia proyectiles
                     else Perdió los 3 corazones (salud == 0)
                         Note over JE: Lanza ImpactoProyectilException (EstadoJuego.DERROTA_VIDA)
@@ -572,7 +588,7 @@ El sistema modela fielmente las exigencias académicas de la materia mediante la
 |---|---|---|
 | **Abstracción** | Jerarquías de `EntidadMovil` y `EntidadEstatica` que generalizan el posicionamiento euclidiano y las dimensiones en pantalla. | Evita código duplicado y proporciona una base extensible para cualquier nuevo elemento gráfico interactivo. |
 | **Herencia** | `Empleado`, `Jefe` y `Proyectil` heredan atributos cinemáticos de `EntidadMovil`; `Muro`, `Salida` y `ZonaBuffo` derivan de `EntidadEstatica`. | Modela coherentemente las relaciones de especialización (*es-un*) en el dominio. |
-| **Polimorfismo** | Uso unificado de la interfaz `Buffo` (`Cafe`, `Aguinaldo` y `Corazon`) e iteración polimórfica sobre colecciones `List<Buffo>` e `IColisionable`. | Permite incorporar nuevos potenciadores (como `Corazon`) sin modificar la estructura del motor central (**Principio Abierto/Cerrado - OCP**). |
+| **Polimorfismo** | Uso unificado de la interfaz `Buffo` (`Cafe`, `Aguinaldo` y `Corazon`) e iteración polimórfica sobre colecciones `List<Buffo>` e `IColisionable`, incluyendo la regla de regeneración (`esRegenerable()` / `crearCopia()`). | Permite incorporar nuevos potenciadores y políticas de reaparición sin acoplar el motor central a subclases concretas (**Principio Abierto/Cerrado - OCP**). |
 | **Encapsulamiento y Visibilidad** | Atributos `private`/`protected`, métodos de coordinación interna `default` (paquete `vista`), getters/setters validados y vistas inmodificables (`Collections.unmodifiableList`). | Protege la integridad del estado interno y delimita la API pública frente a la coordinación interna de paquete. |
 | **Interfaces** | Contratos funcionales `IColisionable` y `Buffo`, además de `Comparable<Puntaje>`, `Comparator<Puntaje>`, `Serializable` y `Runnable`. | Fomenta bajo acoplamiento y alta cohesión (**GRASP / SOLID**). |
 | **Manejo de Excepciones** | Distinción formal entre excepciones *checked* (`NivelNoEncontradoException` para I/O y carga de niveles) y *unchecked* (`ImpactoProyectilException` para colisiones balísticas). | Obliga a un tratamiento controlado y robusto de fallos de persistencia en disco, separando errores de infraestructura de la física en tiempo real. |
@@ -598,7 +614,7 @@ El sistema modela fielmente las exigencias académicas de la materia mediante la
 |---|---|---|
 | **Primera Entrega** | Documento de Diseño de Juego (GDD) y Diagrama de Clases UML formal. | ✅ **Completado** (05/10/2026) |
 | **Segunda Entrega** | Implementación del modelo de dominio en Java: jerarquías, enums, colecciones y manejo de excepciones. | ✅ **Completado** (26/10/2026) |
-| **Entrega Final** | Aplicación completa con interfaz gráfica Swing integrada, 5 niveles incrementales con ataque triple en el Nivel Final y selector desbloqueable, sistema de 3 corazones y escudo, hilos de audio, persistencia de datos y defensa oral. | ✅ **Completado** (16/11/2026) |
+| **Entrega Final** | Aplicación completa con interfaz gráfica Swing integrada, 5 niveles incrementales con ataque triple en el Nivel Final y selector desbloqueable, sistema de 3 corazones, escudo y regeneración selectiva de buffos, hilos de audio, persistencia de datos y defensa oral. | ✅ **Completado** (16/11/2026) |
 
 ---
 
