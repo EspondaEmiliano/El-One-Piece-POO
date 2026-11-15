@@ -140,6 +140,11 @@ public class JuegoEngine {
         // 3. Evaluar recolección de potenciadores en el laberinto
         for (ZonaBuffo zona : this.zonaBuffos) {
             if (!zona.isRecolectado() && zona.verificarColision(this.jugador.getPosicion())) {
+                // Si el potenciador es un corazón y el empleado ya cuenta con su salud máxima, no se consume
+                if (zona.getBuffo() instanceof Corazon && this.jugador.getSalud() >= Empleado.SALUD_DEFAULT) {
+                    continue;
+                }
+
                 Buffo buffoConsumido = zona.consumirBuffo();
                 this.jugador.agregarBuffo(buffoConsumido);
 
