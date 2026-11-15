@@ -12,6 +12,7 @@ import TpoEscapeCorporativo.modelo.entidades.Salida;
 import TpoEscapeCorporativo.modelo.entidades.Proyectil;
 import TpoEscapeCorporativo.modelo.items.Aguinaldo;
 import TpoEscapeCorporativo.modelo.items.Cafe;
+import TpoEscapeCorporativo.modelo.items.Corazon;
 import TpoEscapeCorporativo.modelo.items.ZonaBuffo;
 import TpoEscapeCorporativo.servicios.GestorAudio;
 
@@ -24,8 +25,8 @@ import java.util.LinkedHashSet;
 
 /**
  * Lienzo principal de renderizado del juego. Dibuja el laberinto, los proyectiles,
- * las zonas de potenciadores, las entidades vivas, la interfaz superior (HUD)
- * y gestiona las entradas de teclado del usuario.
+ * las zonas de potenciadores, las entidades vivas, la interfaz superior (HUD) con los 3 corazones
+ * y el estado del escudo, y gestiona las entradas de teclado del usuario.
  */
 public class PanelJuego extends JPanel {
 
@@ -39,7 +40,7 @@ public class PanelJuego extends JPanel {
     private Timer timer;
     private boolean puntajeRegistrado = false;
 
-    // Almacena el alias durante la partida para no volver a solicitarlo entre niveles
+    // Almacena el alias durante la partida para no volver a solicitarlo en los siguientes niveles
     private String aliasJugadorActual = null;
 
     // Almacena las teclas de movimiento que actualmente están presionadas conservando el orden de pulsación
@@ -79,7 +80,7 @@ public class PanelJuego extends JPanel {
                 timer.stop();
                 GestorAudio.getInstance().detenerMusica();
 
-                // Registra automáticamente el récord al completar el último nivel
+                // Registra automáticamente el récord al completar el último nivel de la partida
                 if (motor.getEstadoActual() == EstadoJuego.VICTORIA
                         && !motor.haySiguienteNivel()
                         && !puntajeRegistrado) {
@@ -91,8 +92,9 @@ public class PanelJuego extends JPanel {
     }
 
     /**
-     * Solicita al empleado su alias mediante un cuadro de diálogo Swing
-     * al completar la partida y persiste el récord consolidado en el Top 10.
+     * Solicita al empleado su nombre mediante un cuadro de diálogo Swing
+     * al completar la partida (o al retirarse con puntos acumulados) y persiste
+     * el récord consolidado en el Top 10.
      */
     private void solicitarYGuardarPuntajeJugador() {
         SwingUtilities.invokeLater(() -> {
@@ -118,7 +120,10 @@ public class PanelJuego extends JPanel {
         });
     }
 
-    public void iniciarJuego() {
+    /**
+     * Inicia el bucle de juego y la música de fondo.
+     */
+    void iniciarJuego() {
         this.requestFocusInWindow();
         if (!timer.isRunning()) {
             timer.start();
@@ -126,7 +131,10 @@ public class PanelJuego extends JPanel {
         }
     }
 
-    public void pausarJuego() {
+    /**
+     * Pausa el bucle de juego y la música de fondo.
+     */
+    void pausarJuego() {
         if (timer.isRunning()) {
             timer.stop();
             GestorAudio.getInstance().pausarMusica();
@@ -137,7 +145,7 @@ public class PanelJuego extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // Escalado proporcional al tamaño actual del panel
+        // Escalado proporcional basado en el tamaño actual de la ventana
         double escalaX = (double) getWidth() / ANCHO;
         double escalaY = (double) getHeight() / ALTO;
 
@@ -177,6 +185,8 @@ public class PanelJuego extends JPanel {
                     sprite = GestorRecursos.getSpriteCafe();
                 } else if (zona.getBuffo() instanceof Aguinaldo) {
                     sprite = GestorRecursos.getSpriteAguinaldo();
+                } else if (zona.getBuffo() instanceof Corazon) {
+                    sprite = GestorRecursos.getSpriteCorazon();
                 }
                 if (sprite != null) {
                     g.drawImage(sprite, x, y, ancho, alto, this);
@@ -186,7 +196,8 @@ public class PanelJuego extends JPanel {
     }
 
     /**
-     * Dibuja las entidades activas del juego: el empleado, el jefe y los proyectiles.
+     * Dibuja las entidades activas del juego: el empleado (con halo de escudo si está activo),
+     * el jefe y los proyectiles.
      */
     private void dibujarEntidades(Graphics g) {
         // Renderizado del empleado y de su escudo protector si se encuentra activo
@@ -234,7 +245,8 @@ public class PanelJuego extends JPanel {
     }
 
     /**
-     * Dibuja la barra superior del HUD con el estado del escudo, tiempo restante, puntaje, velocidad y nivel.
+     * Dibuja la barra superior del HUD con los 3 corazones de vida, el estado del escudo,
+     * el tiempo restante, el puntaje acumulado, la velocidad y el nivel actual.
      */
     private void dibujarHUD(Graphics g) {
         g.setColor(new Color(18, 18, 18));
@@ -246,32 +258,42 @@ public class PanelJuego extends JPanel {
         Empleado jugador = motor.getJugador();
         if (jugador == null) return;
 
-        g.setFont(GestorRecursos.getFuenteArcade(11f));
+        g.setFont(GestorRecursos.getFuenteArcade(10f));
 
-        // Fila 1: Indicador de Escudo, Tiempo Restante y Puntaje Acumulado
-        if (jugador.tieneEscudo()) {
-            g.setColor(new Color(50, 255, 100));
-            g.drawString("ESCUDO: ACTIVO", 15, 23);
-        } else {
-            g.setColor(new Color(130, 130, 130));
-            g.drawString("ESCUDO: INACTIVO", 15, 23);
+        // Fila 1: 3 Corazones (Vidas), Tiempo Restante y Puntaje Acumulado
+        g.setColor(Color.WHITE);
+        g.drawString("VIDAS:", 15, 22);
+
+        Graphics2D g2d = (Graphics2D) g;
+        int corazonesActuales = jugador.getSalud();
+        for (int i = 0; i < Empleado.SALUD_DEFAULT; i++) {
+            dibujarCorazon(g2d, 82 + (i * 22), 9, i < corazonesActuales);
         }
 
         int tiempoRestante = motor.getTiempoRestanteSegundos();
+        g.setFont(GestorRecursos.getFuenteArcade(11f));
         g.setColor(tiempoRestante <= 10 ? Color.RED : Color.CYAN);
         g.drawString("TIEMPO: " + tiempoRestante + "s", 235, 23);
 
         g.setColor(new Color(255, 215, 0));
         g.drawString("PTS: " + motor.getPuntajeAcumulado(), 450, 23);
 
-        // Fila 2: Velocidad de desplazamiento, Buff consumible activo y Nivel actual
+        // Fila 2: Velocidad, Estado del Escudo / Buffos y Nivel actual
+        g.setFont(GestorRecursos.getFuenteArcade(9f));
         g.setColor(Color.WHITE);
         g.drawString("VEL: " + jugador.getVelocidad(), 15, 43);
 
+        if (jugador.tieneEscudo()) {
+            g.setColor(new Color(50, 255, 100));
+            g.drawString("ESCUDO: ACTIVO", 100, 43);
+        } else {
+            g.setColor(new Color(110, 110, 110));
+            g.drawString("ESCUDO: INACTIVO", 100, 43);
+        }
+
         if (!jugador.getBuffosActivos().isEmpty()) {
-            g.setFont(GestorRecursos.getFuenteArcade(9f));
             g.setColor(new Color(255, 215, 0));
-            g.drawString("BUFF: " + jugador.getBuffosActivos().get(0).getNombre(), 215, 43);
+            g.drawString("BUFF: " + jugador.getBuffosActivos().get(0).getNombre(), 280, 43);
         }
 
         g.setFont(GestorRecursos.getFuenteArcade(10f));
@@ -282,6 +304,38 @@ public class PanelJuego extends JPanel {
         } else {
             g.drawString("NIVEL: " + motor.getNumeroNivelActual() + "/" + motor.getTotalNiveles(), 450, 43);
         }
+    }
+
+    /**
+     * Dibuja un corazón vectorial estilo máquina arcade en la coordenada solicitada.
+     *
+     * @param g2d Contexto gráfico 2D.
+     * @param x Coordenada horizontal superior izquierda del corazón.
+     * @param y Coordenada vertical superior izquierda del corazón.
+     * @param activo {@code true} para corazón lleno (rojo); {@code false} para corazón vacío (gris).
+     */
+    private void dibujarCorazon(Graphics2D g2d, int x, int y, boolean activo) {
+        Graphics2D gCorazon = (Graphics2D) g2d.create();
+        gCorazon.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int[] xs = {x + 8, x + 1, x,     x + 2, x + 5, x + 8, x + 11, x + 14, x + 16, x + 15};
+        int[] ys = {y + 14, y + 7, y + 4, y + 1, y + 1, y + 4, y + 1,  y + 1,  y + 4,  y + 7};
+
+        if (activo) {
+            gCorazon.setColor(new Color(235, 35, 60));
+            gCorazon.fillPolygon(xs, ys, xs.length);
+            gCorazon.setColor(new Color(255, 130, 145));
+            gCorazon.fillRect(x + 3, y + 3, 2, 2);
+            gCorazon.setColor(new Color(255, 80, 100));
+            gCorazon.drawPolygon(xs, ys, xs.length);
+        } else {
+            gCorazon.setColor(new Color(45, 45, 45));
+            gCorazon.fillPolygon(xs, ys, xs.length);
+            gCorazon.setColor(new Color(95, 95, 95));
+            gCorazon.drawPolygon(xs, ys, xs.length);
+        }
+
+        gCorazon.dispose();
     }
 
     /**
@@ -303,7 +357,7 @@ public class PanelJuego extends JPanel {
 
             g.setFont(GestorRecursos.getFuenteArcade(9f));
             g.setColor(Color.WHITE);
-            dibujarTextoCentrado(g, "Presiona 'P' para continuar", ALTO / 2 + 15);
+            dibujarTextoCentrado(g, "Presiona 'P' o 'ESC' para continuar", ALTO / 2 + 15);
         } else if (estado.esFinDePartida()) {
             g.setColor(new Color(0, 0, 0, 200));
             g.fillRect(0, 0, ANCHO, ALTO);
@@ -330,7 +384,6 @@ public class PanelJuego extends JPanel {
             g.setColor(new Color(255, 215, 0));
             dibujarTextoCentrado(g, "Puntaje acumulado: " + motor.getPuntajeAcumulado(), ALTO / 2 + 15);
 
-            // Opciones interactivas según el resultado y niveles restantes
             g.setFont(GestorRecursos.getFuenteArcade(9f));
             if (esVictoria) {
                 if (motor.haySiguienteNivel()) {
@@ -399,7 +452,8 @@ public class PanelJuego extends JPanel {
     }
 
     /**
-     * Configura el teclado para mover al empleado con las flechas o con W, A, S, D, y pausar con P o ESC.
+     * Configura el teclado para mover al empleado con flechas o WASD, pausar con P o ESC
+     * y gestionar las transiciones de estado al finalizar el nivel.
      */
     private void configurarControles() {
         this.addKeyListener(new KeyAdapter() {
@@ -408,7 +462,6 @@ public class PanelJuego extends JPanel {
                 int codigoTecla = e.getKeyCode();
 
                 if (motor.getEstadoActual() != null && motor.getEstadoActual().esFinDePartida()) {
-                    // ENTER avanza al siguiente nivel o abre la pantalla de Victoria al completar el último
                     if (codigoTecla == KeyEvent.VK_ENTER && motor.getEstadoActual() == EstadoJuego.VICTORIA) {
                         if (motor.haySiguienteNivel()) {
                             puntajeRegistrado = false;
@@ -417,7 +470,9 @@ public class PanelJuego extends JPanel {
                             iniciarJuego();
                         } else {
                             motor.reiniciarPartidaCompleta();
-                            prepararNuevaPartida();
+                            teclasPresionadas.clear();
+                            aliasJugadorActual = null;
+                            puntajeRegistrado = false;
 
                             if (panelPrincipal != null) {
                                 panelPrincipal.mostrarPanel("VICTORIA");
@@ -426,7 +481,6 @@ public class PanelJuego extends JPanel {
                         return;
                     }
 
-                    // R reinicia el nivel actual
                     if (codigoTecla == KeyEvent.VK_R) {
                         puntajeRegistrado = false;
                         motor.reiniciarNivel(motor.getNumeroNivelActual());
@@ -435,7 +489,6 @@ public class PanelJuego extends JPanel {
                         return;
                     }
 
-                    // M vuelve al menú principal, ofreciendo guardar el récord si superó un nivel
                     if (codigoTecla == KeyEvent.VK_M) {
                         if (motor.getEstadoActual() == EstadoJuego.VICTORIA && !puntajeRegistrado) {
                             puntajeRegistrado = true;
@@ -450,7 +503,9 @@ public class PanelJuego extends JPanel {
                             }
                         }
                         motor.reiniciarPartidaCompleta();
-                        prepararNuevaPartida();
+                        teclasPresionadas.clear();
+                        aliasJugadorActual = null;
+                        puntajeRegistrado = false;
 
                         if (panelPrincipal != null) {
                             panelPrincipal.mostrarPanel("INICIO");

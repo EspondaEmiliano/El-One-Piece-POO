@@ -12,20 +12,24 @@ import java.util.List;
 
 /**
  * Representa al personaje principal controlado por el jugador.
- * Hereda el comportamiento de movimiento de EntidadMovil y administra su estado,
- * protección por escudo (Aguinaldo) y modificadores activos (Buffos).
+ * Hereda el comportamiento de movimiento de EntidadMovil y administra sus corazones (vidas),
+ * su posición inicial de reaparición, protección por escudo (Aguinaldo) y modificadores activos (Buffos).
  */
 public class Empleado extends EntidadMovil {
 
-    public static final int SALUD_DEFAULT = 100;
+    /** Cantidad de corazones (vidas) iniciales para toda la partida. */
+    public static final int SALUD_DEFAULT = 3;
+
     private int salud;
+    private final Posicion posicionInicial;
     private boolean tieneEscudo;
     private final List<Buffo> buffosActivos;
     private Direccion ultimaDireccion = Direccion.ABAJO;
 
     /**
      * Crea un empleado con su posición y velocidad iniciales.
-     * Asigna la salud inicial por defecto (100), sin escudo y prepara la lista de buffos.
+     * Asigna los 3 corazones iniciales por defecto, guarda su coordenada de origen,
+     * inicia sin escudo y prepara la lista de buffos.
      *
      * @param posicion  Posición inicial del jugador.
      * @param velocidad Velocidad de movimiento del jugador.
@@ -33,6 +37,12 @@ public class Empleado extends EntidadMovil {
     public Empleado(Posicion posicion, int velocidad) {
         super(posicion, velocidad);
         this.salud = SALUD_DEFAULT;
+        this.posicionInicial = new Posicion(
+                posicion.getX1(),
+                posicion.getY1(),
+                posicion.getX2(),
+                posicion.getY2()
+        );
         this.tieneEscudo = false;
         this.buffosActivos = new ArrayList<>();
     }
@@ -80,12 +90,25 @@ public class Empleado extends EntidadMovil {
     }
 
     /**
+     * Devuelve al empleado a la casilla de inicio del nivel y detiene su desplazamiento.
+     * Se invoca cuando el jefe lo impacta sin escudo pero aún conserva corazones.
+     */
+    public void volverAPosicionInicial() {
+        this.posicion.setX1(this.posicionInicial.getX1());
+        this.posicion.setY1(this.posicionInicial.getY1());
+        this.posicion.setX2(this.posicionInicial.getX2());
+        this.posicion.setY2(this.posicionInicial.getY2());
+        this.direccionActual = Direccion.NINGUNA;
+        this.ultimaDireccion = Direccion.ABAJO;
+    }
+
+    /**
      * Procesa el impacto de una pala o proyectil sobre el empleado.
-     * Si cuenta con un escudo de Aguinaldo activo, lo rompe y el empleado sobrevive.
-     * Si no tiene escudo, el impacto es letal (salud = 0).
+     * Si cuenta con un escudo de Aguinaldo activo, lo rompe y el empleado conserva sus corazones y posición.
+     * Si no tiene escudo, pierde 1 corazón (vida).
      *
-     * @return {@code true} si el impacto fue absorbido por el escudo (sobrevive);
-     *         {@code false} si el impacto resultó fatal (muerte).
+     * @return {@code true} si el impacto fue absorbido por el escudo (no pierde corazón ni retrocede);
+     *         {@code false} si el impacto afectó al empleado descontándole un corazón.
      */
     public boolean recibirImpacto() {
         if (this.tieneEscudo) {
@@ -97,15 +120,15 @@ public class Empleado extends EntidadMovil {
                 }
             }
             this.buffosActivos.removeIf(Buffo::estaExpirado);
-            return true; // Golpe absorbido con éxito (sobrevive)
+            return true; // Golpe absorbido con éxito por el escudo
         }
 
-        this.salud = 0;
-        return false; // Muerte instantánea
+        this.salud = Math.max(0, this.salud - 1);
+        return false; // Pierde 1 corazón
     }
 
     /**
-     * Reduce la salud del empleado o delega al sistema de impacto letal con escudo.
+     * Reduce la salud del empleado o delega al sistema de impacto por corazones y escudo.
      * Conservado por compatibilidad.
      *
      * @param danio Puntos de daño recibidos.
@@ -163,7 +186,7 @@ public class Empleado extends EntidadMovil {
     }
 
     /**
-     * Indica si el empleado sigue vivo para continuar la partida.
+     * Indica si el empleado aún conserva al menos un corazón para continuar la partida.
      */
     public boolean estaVivo() {
         return this.salud > 0;
@@ -197,7 +220,7 @@ public class Empleado extends EntidadMovil {
     }
 
     public void setSalud(int salud) {
-        this.salud = Math.max(0, salud);
+        this.salud = Math.max(0, Math.min(SALUD_DEFAULT, salud));
     }
 
     /**

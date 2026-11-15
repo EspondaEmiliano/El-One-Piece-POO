@@ -20,6 +20,7 @@ public class PanelPrincipal {
     private JPanel panelPrincipal;
     private CardLayout cardLayout;
     private JuegoEngine motorEngine;
+    private PanelInicio panelInicio;
     private PanelJuego panelJuego;
     private PanelRanking panelRanking;
     private PanelVictoria panelVictoria;
@@ -43,8 +44,8 @@ public class PanelPrincipal {
         panelPrincipal.setPreferredSize(new Dimension(ANCHO_VENTANA, ALTO_VENTANA));
 
         // Creamos los paneles con el tamaño dimensionado
-        PanelInicio panelInicio = new PanelInicio(this);
-        panelInicio.setPreferredSize(new Dimension(ANCHO_VENTANA, ALTO_VENTANA));
+        this.panelInicio = new PanelInicio(this);
+        this.panelInicio.setPreferredSize(new Dimension(ANCHO_VENTANA, ALTO_VENTANA));
 
         this.panelJuego = new PanelJuego(motorEngine, this);
         this.panelJuego.setPreferredSize(new Dimension(ANCHO_VENTANA, ALTO_VENTANA));
@@ -56,7 +57,7 @@ public class PanelPrincipal {
         this.panelVictoria.setPreferredSize(new Dimension(ANCHO_VENTANA, ALTO_VENTANA));
 
         // Agregamos paneles al contenedor principal
-        panelPrincipal.add(panelInicio, "INICIO");
+        panelPrincipal.add(this.panelInicio, "INICIO");
         panelPrincipal.add(this.panelJuego, "JUEGO");
         panelPrincipal.add(this.panelRanking, "RANKING");
         panelPrincipal.add(this.panelVictoria, "VICTORIA");
@@ -77,11 +78,15 @@ public class PanelPrincipal {
 
     /**
      * Alterna la vista visible en pantalla según su identificador.
-     * Sincroniza la música de fondo y los loops de animación.
+     * Sincroniza la música de fondo, el estado del selector de niveles y los loops de animación.
      *
      * @param nombre Nombre de la tarjeta ("INICIO", "JUEGO", "RANKING" o "VICTORIA").
      */
     public void mostrarPanel(String nombre) {
+        if ("INICIO".equalsIgnoreCase(nombre) && panelInicio != null) {
+            panelInicio.actualizarEstadoSelector();
+        }
+
         cardLayout.show(panelPrincipal, nombre);
 
         if ("JUEGO".equalsIgnoreCase(nombre)) {
@@ -98,9 +103,10 @@ public class PanelPrincipal {
     }
 
     /**
-     * Prepara una nueva partida en el nivel seleccionado y transiciona a la pantalla de juego.
+     * Prepara el motor en un nivel específico con los 3 corazones iniciales
+     * y transiciona la vista a la pantalla de juego.
      *
-     * @param numeroNivel Identificador del nivel inicial en el que comenzará la partida.
+     * @param numeroNivel Identificador del nivel en el que iniciará la partida.
      */
     public void iniciarJuegoEnNivel(int numeroNivel) {
         if (panelJuego != null) {

@@ -27,7 +27,6 @@ public class Jefe extends EntidadMovil {
     /** Duración en milisegundos de la animación de disparo. */
     public static final int DURACION_ANIMACION_ATAQUE_MS = 400;
 
-    private String nombre;
     private int intervalAtaque;
     private long ultimoAtaque;
     private boolean ataqueTriple;
@@ -38,11 +37,10 @@ public class Jefe extends EntidadMovil {
      *
      * @param posicion Hitbox inicial en el pasillo superior.
      * @param velocidad Velocidad de seguimiento horizontal.
-     * @param nombre Nombre descriptivo del jefe.
      * @param intervalAtaque Cadencia de disparo en milisegundos.
      */
-    public Jefe(Posicion posicion, int velocidad, String nombre, int intervalAtaque) {
-        this(posicion, velocidad, nombre, intervalAtaque, false);
+    public Jefe(Posicion posicion, int velocidad, int intervalAtaque) {
+        this(posicion, velocidad, intervalAtaque, false);
     }
 
     /**
@@ -50,17 +48,28 @@ public class Jefe extends EntidadMovil {
      *
      * @param posicion Hitbox inicial en el pasillo superior.
      * @param velocidad Velocidad de seguimiento horizontal.
-     * @param nombre Nombre descriptivo del jefe.
      * @param intervalAtaque Cadencia de disparo en milisegundos.
      * @param ataqueTriple {@code true} para disparar tres palas paralelas; {@code false} para disparo simple.
      */
-    public Jefe(Posicion posicion, int velocidad, String nombre, int intervalAtaque, boolean ataqueTriple) {
+    public Jefe(Posicion posicion, int velocidad, int intervalAtaque, boolean ataqueTriple) {
         super(posicion, velocidad);
-        this.nombre = nombre;
         this.intervalAtaque = intervalAtaque;
         this.ataqueTriple = ataqueTriple;
         this.proyectilesGenerados = new ArrayList<>();
         this.ultimoAtaque = System.currentTimeMillis();
+    }
+
+    /**
+     * Constructor sobrecargado compatible que acepta denominación temática del jefe.
+     *
+     * @param posicion Hitbox inicial en el pasillo superior.
+     * @param velocidad Velocidad de seguimiento horizontal.
+     * @param nombre Nombre descriptivo del antagonista.
+     * @param intervalAtaque Cadencia de disparo en milisegundos.
+     * @param ataqueTriple {@code true} para disparar tres palas paralelas; {@code false} para disparo simple.
+     */
+    public Jefe(Posicion posicion, int velocidad, String nombre, int intervalAtaque, boolean ataqueTriple) {
+        this(posicion, velocidad, intervalAtaque, ataqueTriple);
     }
 
     /**
@@ -181,6 +190,15 @@ public class Jefe extends EntidadMovil {
      */
     public void limpiarProyectilGenerado() {
         proyectilesGenerados.clear();
+    }
+
+    /**
+     * Devuelve el intervalo de recarga entre disparos sucesivos en milisegundos.
+     *
+     * @return Cadencia de disparo en milisegundos.
+     */
+    public int getIntervaloAtaque() {
+        return intervalAtaque;
     }
 
     /**

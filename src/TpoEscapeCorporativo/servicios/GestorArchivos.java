@@ -19,8 +19,6 @@ public class GestorArchivos {
     private static final String RUTA_RANKING_DEFAULT = "data/ranking.dat";
     private static final String CARPETA_NIVELES_DEFAULT = "assets/mapas/";
     private static final int MAX_TOP_PUNTAJES = 10;
-    private static final String ARCHIVO_NIVEL_FINAL = "nivel_final";
-    private static final String ARCHIVO_NIVEL_FINAL_TXT = "nivel_final.txt";
 
     private final String rutaRanking;
     private final String carpetaNiveles;
@@ -113,15 +111,15 @@ public class GestorArchivos {
     }
 
     /**
-     * Carga la matriz de diseño de un nivel desde su archivo de texto en disco.
+     * Carga la matriz de diseño de un nivel desde un archivo .txt plano.
      *
-     * @param numeroNivel Identificador numérico del nivel (ej. 1 -> nivel_1.txt, último -> nivel_final).
+     * @param numeroNivel Identificador numérico del nivel (ej. 1 -> nivel_1.txt).
      * @return Matriz de caracteres (char[][]) que representa la cuadrícula del nivel.
      * @throws NivelNoEncontradoException Si el archivo no existe o no se puede leer.
      */
     public char[][] cargarMapaNivel(int numeroNivel) throws NivelNoEncontradoException {
-        File archivo = resolverArchivoNivel(numeroNivel);
-        String nombreArchivo = archivo.getPath();
+        String nombreArchivo = this.carpetaNiveles + "nivel_" + numeroNivel + ".txt";
+        File archivo = new File(nombreArchivo);
 
         if (!archivo.exists() || !archivo.isFile()) {
             throw new NivelNoEncontradoException(
@@ -187,63 +185,16 @@ public class GestorArchivos {
     }
 
     /**
-     * Cuenta los niveles numerados consecutivos disponibles en el directorio de mapas.
+     * Determina la cantidad total de niveles disponibles escaneando los archivos en el disco.
      *
-     * @return Cantidad de niveles numerados encontrados a partir del nivel 1.
+     * @return Cantidad de niveles existentes consecutivos a partir del nivel 1.
      */
-    private int contarNivelesNumerados() {
+    public int contarNivelesDisponibles() {
         int contador = 0;
         while (new File(this.carpetaNiveles + "nivel_" + (contador + 1) + ".txt").isFile()) {
             contador++;
         }
-        return contador;
-    }
-
-    /**
-     * Busca el archivo del nivel final dentro de la carpeta de mapas.
-     *
-     * @return Archivo del nivel final si existe en disco; {@code null} en caso contrario.
-     */
-    private File obtenerArchivoNivelFinal() {
-        File sinExtension = new File(this.carpetaNiveles + ARCHIVO_NIVEL_FINAL);
-        if (sinExtension.isFile()) {
-            return sinExtension;
-        }
-        File conExtension = new File(this.carpetaNiveles + ARCHIVO_NIVEL_FINAL_TXT);
-        return conExtension.isFile() ? conExtension : null;
-    }
-
-    /**
-     * Resuelve el archivo en disco que corresponde al número de nivel solicitado.
-     *
-     * @param numeroNivel Identificador numérico del nivel.
-     * @return Instancia {@link File} apuntando al mapa del nivel.
-     */
-    private File resolverArchivoNivel(int numeroNivel) {
-        if (esNivelFinal(numeroNivel)) {
-            return obtenerArchivoNivelFinal();
-        }
-        return new File(this.carpetaNiveles + "nivel_" + numeroNivel + ".txt");
-    }
-
-    /**
-     * Indica si el número de nivel indicado corresponde al nivel final del juego.
-     *
-     * @param numeroNivel Identificador numérico del nivel.
-     * @return {@code true} si existe el archivo de nivel final y ocupa dicha posición; {@code false} en caso contrario.
-     */
-    public boolean esNivelFinal(int numeroNivel) {
-        return obtenerArchivoNivelFinal() != null && numeroNivel == contarNivelesNumerados() + 1;
-    }
-
-    /**
-     * Determina la cantidad total de niveles disponibles sumando mapas numerados y nivel final.
-     *
-     * @return Cantidad total de niveles jugables en el directorio, con un mínimo de 1.
-     */
-    public int contarNivelesDisponibles() {
-        int total = contarNivelesNumerados() + (obtenerArchivoNivelFinal() != null ? 1 : 0);
-        return total > 0 ? total : 1;
+        return contador > 0 ? contador : 1;
     }
 
     /**
@@ -253,9 +204,6 @@ public class GestorArchivos {
      * @return Título y denominación temática del nivel.
      */
     public String getNombreNivel(int numeroNivel) {
-        if (esNivelFinal(numeroNivel)) {
-            return "Nivel Final";
-        }
         switch (numeroNivel) {
             case 1:
                 return "Nivel 1: Primer Paso";
@@ -265,23 +213,36 @@ public class GestorArchivos {
                 return "Nivel 3: Ruta Dual";
             case 4:
                 return "Nivel 4: El Búnker Central";
+            case 5:
+                return "Nivel 5: Nivel Final";
             default:
                 return "Nivel " + numeroNivel;
         }
     }
 
     /**
-     * Genera la lista de títulos de todos los niveles disponibles para su selección en la interfaz.
+     * Genera la lista de títulos de los niveles disponibles hasta el tope desbloqueado indicado.
+     *
+     * @param limiteNivelMaximo Nivel máximo incluido en el listado.
+     * @return Arreglo de cadenas con los nombres ordenados de los niveles habilitados.
+     */
+    public String[] getNombresNivelesDisponibles(int limiteNivelMaximo) {
+        int totalDisponibles = contarNivelesDisponibles();
+        int cantidadAMostrar = Math.max(1, Math.min(limiteNivelMaximo, totalDisponibles));
+        String[] nombres = new String[cantidadAMostrar];
+        for (int i = 0; i < cantidadAMostrar; i++) {
+            nombres[i] = getNombreNivel(i + 1);
+        }
+        return nombres;
+    }
+
+    /**
+     * Genera la lista de títulos de todos los niveles disponibles en disco.
      *
      * @return Arreglo de cadenas con los nombres ordenados de cada nivel.
      */
     public String[] getNombresNivelesDisponibles() {
-        int total = contarNivelesDisponibles();
-        String[] nombres = new String[total];
-        for (int i = 0; i < total; i++) {
-            nombres[i] = getNombreNivel(i + 1);
-        }
-        return nombres;
+        return getNombresNivelesDisponibles(contarNivelesDisponibles());
     }
 
     public String getRutaRanking() {
@@ -289,7 +250,7 @@ public class GestorArchivos {
     }
 
     public String getRutaRankingDefault() {
-        return rutaRanking;
+        return RUTA_RANKING_DEFAULT;
     }
 
     public String getCarpetaNiveles() {

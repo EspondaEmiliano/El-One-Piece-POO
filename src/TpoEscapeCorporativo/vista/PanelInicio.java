@@ -1,15 +1,20 @@
 package TpoEscapeCorporativo.vista;
 
+import TpoEscapeCorporativo.controlador.JuegoEngine;
 import TpoEscapeCorporativo.servicios.GestorAudio;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * Pantalla de bienvenida y menú principal del juego.
- * Proporciona acceso al inicio directo de la partida, selector de niveles,
+ * Proporciona acceso al inicio directo de la partida, un selector de niveles
+ * con estética arcade (tarjetas interactivas con progresión desbloqueable),
  * visualización de mejores puntajes y ajuste de volumen del audio retro.
  */
 public class PanelInicio extends JPanel {
@@ -30,6 +35,7 @@ public class PanelInicio extends JPanel {
     public PanelInicio(PanelPrincipal panelPrincipal) {
         this.panelPrincipal = panelPrincipal;
         inicializarPanel();
+        actualizarEstadoSelector();
     }
 
     private void inicializarPanel() {
@@ -37,13 +43,13 @@ public class PanelInicio extends JPanel {
         this.setBackground(new Color(25, 25, 25));
         this.setLayout(null);
 
-        // Título Arcade con tipografía retro en color dorado
+        // Título Arcade en color dorado
         cartelTitulo = new JLabel("ESCAPE CORPORATIVO", SwingConstants.CENTER);
         cartelTitulo.setFont(GestorRecursos.getFuenteArcade(22f));
         cartelTitulo.setForeground(new Color(255, 215, 0));
         add(cartelTitulo);
 
-        // Botón para iniciar el juego desde el primer nivel
+        // Botón estilo máquina arcade para iniciar desde el Nivel 1
         botonPlay = new JButton("INICIAR JUEGO");
         botonPlay.setFont(GestorRecursos.getFuenteArcade(13f));
         botonPlay.setBackground(new Color(30, 130, 60));
@@ -56,18 +62,14 @@ public class PanelInicio extends JPanel {
         });
         add(botonPlay);
 
-        // Botón para desplegar el selector de niveles disponibles
+        // Botón para desplegar el selector arcade de niveles
         botonSeleccionarNivel = new JButton("SELECCIONAR NIVEL");
-        botonSeleccionarNivel.setFont(GestorRecursos.getFuenteArcade(12f));
-        botonSeleccionarNivel.setBackground(new Color(110, 40, 140));
-        botonSeleccionarNivel.setForeground(Color.WHITE);
+        botonSeleccionarNivel.setFont(GestorRecursos.getFuenteArcade(11f));
         botonSeleccionarNivel.setFocusable(false);
-        botonSeleccionarNivel.setBorder(BorderFactory.createLineBorder(new Color(190, 70, 240), 2));
-        botonSeleccionarNivel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         botonSeleccionarNivel.addActionListener(e -> abrirDialogoSeleccionNivel());
         add(botonSeleccionarNivel);
 
-        // Botón para acceder a la tabla de récords del Top 10
+        // Botón para acceder al Ranking / TOP 10
         botonRanking = new JButton("RANKING / TOP 10");
         botonRanking.setFont(GestorRecursos.getFuenteArcade(12f));
         botonRanking.setBackground(new Color(20, 80, 140));
@@ -80,7 +82,7 @@ public class PanelInicio extends JPanel {
         });
         add(botonRanking);
 
-        // Carteles de controles e instrucciones operativas
+        // Carteles de controles e instrucciones
         lblControles = new JLabel("CONTROLES: FLECHAS O W-A-S-D", SwingConstants.CENTER);
         lblControles.setFont(GestorRecursos.getFuenteArcade(9f));
         lblControles.setForeground(Color.CYAN);
@@ -96,17 +98,20 @@ public class PanelInicio extends JPanel {
         lblPausa.setForeground(Color.YELLOW);
         add(lblPausa);
 
-        // Indicador y control deslizante para calibrar el volumen del audio
+        // Etiqueta de volumen arcade
         lblVolumen = new JLabel("VOLUMEN: 70%", SwingConstants.CENTER);
         lblVolumen.setFont(GestorRecursos.getFuenteArcade(9f));
         lblVolumen.setForeground(Color.CYAN);
         add(lblVolumen);
 
+        // Barra de sonido retro (JSlider)
         sliderVolumen = new JSlider(0, 100, 70);
         sliderVolumen.setBackground(new Color(25, 25, 25));
         sliderVolumen.setForeground(Color.CYAN);
         sliderVolumen.setFocusable(false);
         sliderVolumen.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Listener: actualiza el volumen en tiempo real cuando el usuario desliza
         sliderVolumen.addChangeListener(e -> {
             int valor = sliderVolumen.getValue();
             lblVolumen.setText("VOLUMEN: " + valor + "%");
@@ -114,7 +119,7 @@ public class PanelInicio extends JPanel {
         });
         add(sliderVolumen);
 
-        // Distribución proporcional de los elementos en resolución fija 900x680
+        // Posicionamiento armónico y proporcional de los elementos en 900x680
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -124,17 +129,17 @@ public class PanelInicio extends JPanel {
                 cartelTitulo.setBounds((ancho - 700) / 2, (int) (alto * 0.05), 700, 45);
 
                 int anchoBoton = 280;
-                int altoBoton = 44;
-                int yBotones = (int) (alto * 0.30);
+                int altoBoton = 42;
+                int yBotones = (int) (alto * 0.32);
 
                 botonPlay.setBounds((ancho - anchoBoton) / 2, yBotones, anchoBoton, altoBoton);
-                botonSeleccionarNivel.setBounds((ancho - anchoBoton) / 2, yBotones + 54, anchoBoton, altoBoton);
-                botonRanking.setBounds((ancho - anchoBoton) / 2, yBotones + 108, anchoBoton, altoBoton);
+                botonSeleccionarNivel.setBounds((ancho - anchoBoton) / 2, yBotones + 50, anchoBoton, altoBoton);
+                botonRanking.setBounds((ancho - anchoBoton) / 2, yBotones + 100, anchoBoton, altoBoton);
 
                 int yInstrucciones = (int) (alto * 0.58);
                 lblControles.setBounds((ancho - 650) / 2, yInstrucciones, 650, 24);
-                lblObjetivo.setBounds((ancho - 650) / 2, yInstrucciones + 30, 650, 24);
-                lblPausa.setBounds((ancho - 650) / 2, yInstrucciones + 60, 650, 24);
+                lblObjetivo.setBounds((ancho - 650) / 2, yInstrucciones + 28, 650, 24);
+                lblPausa.setBounds((ancho - 650) / 2, yInstrucciones + 56, 650, 24);
 
                 int anchoSlider = 250;
                 int yVolumen = (int) (alto * 0.77);
@@ -145,41 +150,199 @@ public class PanelInicio extends JPanel {
     }
 
     /**
-     * Despliega una ventana emergente para elegir el nivel de inicio entre los mapas existentes.
+     * Refresca la apariencia del botón del selector de niveles según el progreso del jugador:
+     * - Si aún no superó el nivel 1, se muestra bloqueado en tono carbón neutro.
+     * - Al superar el primer nivel, se ilumina con estilo neón violeta habilitando la selección.
+     */
+    public void actualizarEstadoSelector() {
+        if (this.panelPrincipal == null) return;
+        JuegoEngine motor = this.panelPrincipal.getMotorEngine();
+        if (motor == null || botonSeleccionarNivel == null) return;
+
+        boolean desbloqueado = motor.isSelectorDesbloqueado();
+
+        if (desbloqueado) {
+            botonSeleccionarNivel.setText("SELECCIONAR NIVEL");
+            botonSeleccionarNivel.setBackground(new Color(110, 40, 140));
+            botonSeleccionarNivel.setForeground(Color.WHITE);
+            botonSeleccionarNivel.setBorder(BorderFactory.createLineBorder(new Color(190, 70, 240), 2));
+            botonSeleccionarNivel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            botonSeleccionarNivel.setToolTipText("Elegir entre los niveles desbloqueados");
+        } else {
+            botonSeleccionarNivel.setText("NIVELES (BLOQUEADO)");
+            botonSeleccionarNivel.setBackground(new Color(45, 45, 48));
+            botonSeleccionarNivel.setForeground(new Color(140, 140, 145));
+            botonSeleccionarNivel.setBorder(BorderFactory.createLineBorder(new Color(70, 70, 75), 2));
+            botonSeleccionarNivel.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            botonSeleccionarNivel.setToolTipText("Supera al menos el Nivel 1 para desbloquear el selector");
+        }
+    }
+
+    /**
+     * Despliega un cuadro de diálogo modal con estética Arcade que presenta
+     * las tarjetas de todos los niveles del juego, permitiendo iniciar directamente
+     * cualquiera de los niveles ya desbloqueados y visualizando los que aún están bloqueados.
      */
     private void abrirDialogoSeleccionNivel() {
-        String[] opcionesNiveles = this.panelPrincipal.getMotorEngine().getOpcionesNiveles();
-        if (opcionesNiveles == null || opcionesNiveles.length == 0) {
+        JuegoEngine motor = this.panelPrincipal.getMotorEngine();
+        if (motor == null || !motor.isSelectorDesbloqueado()) {
             return;
         }
 
-        JComboBox<String> comboNiveles = new JComboBox<>(opcionesNiveles);
-        comboNiveles.setFont(GestorRecursos.getFuenteArcade(9f));
-        comboNiveles.setBackground(new Color(30, 30, 30));
-        comboNiveles.setForeground(Color.WHITE);
+        Window ventanaPadre = SwingUtilities.getWindowAncestor(this);
+        JDialog dialogo = new JDialog(ventanaPadre, "SELECCIONAR NIVEL", Dialog.ModalityType.APPLICATION_MODAL);
+        dialogo.setUndecorated(true);
+        dialogo.setSize(580, 480);
+        dialogo.setLocationRelativeTo(this);
 
-        JPanel panelDialogo = new JPanel(new GridLayout(2, 1, 5, 8));
-        panelDialogo.setBackground(new Color(25, 25, 25));
+        JPanel contenedor = new JPanel(new BorderLayout(0, 14));
+        contenedor.setBackground(new Color(20, 20, 24));
+        contenedor.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(190, 70, 245), 3),
+                BorderFactory.createEmptyBorder(20, 24, 20, 24)
+        ));
 
-        JLabel lblInstruccion = new JLabel("SELECCIONA EL NIVEL DE PARTIDA:", SwingConstants.CENTER);
-        lblInstruccion.setFont(GestorRecursos.getFuenteArcade(8f));
-        lblInstruccion.setForeground(Color.CYAN);
+        // Cabecera del selector
+        JPanel panelCabecera = new JPanel(new GridLayout(2, 1, 0, 6));
+        panelCabecera.setOpaque(false);
 
-        panelDialogo.add(lblInstruccion);
-        panelDialogo.add(comboNiveles);
+        JLabel lblTitulo = new JLabel("SELECCION DE NIVEL", SwingConstants.CENTER);
+        lblTitulo.setFont(GestorRecursos.getFuenteArcade(15f));
+        lblTitulo.setForeground(new Color(255, 215, 0));
 
-        int resultado = JOptionPane.showConfirmDialog(
-                this,
-                panelDialogo,
-                "SELECCION DE NIVEL",
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE
+        int totalNiveles = motor.getTotalNiveles();
+        int maxDesbloqueado = motor.getNivelMaximoDesbloqueado();
+        JLabel lblSubtitulo = new JLabel(
+                "PROGRESO DESBLOQUEADO: " + maxDesbloqueado + " DE " + totalNiveles + " NIVELES",
+                SwingConstants.CENTER
+        );
+        lblSubtitulo.setFont(GestorRecursos.getFuenteArcade(8f));
+        lblSubtitulo.setForeground(Color.CYAN);
+
+        panelCabecera.add(lblTitulo);
+        panelCabecera.add(lblSubtitulo);
+        contenedor.add(panelCabecera, BorderLayout.NORTH);
+
+        // Grilla central con las tarjetas de los niveles
+        JPanel panelNiveles = new JPanel(new GridLayout(totalNiveles, 1, 0, 8));
+        panelNiveles.setOpaque(false);
+
+        for (int nivel = 1; nivel <= totalNiveles; nivel++) {
+            final int nivelElegido = nivel;
+            boolean desbloqueado = (nivel <= maxDesbloqueado);
+            String nombreNivel = motor.getNombreNivel(nivel).toUpperCase();
+            String etiquetaDificultad = obtenerEtiquetaDificultad(nivel);
+
+            JButton btnNivel = new JButton();
+            btnNivel.setLayout(new BorderLayout(10, 0));
+            btnNivel.setFocusable(false);
+            btnNivel.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(
+                            desbloqueado ? new Color(0, 200, 255) : new Color(75, 75, 75),
+                            2
+                    ),
+                    BorderFactory.createEmptyBorder(8, 14, 8, 14)
+            ));
+
+            JLabel lblIzquierda = new JLabel(nombreNivel);
+            lblIzquierda.setFont(GestorRecursos.getFuenteArcade(9f));
+
+            JLabel lblDerecha = new JLabel();
+            lblDerecha.setFont(GestorRecursos.getFuenteArcade(8f));
+            lblDerecha.setHorizontalAlignment(SwingConstants.RIGHT);
+
+            if (desbloqueado) {
+                Color bgNormal = new Color(36, 26, 58);
+                Color bgHover = new Color(62, 42, 98);
+                btnNivel.setBackground(bgNormal);
+                btnNivel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+                lblIzquierda.setForeground(Color.WHITE);
+                lblDerecha.setText(etiquetaDificultad + "  [JUGAR]");
+                lblDerecha.setForeground(new Color(80, 255, 130));
+
+                btnNivel.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseEntered(MouseEvent e) {
+                        btnNivel.setBackground(bgHover);
+                        btnNivel.setBorder(BorderFactory.createCompoundBorder(
+                                BorderFactory.createLineBorder(new Color(255, 215, 0), 2),
+                                BorderFactory.createEmptyBorder(8, 14, 8, 14)
+                        ));
+                    }
+
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+                        btnNivel.setBackground(bgNormal);
+                        btnNivel.setBorder(BorderFactory.createCompoundBorder(
+                                BorderFactory.createLineBorder(new Color(0, 200, 255), 2),
+                                BorderFactory.createEmptyBorder(8, 14, 8, 14)
+                        ));
+                    }
+                });
+
+                btnNivel.addActionListener(e -> {
+                    dialogo.dispose();
+                    this.panelPrincipal.iniciarJuegoEnNivel(nivelElegido);
+                });
+            } else {
+                btnNivel.setBackground(new Color(32, 32, 34));
+                btnNivel.setEnabled(false);
+
+                lblIzquierda.setForeground(new Color(110, 110, 110));
+                lblDerecha.setText("BLOQUEADO (SUPERA NIVEL " + (nivel - 1) + ")");
+                lblDerecha.setForeground(new Color(150, 90, 90));
+            }
+
+            btnNivel.add(lblIzquierda, BorderLayout.WEST);
+            btnNivel.add(lblDerecha, BorderLayout.EAST);
+            panelNiveles.add(btnNivel);
+        }
+
+        contenedor.add(panelNiveles, BorderLayout.CENTER);
+
+        // Pie del diálogo con botón de cierre
+        JPanel panelPie = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 2));
+        panelPie.setOpaque(false);
+
+        JButton btnCerrar = new JButton("VOLVER AL MENU [ESC]");
+        btnCerrar.setFont(GestorRecursos.getFuenteArcade(9f));
+        btnCerrar.setPreferredSize(new Dimension(240, 36));
+        btnCerrar.setBackground(new Color(130, 35, 45));
+        btnCerrar.setForeground(Color.WHITE);
+        btnCerrar.setFocusable(false);
+        btnCerrar.setBorder(BorderFactory.createLineBorder(new Color(255, 80, 90), 2));
+        btnCerrar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnCerrar.addActionListener(e -> dialogo.dispose());
+
+        panelPie.add(btnCerrar);
+        contenedor.add(panelPie, BorderLayout.SOUTH);
+
+        // Permitir cerrar con la tecla ESC
+        contenedor.registerKeyboardAction(
+                e -> dialogo.dispose(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
         );
 
-        if (resultado == JOptionPane.OK_OPTION) {
-            int indiceSeleccionado = comboNiveles.getSelectedIndex();
-            int nivelElegido = indiceSeleccionado + 1;
-            this.panelPrincipal.iniciarJuegoEnNivel(nivelElegido);
+        dialogo.setContentPane(contenedor);
+        dialogo.setVisible(true);
+    }
+
+    /**
+     * Retorna una etiqueta concisa de dificultad para presentar en cada tarjeta del selector.
+     *
+     * @param numeroNivel Identificador numérico del nivel.
+     * @return Etiqueta arcade descriptiva de la dificultad.
+     */
+    private String obtenerEtiquetaDificultad(int numeroNivel) {
+        switch (numeroNivel) {
+            case 1: return "DIF: BAJA";
+            case 2: return "DIF: MEDIA";
+            case 3: return "DIF: ALTA";
+            case 4: return "DIF: EXTREMA";
+            case 5: return "DIF: JEFE FINAL";
+            default: return "DIF: DESAFIO";
         }
     }
 
@@ -191,7 +354,7 @@ public class PanelInicio extends JPanel {
         super.paintComponent(g);
 
         int centroX = getWidth() / 2;
-        int posY = (int) (getHeight() * 0.16);
+        int posY = (int) (getHeight() * 0.15);
         int tamanioSprite = 64;
 
         Image spriteEmpleado = GestorRecursos.getSpriteEmpleado();
